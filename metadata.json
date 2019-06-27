@@ -1,0 +1,53 @@
+{
+  "name": "psst",
+  "version": "0.1.0",
+  "package": "git.lo/dbt/psst",
+  "description": "Secrets definition and management tool",
+  "repository": "https://artifacts.lo/artifactory/dbt-tools",
+  "building": {
+    "targets": [
+      {
+        "name": "darwin/amd64"
+      },
+      {
+        "name": "linux/amd64"
+      }
+    ],
+    "extras": [
+      {
+        "template": "templates/description.tmpl",
+        "filename": "description.txt",
+        "executable": false
+      }
+    ]
+  },
+  "signing": {
+    "program": "gpg",
+    "email": "you@yourmail.com"
+
+  },
+  "publishing": {
+    "targets": [
+      {
+        "src": "description.txt",
+        "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/description.txt",
+        "sig": true,
+        "checksums": false
+      },
+      {
+        "src": "psst_darwin_amd64",
+        "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/darwin/amd64/{{.Name}}",
+        "sig": true,
+        "checksums": false
+      },
+      {
+        "src": "psst_linux_amd64",
+        "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/linux/amd64/{{.Name}}",
+        "sig": true,
+        "checksums": false
+      }
+    ],
+    "usernamefunc": "echo -n $PUBLISH_USERNAME",
+    "passwordfunc": "echo -n $PUBLISH_PASSWORD"
+  }
+}
