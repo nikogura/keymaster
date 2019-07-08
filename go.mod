@@ -3,7 +3,7 @@ module git.lo/dbt/psst
 go 1.12
 
 require (
-	git.lo/ops/vaulttest v0.0.0-20190706155433-e0d4b5bb9ff5
+	git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825
 	github.com/google/uuid v1.1.1
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0

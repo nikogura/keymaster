@@ -4,6 +4,8 @@ git.lo/ops/vaulttest v0.0.0-20190706154551-473371b9313a h1:sKlrQTnD2A5jBAUoZa/rH
 git.lo/ops/vaulttest v0.0.0-20190706154551-473371b9313a/go.mod h1:NZrf/0GHTLIT1FvGGPE0vZOM4ZFL+L6HqJDWoa7u9NM=
 git.lo/ops/vaulttest v0.0.0-20190706155433-e0d4b5bb9ff5 h1:MRjIq4qXKGNFuM0zfe3CWWVw6M12UJCwA4YJ09hz8Cc=
 git.lo/ops/vaulttest v0.0.0-20190706155433-e0d4b5bb9ff5/go.mod h1:NZrf/0GHTLIT1FvGGPE0vZOM4ZFL+L6HqJDWoa7u9NM=
+git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825 h1:p+M34VHEAFgbQwEBfLH6LJVMzvmdcr55Zbhc2aOA4vY=
+git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825/go.mod h1:M9hjafp59sVR3zHFp3K3BKRBAL86Semx8xMRWBnpCZU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
@@ -143,6 +145,7 @@ github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.4.0 h1:u3Z1r+oOXJIkxqw34zVhyPgjBsm6X2wn21NWs/HfSeg=
 github.com/pelletier/go-toml v1.4.0/go.mod h1:PN7xzY2wHTK0K9p34ErDQMlFxa51Fk0OUruD3k1mMwo=
+github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2/go.mod h1:iIss55rKnNBTvrwdmkUpLnDpZoAHvWaiq5+iMmen4AE=
 github.com/pierrec/lz4 v2.0.5+incompatible h1:2xWsjqPFWcplujydGg4WmhC/6fZqK42wMM8aXeqhl0I=
 github.com/pierrec/lz4 v2.0.5+incompatible/go.mod h1:pdkljMzZIN41W+lC3N2tnIh5sFi+IEE17M5jbnwPHcY=
 github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=
