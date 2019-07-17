@@ -13,7 +13,7 @@
 
 package main
 
-import "git.lo/dbt/psst/cmd"
+import "git.lo/dbt/harpo/cmd"
 
 func main() {
 	cmd.Execute()

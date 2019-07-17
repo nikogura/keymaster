@@ -1,7 +1,7 @@
 {
-  "name": "psst",
+  "name": "harpo",
   "version": "0.1.0",
-  "package": "git.lo/dbt/psst",
+  "package": "git.lo/dbt/harpo",
   "description": "Secrets definition and management tool",
   "repository": "https://artifacts.lo/artifactory/dbt-tools",
   "building": {
@@ -35,13 +35,13 @@
         "checksums": false
       },
       {
-        "src": "psst_darwin_amd64",
+        "src": "harpo_darwin_amd64",
         "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/darwin/amd64/{{.Name}}",
         "sig": true,
         "checksums": false
       },
       {
-        "src": "psst_linux_amd64",
+        "src": "harpo_linux_amd64",
         "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/linux/amd64/{{.Name}}",
         "sig": true,
         "checksums": false

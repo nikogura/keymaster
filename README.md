@@ -1,33 +1,18 @@
-# psst
+# harpo
 
-Secrets definition and management tool
+Secrets Definition and Management tool.
 
-## Requirements
+Defines Secrets and their Generators based on a config file.
 
-Define Secrets - and their generators
+Provisions Vault to hold the Secret values, provides Authentication methods to Vault, and Access Policies to the Secrets.
 
-Define Secret Roles (Vault AppRoles & Policies)
+## Etymology
+Named for Harpocrates, the Greek god of Silence, Secrets, and Confidentiality, and also Harpo, the silent Stooge.  Had to call it something.
 
-In Memory vault server for testing
+## Design Docs
 
-Verify CRUD off of definition
+* https://scribdjira.atlassian.net/wiki/spaces/SEC/pages/559317160/Secret+Management+Options+and+Requirements+-+2019-Q3
 
-Write secrets if not exist in preprod/prod
+* https://scribdjira.atlassian.net/wiki/spaces/SEC/pages/572950716/SecretsV2+-+2019-Q3
 
-Backends for dev/preprod/prod
-
-Definitions out of git, or act as front end to whats in vault
-
-Vault itself is the storage medium, Vault AppRole/Policy is definition and enforcement of role
-
-
-## Stories
-
-* As a Developer, I want to define a Secret for my application and have it made available everywhere it's needed.
-
-* As a Developer, or an Operator, I want to be able to define a Role for my application, and choose what secrets this Role needs access to.
-
-* As a Security Admin, I want to be able to rotate (regenerate) any secret or group of secrets when I deem it necessary (time based, or in response to a suspected breach).
-
-* As an Operator, I want Developers to be able to choose the Name (Key) of a secret, and define a pattern for that secret's generation so that it can be created and populated in all environments/realms where necessary so that the Developer needs no further interaction.
-
+* https://scribdjira.atlassian.net/wiki/spaces/SEC/pages/573603988/Secrets+Backend+Harpo+-+2019-Q3 
