@@ -1,4 +1,4 @@
-package harpo
+package secrets_backend
 
 import (
 	"fmt"

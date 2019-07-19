@@ -1,4 +1,4 @@
-module git.lo/dbt/harpo
+module git.lo/dbt/secrets-backend
 
 go 1.12
 

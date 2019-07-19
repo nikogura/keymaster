@@ -1,4 +1,4 @@
-package harpo
+package secrets_backend
 
 // Environment Scribd's deployment environments.   One of "Prod", "Stage", "Dev"
 type Environment int
