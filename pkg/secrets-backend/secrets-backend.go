@@ -14,29 +14,6 @@ type Generator interface {
 	Generate() string
 }
 
-// How do we maintain Environment distinctions?  One easy way is to have 3 separate Vault instances.
-// How can we do with 1?  Should we?
-
-type Org struct {
-	Name  string `yaml:"org""`
-	Roles []Role `yaml:"roles"`
-}
-
-type Role struct {
-	Org     string   `yaml:"org"`
-	Name    string   `yaml:"name"`
-	Secrets []Secret `yaml:"secrets"`
-}
-
-type Secret struct {
-	Name      string    `yaml:"name"`
-	Generator Generator `yaml:"generator"`
-
-	DevValue   string `yaml:"dev_value"`
-	StageValue string `yaml:"stage_value"`
-	ProdValue  string `yaml:"prod_value"`
-}
-
 type SecretMetadata struct {
 	/*
 		{
