@@ -9,37 +9,6 @@ const (
 	Dev
 )
 
-//type SecretMetadata struct {
-/*
-	{
-	  "data": {
-	    "created_time": "2018-03-22T02:24:06.945319214Z",
-	    "current_version": 3,
-	    "max_versions": 0,
-	    "oldest_version": 0,
-	    "updated_time": "2018-03-22T02:36:43.986212308Z",
-	    "versions": {
-	      "1": {
-	        "created_time": "2018-03-22T02:24:06.945319214Z",
-	        "deletion_time": "",
-	        "destroyed": false
-	      },
-	      "2": {
-	        "created_time": "2018-03-22T02:36:33.954880664Z",
-	        "deletion_time": "",
-	        "destroyed": false
-	      },
-	      "3": {
-	        "created_time": "2018-03-22T02:36:43.986212308Z",
-	        "deletion_time": "",
-	        "destroyed": false
-	      }
-	    }
-	  }
-	}
-*/
-//}
-
 /*
 	LDAP Auth can access only dev secrets
 
