@@ -7,8 +7,8 @@ package secrets_backend
 
 import (
 	"fmt"
-	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 )
 
 const ERR_ORG_DATA_LOAD = "failed to load data in supplied config"
@@ -17,6 +17,7 @@ const ERR_NAMELESS_ROLE = "nameless roles are not supported"
 const ERR_NAMELESS_SECRET = "nameless secrets are not supported"
 const ERR_MISSING_SECRET = "missing secret in role"
 const ERR_MISSING_GENERATOR = "missing generator in secret"
+const ERR_BAD_GENERATOR = "unable to create generator"
 
 // Org An organization such as 'core-infra', 'core-platform', or 'core-services'.
 type Org struct {
@@ -34,16 +35,18 @@ type Role struct {
 	SecretsMap map[string]Secret
 }
 
+type GeneratorData map[string]interface{}
+
 // Secret a set of information describing a string value in Vault that is protected from unauthorized access, and varies by business environment.
 type Secret struct {
-	Name string `yaml:"name"`
-	Org  string `yaml:"org"`
-	//Generator Generator `yaml:"generator"`
-	Generator string `yaml:"generator"`
+	Name          string        `yaml:"name"`
+	Org           string        `yaml:"org"`
+	GeneratorData GeneratorData `yaml:"generator"`
+	Generator     *Generator    `yaml:"-"`
 
 	DevValue   string `yaml:"dev_value"`
-	StageValue string `yaml:"stage_value"`
-	ProdValue  string `yaml:"prod_value"`
+	StageValue string `yaml:"-"`
+	ProdValue  string `yaml:"-"`
 }
 
 // LoadOrgData Created an Org interface from
@@ -70,7 +73,7 @@ func LoadOrgData(data []byte) (org Org, err error) {
 			secret.Org = org.Name
 		}
 
-		if secret.Generator == "" {
+		if len(secret.GeneratorData) == 0 {
 			err = errors.New(ERR_MISSING_GENERATOR)
 			return org, err
 		}
@@ -79,6 +82,14 @@ func LoadOrgData(data []byte) (org Org, err error) {
 			err = errors.New(ERR_NAMELESS_SECRET)
 			return org, err
 		}
+
+		//generator, err := NewGenerator(secret.GeneratorData)
+		//if err != nil {
+		//	err = errors.Wrap(err, ERR_BAD_GENERATOR)
+		//	return org, err
+		//}
+
+		//secret.Generator = generator
 
 		org.SecretsMap[secret.Name] = secret
 	}

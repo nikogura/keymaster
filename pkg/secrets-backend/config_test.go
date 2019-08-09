@@ -18,14 +18,18 @@ var orgyamls = []struct {
 name: test-org
 secrets:
   - name: foo
-    generator: bar
-  - name: wip
-    generator: zoz
+    generator: 
+      type: alpha
+      length: 8
+  - name: bar
+    generator:
+      type: hex
+      length: 12
 roles:
   - name: app1
     secrets:
       - name: foo
-      - name: wip
+      - name: bar
       - name: baz
         org: core-infra`,
 		"",
@@ -35,14 +39,19 @@ roles:
 		`---
 secrets:
   - name: foo
-    generator: bar
-  - name: wip
-    generator: zoz
+    generator: 
+      type: alpha
+      length: 8
+
+  - name: bar
+    generator:
+      type: hex
+      length: 12
 roles:
   - name: app1
     secrets:
       - name: foo
-      - name: wip
+      - name: bar
       - name: baz
         org: core-infra`,
 		ERR_NAMELESS_ORG,
@@ -53,13 +62,18 @@ roles:
 name: test-org
 secrets:
   - name: foo
-    generator: bar
-  - name: wip
-    generator: zoz
+    generator: 
+      type: alpha
+      length: 8
+
+  - name: bar
+    generator:
+      type: hex
+      length: 12
 roles:
   - secrets:
       - name: foo
-      - name: wip
+      - name: bar
       - name: baz
         org: core-infra`,
 		ERR_NAMELESS_ROLE,
@@ -69,8 +83,10 @@ roles:
 		`---
 name: test-org
 secrets:
-  - name: wip
-    generator: zoz
+  - name: bar
+    generator:
+      type: hex
+      length: 12
 roles:
   - name: app1
     secrets:
@@ -91,8 +107,10 @@ roles:
 name: test-org
 secrets:
   - name: foo
-  - name: wip
-    generator: zoz
+  - name: bar
+    generator:
+      type: hex
+      length: 12
 roles:
   - name: app1
     secrets:
@@ -108,8 +126,13 @@ roles:
 name: test-org
 secrets:
   - name: foo
-    generator: bar
-  - generator: zoz
+    generator: 
+      type: alpha
+      length: 8
+
+  - generator:
+      type: hex
+      length: 12
 roles:
   - name: app1
     secrets:
