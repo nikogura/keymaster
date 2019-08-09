@@ -42,7 +42,7 @@ type Secret struct {
 	Name          string        `yaml:"name"`
 	Org           string        `yaml:"org"`
 	GeneratorData GeneratorData `yaml:"generator"`
-	Generator     *Generator    `yaml:"-"`
+	Generator     Generator     `yaml:"-"`
 
 	DevValue   string `yaml:"dev_value"`
 	StageValue string `yaml:"-"`
@@ -83,13 +83,13 @@ func LoadOrgData(data []byte) (org Org, err error) {
 			return org, err
 		}
 
-		//generator, err := NewGenerator(secret.GeneratorData)
-		//if err != nil {
-		//	err = errors.Wrap(err, ERR_BAD_GENERATOR)
-		//	return org, err
-		//}
-
-		//secret.Generator = generator
+		generator, err := NewGenerator(secret.GeneratorData)
+		if err != nil {
+			err = errors.Wrap(err, ERR_BAD_GENERATOR)
+			return org, err
+		}
+		//
+		secret.Generator = generator
 
 		org.SecretsMap[secret.Name] = secret
 	}
