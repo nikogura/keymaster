@@ -1,7 +1,7 @@
 {
-  "name": "harpo",
+  "name": "secrets-backend",
   "version": "0.1.0",
-  "package": "git.lo/dbt/harpo",
+  "package": "git.lo/dbt/secrets-backend",
   "description": "Secrets definition and management tool",
   "repository": "https://artifacts.lo/artifactory/dbt-tools",
   "building": {
@@ -35,13 +35,13 @@
         "checksums": false
       },
       {
-        "src": "harpo_darwin_amd64",
+        "src": "secrets-backend_darwin_amd64",
         "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/darwin/amd64/{{.Name}}",
         "sig": true,
         "checksums": false
       },
       {
-        "src": "harpo_linux_amd64",
+        "src": "secrets-backend_linux_amd64",
         "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/linux/amd64/{{.Name}}",
         "sig": true,
         "checksums": false
