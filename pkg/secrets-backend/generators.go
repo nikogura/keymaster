@@ -20,28 +20,14 @@ const (
 	TLS
 )
 
+const ERR_UNKNOWN_GENERATOR = "unknown generator"
+
 // Generator an interface for a function that creates a string according to a pattern.  E. g.
 type Generator interface {
 	Generate() (value string, err error)
-	//	UnmarshalJSON(data[]byte) (err error)
-	//	MarshalJSON()(data[]byte, err error)
 }
 
-//type Generator struct {
-//
-//}
-
-/*
-	alpha-N N digit alphanumeric
-	hex-N  N digit hex
-	uuid UUID
-	chbs-N correct-horse-battery-staple (N words)
-	rsa-N rsa key with cipher block of size N
-	tls-N tls cert with common name N
-*/
-
-const ERR_UNKNOWN_GENERATOR = "unknown generator"
-
+// NewGenerator creates a new generator from the options given
 func NewGenerator(options GeneratorData) (generator Generator, err error) {
 	if genType, ok := options["type"].(string); ok {
 		switch genType {
@@ -69,11 +55,13 @@ func NewGenerator(options GeneratorData) (generator Generator, err error) {
 }
 
 // Alphanumerics
+// AlphaGenerator generates alphanumeric strings of any length given
 type AlphaGenerator struct {
 	Type   string
 	Length int
 }
 
+// Generate produces the required string of the length indicated
 func (g AlphaGenerator) Generate() (string, error) {
 	letters := []rune("abcdefghijklmnopqrstuvqxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -85,6 +73,7 @@ func (g AlphaGenerator) Generate() (string, error) {
 	return string(b), nil
 }
 
+// NewAlphaGenerator produces a new AlphaGenerator from the provided options
 func NewAlphaGenerator(options GeneratorData) (generator AlphaGenerator, err error) {
 	if length, ok := options["length"].(int); ok {
 		generator = AlphaGenerator{
@@ -101,11 +90,13 @@ func NewAlphaGenerator(options GeneratorData) (generator AlphaGenerator, err err
 }
 
 // Hex strings
+// HexGenerator generates hecadecimal strings
 type HexGenerator struct {
 	Type   string
 	Length int
 }
 
+// Generate creates a random hex string of the length indicated
 func (g HexGenerator) Generate() (string, error) {
 	letters := []rune("0123456789abcdef")
 
@@ -116,6 +107,8 @@ func (g HexGenerator) Generate() (string, error) {
 
 	return string(b), nil
 }
+
+// NewHexGenerator creates a new HexGenerator from the options given
 func NewHexGenerator(options GeneratorData) (generator HexGenerator, err error) {
 	if length, ok := options["length"].(int); ok {
 		generator = HexGenerator{
@@ -131,10 +124,12 @@ func NewHexGenerator(options GeneratorData) (generator HexGenerator, err error) 
 }
 
 // UUID's
+// UUIDGenerator produces random UUIDs
 type UUIDGenerator struct {
 	Type string
 }
 
+// Generate produces a random UUID string
 func (g UUIDGenerator) Generate() (string, error) {
 	u, err := uuid.NewRandom()
 	if err != nil {
@@ -144,17 +139,20 @@ func (g UUIDGenerator) Generate() (string, error) {
 	return u.String(), err
 }
 
+// NewUUIDGenerator produces a UUIDGenerator from the provided options
 func NewUUIDGenerator(options GeneratorData) (generator Generator, err error) {
 	generator = UUIDGenerator{}
 	return generator, err
 }
 
 // Correct Horse Battery Staple Secrets
+// CHBSGenerator a Correct Horse Battery Staple passphrase generator
 type CHBSGenerator struct {
 	Type  string
 	Words int
 }
 
+// Generate produces a random word list separated by hyphens
 func (g CHBSGenerator) Generate() (string, error) {
 	list, err := diceware.Generate(g.Words)
 	if err != nil {
@@ -164,6 +162,7 @@ func (g CHBSGenerator) Generate() (string, error) {
 	return strings.Join(list, "-"), nil
 }
 
+// NewCHBSGenerator creates a CHBSGenerator from the provided options
 func NewCHBSGenerator(options GeneratorData) (generator Generator, err error) {
 	if words, ok := options["words"].(int); ok {
 		generator = CHBSGenerator{
@@ -179,16 +178,19 @@ func NewCHBSGenerator(options GeneratorData) (generator Generator, err error) {
 }
 
 // RSA Keys
+// RSAGenerator generates RSA Keys
 type RSAGenerator struct {
 	Type      string
 	Blocksize int
 }
 
+// Generate produces new RSA keys
 func (g RSAGenerator) Generate() (string, error) {
 	// TODO Implement RSAGenerator.Generate()
 	return "", nil
 }
 
+// NewRSAGenerrator makes an RSAGenerator from the options provided
 func NewRSAGenerator(options GeneratorData) (generator Generator, err error) {
 	if bs, ok := options["blocksize"].(float64); ok {
 		generator = RSAGenerator{
@@ -202,6 +204,8 @@ func NewRSAGenerator(options GeneratorData) (generator Generator, err error) {
 	return generator, err
 }
 
+// TLS Certs
+// TLSGenerator generates TLS certs
 type TLSGenerator struct {
 	Type       string
 	CommonName string
@@ -209,13 +213,14 @@ type TLSGenerator struct {
 	IPSans     []string
 }
 
+// Generate Hits Vault to generate TLS certs
 func (g TLSGenerator) Generate() (string, error) {
 	// TODO Implement TLSGenerator.Generate()
 
 	return "", nil
 }
 
-// TLS Certificates
+// NewTlsGenerator produces a new TlSGenerator from the options indicated
 func NewTlsGenerator(options GeneratorData) (generator Generator, err error) {
 	// TODO Implement NewTlsGenerator
 
