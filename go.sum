@@ -1,9 +1,5 @@
 cloud.google.com/go v0.26.0 h1:e0WKqKTd5BnrG8aKH3J3h+QvEIQtSUcf2n5UZ5ZgLtQ=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
-git.lo/ops/vaulttest v0.0.0-20190706154551-473371b9313a h1:sKlrQTnD2A5jBAUoZa/rH9fEPXCjtPN9NjCFdXjc/2c=
-git.lo/ops/vaulttest v0.0.0-20190706154551-473371b9313a/go.mod h1:NZrf/0GHTLIT1FvGGPE0vZOM4ZFL+L6HqJDWoa7u9NM=
-git.lo/ops/vaulttest v0.0.0-20190706155433-e0d4b5bb9ff5 h1:MRjIq4qXKGNFuM0zfe3CWWVw6M12UJCwA4YJ09hz8Cc=
-git.lo/ops/vaulttest v0.0.0-20190706155433-e0d4b5bb9ff5/go.mod h1:NZrf/0GHTLIT1FvGGPE0vZOM4ZFL+L6HqJDWoa7u9NM=
 git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825 h1:p+M34VHEAFgbQwEBfLH6LJVMzvmdcr55Zbhc2aOA4vY=
 git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825/go.mod h1:M9hjafp59sVR3zHFp3K3BKRBAL86Semx8xMRWBnpCZU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=

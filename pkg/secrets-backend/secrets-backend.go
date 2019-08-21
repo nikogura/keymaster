@@ -17,9 +17,9 @@ const (
 	Dev
 )
 
-const PROD_SECRET_ROOT = "prod"
-const STAGE_SECRET_ROOT = "stage"
-const DEV_SECRET_ROOT = "dev"
+const PROD_NAME = "prod"
+const STAGE_NAME = "stage"
+const DEV_NAME = "dev"
 
 var Envs = []Environment{
 	Prod,
@@ -31,11 +31,11 @@ var Envs = []Environment{
 func SecretPath(name string, org string, env Environment) (path string) {
 	switch env {
 	case Prod:
-		path = fmt.Sprintf("%s/data/%s/%s", PROD_SECRET_ROOT, org, name)
+		path = fmt.Sprintf("%s/data/%s/%s", PROD_NAME, org, name)
 	case Stage:
-		path = fmt.Sprintf("%s/data/%s/%s", STAGE_SECRET_ROOT, org, name)
+		path = fmt.Sprintf("%s/data/%s/%s", STAGE_NAME, org, name)
 	default:
-		path = fmt.Sprintf("%s/data/%s/%s", DEV_SECRET_ROOT, org, name)
+		path = fmt.Sprintf("%s/data/%s/%s", DEV_NAME, org, name)
 	}
 
 	return path
@@ -90,19 +90,3 @@ func WriteSecretIfBlank(client *api.Client, secret *Secret) (err error) {
 
 	return err
 }
-
-/*
-	LDAP Auth can access only dev secrets
-
-	k8s dev auth can access dev secrets
-	k8s stage auth can access stage secrets
-	k8s prod auth can access prod secrets
-
-	aws dev auth can access dev secrets
-	aws stage auth can access stage secrets
-	aws prod auth can access prod secrets
-
-	tls prod auth can access prod secrets
-	do we need tls stage / dev access at all?
-
-*/

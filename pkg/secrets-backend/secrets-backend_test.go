@@ -64,7 +64,6 @@ func setUp() {
 			}
 		}
 	}
-
 }
 
 func tearDown() {
@@ -73,7 +72,6 @@ func tearDown() {
 	}
 
 	testServer.ServerShutDown()
-
 }
 
 func TestSecretPath(t *testing.T) {
@@ -119,6 +117,53 @@ func TestSecretPath(t *testing.T) {
 			path := SecretPath(tc.secretName, tc.secretOrg, tc.env)
 
 			assert.Equal(t, tc.output, path, "Created expected path.")
+		})
+	}
+}
+
+func TestPolicyName(t *testing.T) {
+	var inputs = []struct {
+		name     string
+		roleName string
+		orgName  string
+		env      Environment
+		output   string
+	}{
+		{
+			"role1",
+			"foo",
+			"core-services",
+			Prod,
+			"prod-core-services-foo",
+		},
+		{
+			"role2",
+			"bar",
+			"core-platform",
+			Stage,
+			"stage-core-platform-bar",
+		},
+		{
+			"role3",
+			"baz",
+			"core-infra",
+			Dev,
+			"dev-core-infra-baz",
+		},
+		{
+			"role4",
+			"wip",
+			"payments",
+			17,
+			"dev-payments-wip",
+		},
+	}
+
+	for _, tc := range inputs {
+		t.Run(tc.name, func(t *testing.T) {
+			path := PolicyName(tc.roleName, tc.orgName, tc.env)
+
+			assert.Equal(t, tc.output, path, "Created expected policy.")
 		})
 	}
 }

@@ -4,11 +4,9 @@ go 1.12
 
 require (
 	git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825
-	github.com/davecgh/go-spew v1.1.1
-	github.com/ghodss/yaml v1.0.0
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/vault/api v1.0.2
-	github.com/magiconair/properties v1.8.1
+	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/pelletier/go-toml v1.4.0 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2

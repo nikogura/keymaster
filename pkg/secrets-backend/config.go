@@ -33,6 +33,7 @@ type Role struct {
 	Name       string   `yaml:"name"`
 	Secrets    []Secret `yaml:"secrets"`
 	SecretsMap map[string]Secret
+	Org        string
 }
 
 type GeneratorData map[string]interface{}
@@ -100,6 +101,8 @@ func LoadOrgData(data []byte) (org Org, err error) {
 			err = errors.New(ERR_NAMELESS_ROLE)
 			return org, err
 		}
+
+		role.Org = org.Name
 
 		for _, secret := range role.Secrets {
 			if secret.Org == "" {
