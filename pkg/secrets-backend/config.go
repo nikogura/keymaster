@@ -21,10 +21,10 @@ const ERR_BAD_GENERATOR = "unable to create generator"
 
 // Org An organization such as 'core-infra', 'core-platform', or 'core-services'.
 type Org struct {
-	Name       string   `yaml:"name"`
-	Roles      []Role   `yaml:"roles"`
-	Secrets    []Secret `yaml:"secrets"`
-	SecretsMap map[string]Secret
+	Name       string    `yaml:"name"`
+	Roles      []Role    `yaml:"roles"`
+	Secrets    []*Secret `yaml:"secrets"`
+	SecretsMap map[string]*Secret
 	RolesMap   map[string]Role
 }
 
@@ -33,6 +33,7 @@ type Role struct {
 	Name       string   `yaml:"name"`
 	Secrets    []Secret `yaml:"secrets"`
 	SecretsMap map[string]Secret
+	Org        string
 }
 
 type GeneratorData map[string]interface{}
@@ -64,7 +65,7 @@ func LoadOrgData(data []byte) (org Org, err error) {
 	}
 
 	// Generate maps for O(1) lookups
-	org.SecretsMap = make(map[string]Secret)
+	org.SecretsMap = make(map[string]*Secret)
 	org.RolesMap = make(map[string]Role)
 
 	// If there's no org listed for the secret, it belongs to the org of the file from which it's loaded.
@@ -89,7 +90,7 @@ func LoadOrgData(data []byte) (org Org, err error) {
 			return org, err
 		}
 		//
-		secret.Generator = generator
+		secret.SetGenerator(generator)
 
 		org.SecretsMap[secret.Name] = secret
 	}
@@ -100,6 +101,8 @@ func LoadOrgData(data []byte) (org Org, err error) {
 			err = errors.New(ERR_NAMELESS_ROLE)
 			return org, err
 		}
+
+		role.Org = org.Name
 
 		for _, secret := range role.Secrets {
 			if secret.Org == "" {
@@ -120,4 +123,8 @@ func LoadOrgData(data []byte) (org Org, err error) {
 	}
 
 	return org, err
+}
+
+func (s *Secret) SetGenerator(generator Generator) {
+	s.Generator = generator
 }
