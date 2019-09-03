@@ -63,6 +63,18 @@ func setUp() {
 				log.Fatalf("Unable to create secret engine %q: %s", endpoint, err)
 			}
 		}
+
+		for _, cluster := range Clusters {
+			data := map[string]interface{}{
+				"type":        "kubernetes",
+				"description": fmt.Sprintf("Kubernetes Cluster %s", cluster.Name),
+			}
+
+			_, err := client.Logical().Write(fmt.Sprintf("sys/auth/%s", cluster.Name), data)
+			if err != nil {
+				log.Fatalf("Failed to enable k8s auth at %s: %s", cluster.Name, err)
+			}
+		}
 	}
 }
 
