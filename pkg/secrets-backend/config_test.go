@@ -13,9 +13,9 @@ var orgyamls = []struct {
 	out  string
 }{
 	{
-		"good-org",
+		"good-ns",
 		`---
-name: test-org
+name: test-ns
 secrets:
   - name: foo
     generator: 
@@ -35,7 +35,7 @@ roles:
 		"",
 	},
 	{
-		"name-org",
+		"name-ns",
 		`---
 secrets:
   - name: foo
@@ -54,12 +54,12 @@ roles:
       - name: bar
       - name: baz
         org: core-infra`,
-		ERR_NAMELESS_ORG,
+		ERR_NAMELESS_NS,
 	},
 	{
 		"nameless-role",
 		`---
-name: test-org
+name: test-ns
 secrets:
   - name: foo
     generator: 
@@ -81,7 +81,7 @@ roles:
 	{
 		"missing-secret",
 		`---
-name: test-org
+name: test-ns
 secrets:
   - name: bar
     generator:
@@ -99,12 +99,12 @@ roles:
 	{
 		"garbage",
 		`asd;lkfjqw4p9rui4tw`,
-		ERR_ORG_DATA_LOAD,
+		ERR_NS_DATA_LOAD,
 	},
 	{
 		"missing-generator",
 		`---
-name: test-org
+name: test-ns
 secrets:
   - name: foo
   - name: bar
@@ -123,7 +123,7 @@ roles:
 	{
 		"nameless secret",
 		`---
-name: test-org
+name: test-ns
 secrets:
   - name: foo
     generator: 
