@@ -1,4 +1,4 @@
-package secrets_backend
+package keymaster
 
 import (
 	"encoding/base64"

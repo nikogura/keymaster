@@ -47,7 +47,7 @@
         "checksums": false
       }
     ],
-    "usernamefunc": "echo -n $PUBLISH_USERNAME",
-    "passwordfunc": "echo -n $PUBLISH_PASSWORD"
+    "usernamefunc": "echo -n $username",
+    "passwordfunc": "echo -n $password"
   }
 }
