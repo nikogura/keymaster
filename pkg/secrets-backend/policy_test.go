@@ -20,15 +20,15 @@ func TestPolicyPath(t *testing.T) {
 				Name: "app1",
 				Secrets: []Secret{
 					{
-						Name: "foo",
-						Org:  "core-services",
+						Name:      "foo",
+						Namespace: "core-services",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 				},
-				Org: "core-services",
+				Namespace: "core-services",
 			},
 			Dev,
 			"sys/policy/dev-core-services-app1",
@@ -36,7 +36,7 @@ func TestPolicyPath(t *testing.T) {
 	}
 
 	for _, tc := range inputs {
-		path := PolicyPath(tc.role.Name, tc.role.Org, tc.env)
+		path := PolicyPath(tc.role.Name, tc.role.Namespace, tc.env)
 		assert.Equal(t, tc.out, path, "generated policy path looks like what we expect")
 	}
 }
@@ -53,15 +53,15 @@ func TestPolicyPayload(t *testing.T) {
 				Name: "app1",
 				Secrets: []Secret{
 					{
-						Name: "foo",
-						Org:  "core-services",
+						Name:      "foo",
+						Namespace: "core-services",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 				},
-				Org: "core-services",
+				Namespace: "core-services",
 			},
 			map[string]interface{}{
 				"path": map[string]interface{}{
@@ -84,22 +84,22 @@ func TestPolicyPayload(t *testing.T) {
 				Name: "app2",
 				Secrets: []Secret{
 					{
-						Name: "foo",
-						Org:  "core-platform",
+						Name:      "foo",
+						Namespace: "core-platform",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 					{
-						Name: "bar",
-						Org:  "core-platform",
+						Name:      "bar",
+						Namespace: "core-platform",
 						Generator: UUIDGenerator{
 							Type: "uuid",
 						},
 					},
 				},
-				Org: "core-platform",
+				Namespace: "core-platform",
 			},
 			map[string]interface{}{
 				"path": map[string]interface{}{
@@ -178,18 +178,18 @@ func TestPolicyCrud(t *testing.T) {
 		},
 	}
 
-	client := testServer.VaultTestClient()
+	km := NewKeyMaster(testServer.VaultTestClient())
 
 	for _, tc := range inputs {
 		// write
-		err := WritePolicyToVault(tc.in, client)
+		err := WritePolicyToVault(tc.in, km.VaultClient)
 		if err != nil {
 			fmt.Printf("Policy write error: %s", err)
 			t.Fail()
 		}
 
 		// read
-		policy, err := ReadPolicyFromVault(tc.in.Path, client)
+		policy, err := ReadPolicyFromVault(tc.in.Path, km.VaultClient)
 		if err != nil {
 			fmt.Printf("Failed to read policy: %s", err)
 			t.Fail()
@@ -198,14 +198,14 @@ func TestPolicyCrud(t *testing.T) {
 		// compare
 		assert.Equal(t, tc.in, policy, "Fetched policy matches what was input")
 		// delete
-		err = DeletePolicyFromVault(tc.in.Path, client)
+		err = DeletePolicyFromVault(tc.in.Path, km.VaultClient)
 		if err != nil {
 			fmt.Printf("failed to delete policy: %s", err)
 			t.Fail()
 		}
 
 		// confirm
-		policy, err = ReadPolicyFromVault(tc.in.Path, client)
+		policy, err = ReadPolicyFromVault(tc.in.Path, km.VaultClient)
 		if err != nil {
 			fmt.Printf("Failed to read policy: %s", err)
 			t.Fail()

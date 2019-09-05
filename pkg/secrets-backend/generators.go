@@ -1,9 +1,11 @@
 package secrets_backend
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
+	"github.com/hashicorp/vault/api"
+	"github.com/pkg/errors"
 	"github.com/sethvargo/go-diceware/diceware"
 	"math/rand"
 	"strings"
@@ -25,33 +27,6 @@ const ERR_UNKNOWN_GENERATOR = "unknown generator"
 // Generator an interface for a function that creates a string according to a pattern.  E. g.
 type Generator interface {
 	Generate() (value string, err error)
-}
-
-// NewGenerator creates a new generator from the options given
-func NewGenerator(options GeneratorData) (generator Generator, err error) {
-	if genType, ok := options["type"].(string); ok {
-		switch genType {
-		case "alpha":
-			return NewAlphaGenerator(options)
-		case "hex":
-			return NewHexGenerator(options)
-		case "uuid":
-			return NewUUIDGenerator(options)
-		case "chbs":
-			return NewCHBSGenerator(options)
-		case "rsa":
-			return NewRSAGenerator(options)
-		case "tls":
-			return NewTlsGenerator(options)
-		default:
-			err = errors.New(fmt.Sprintf("%s: %s", ERR_UNKNOWN_GENERATOR, genType))
-			return generator, err
-		}
-	}
-
-	err = errors.New(ERR_BAD_GENERATOR)
-
-	return generator, err
 }
 
 // Alphanumerics
@@ -207,22 +182,136 @@ func NewRSAGenerator(options GeneratorData) (generator Generator, err error) {
 // TLS Certs
 // TLSGenerator generates TLS certs
 type TLSGenerator struct {
-	Type       string
-	CommonName string
-	Sans       []string
-	IPSans     []string
+	Type        string
+	CommonName  string
+	Sans        []string
+	IPSans      []string
+	CA          string
+	TTL         string
+	VaultClient *api.Client
+}
+
+// VaultCert a struct representing what Vault returns when you create a cert in one shot.
+type VaultCert struct {
+	Chain      []string `json:"ca_chain"`
+	Cert       string   `json:"certificate"`
+	Expiration int      `json:"expiration"`
+	CA         string   `json:"issuing_ca"`
+	Key        string   `json:"private_key"`
+	Type       string   `json:"private_key_type"`
+	Serial     string   `json:"serial_number"`
 }
 
 // Generate Hits Vault to generate TLS certs
 func (g TLSGenerator) Generate() (string, error) {
-	// TODO Implement TLSGenerator.Generate()
+	role := "keymaster" // this probably needs it's own role for secrets-backend
+	vaultPath := fmt.Sprintf("%s/issue/%s", g.CA, role)
 
-	return "", nil
+	data := make(map[string]interface{})
+
+	data["common_name"] = g.CommonName
+	data["ttl"] = g.TTL
+
+	// hit vault endpoint to create cert
+	s, err := g.VaultClient.Logical().Write(vaultPath, data)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create certificate")
+		return "", err
+	}
+
+	if s == nil {
+		err = errors.New("failed to get certificate from vault")
+		return "", err
+	}
+
+	b, err := json.Marshal(s.Data)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to marshal certificate secret into json")
+		return "", err
+	}
+
+	return string(b), nil
 }
 
 // NewTlsGenerator produces a new TlSGenerator from the options indicated
-func NewTlsGenerator(options GeneratorData) (generator Generator, err error) {
-	// TODO Implement NewTlsGenerator
+func NewTlsGenerator(vaultClient *api.Client, options GeneratorData) (generator Generator, err error) {
+	cn, ok := options["cn"].(string)
+	if !ok {
+		err = errors.New("Bad value for option 'cn' in generator")
+		return generator, err
+	}
+
+	ca := "service"
+	ttl := "8760h"
+	sans := make([]string, 0)
+	ipSans := make([]string, 0)
+
+	rawCa, ok := options["ca"]
+	if ok {
+		c, ok := rawCa.(string)
+		if !ok {
+			err = errors.New("Bad value for option 'ca' in generator")
+			return generator, err
+		}
+		ca = c
+	}
+
+	rawTtl, ok := options["ttl"]
+	if ok {
+		t, ok := rawTtl.(string)
+		if !ok {
+			err = errors.New("Bad value for option 'ttl' in generator")
+			return generator, err
+		}
+
+		ttl = t
+	}
+
+	rs, ok := options["sans"]
+	if ok {
+		rawSans, ok := rs.([]interface{})
+		if !ok {
+			err = errors.New("Bad value for option 'sans' in generator")
+			return generator, err
+		}
+
+		for _, rawSan := range rawSans {
+			san, ok := rawSan.(string)
+			if !ok {
+				err = errors.New("Bad value for option 'sans' in generator")
+				return generator, err
+			}
+			sans = append(sans, san)
+		}
+	}
+
+	ris, ok := options["ip_sans"]
+	if ok {
+		rawIpSans, ok := ris.([]interface{})
+		if !ok {
+			err = errors.New("Bad value for option 'ip_sans' in generator")
+			return generator, err
+		}
+
+		for _, rawSan := range rawIpSans {
+			san, ok := rawSan.(string)
+			if !ok {
+				err = errors.New("Bad value for option 'sans' in generator")
+				return generator, err
+			}
+			ipSans = append(ipSans, san)
+		}
+	}
+
+	generator = TLSGenerator{
+		Type:        "tls",
+		CommonName:  cn,
+		Sans:        sans,
+		IPSans:      ipSans,
+		CA:          ca,
+		TTL:         ttl,
+		VaultClient: vaultClient,
+	}
 
 	return generator, err
 }
