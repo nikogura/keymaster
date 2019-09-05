@@ -1,4 +1,4 @@
-package secrets_backend
+package keymaster
 
 import (
 	"fmt"
@@ -169,15 +169,15 @@ kNoCEVDI5C2RN36GljQpCFkQ8IR5eyDC4PeqXBkxg8nzrl06NN2R89H1oB3OgiL2
 }
 
 // AuthName constructs the policy name form the inputs in a regular fashion. Environment is not an input as the cluster's name is known, and each cluster only serves a single environment.
-func AuthName(role string, org string) (name string) {
-	name = fmt.Sprintf("%s-%s", org, role)
+func AuthName(role string, namespace string) (name string) {
+	name = fmt.Sprintf("%s-%s", namespace, role)
 
 	return name
 }
 
 // AuthPath constructs the auth path in a regular fashion.
 func AuthPath(cluster string, role Role) (path string) {
-	path = fmt.Sprintf("auth/%s/role/%s", cluster, AuthName(role.Name, role.Org))
+	path = fmt.Sprintf("auth/%s/role/%s", cluster, AuthName(role.Name, role.Namespace))
 
 	return path
 }
@@ -187,7 +187,7 @@ func WriteK8sAuth(cluster Cluster, role Role, policy VaultPolicy, client *api.Cl
 
 	data := make(map[string]interface{})
 	data["bound_service_account_names"] = "default"
-	data["bound_service_account_namespaces"] = role.Org
+	data["bound_service_account_namespaces"] = role.Namespace
 	data["policies"] = policy.Name
 
 	boundCidrs := strings.Join(cluster.BoundCidrs, ",")

@@ -1,4 +1,4 @@
-package secrets_backend
+package keymaster
 
 import (
 	"encoding/json"
@@ -31,15 +31,15 @@ func TestAuthCrud(t *testing.T) {
 				Name: "app1",
 				Secrets: []Secret{
 					{
-						Name: "foo",
-						Org:  "core-services",
+						Name:      "foo",
+						Namespace: "core-services",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 				},
-				Org: "core-services",
+				Namespace: "core-services",
 			},
 			map[string]interface{}{
 				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
@@ -59,22 +59,22 @@ func TestAuthCrud(t *testing.T) {
 				Name: "app2",
 				Secrets: []Secret{
 					{
-						Name: "foo",
-						Org:  "core-platform",
+						Name:      "foo",
+						Namespace: "core-platform",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 					{
-						Name: "bar",
-						Org:  "core-platform",
+						Name:      "bar",
+						Namespace: "core-platform",
 						Generator: UUIDGenerator{
 							Type: "uuid",
 						},
 					},
 				},
-				Org: "core-platform",
+				Namespace: "core-platform",
 			},
 			map[string]interface{}{
 				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),

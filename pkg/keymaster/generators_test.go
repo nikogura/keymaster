@@ -1,4 +1,4 @@
-package secrets_backend
+package keymaster
 
 import (
 	"fmt"
@@ -45,9 +45,12 @@ var newGeneratorErrors = []struct {
 }
 
 func TestNewGenerator(t *testing.T) {
+	client := testServer.VaultTestClient()
+	km := NewKeyMaster(client)
+
 	for _, tc := range newGeneratorErrors {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := NewGenerator(tc.in)
+			_, err := km.NewGenerator(tc.in)
 			if err != nil {
 				assert.Equal(t, tc.out, err.Error())
 			}
@@ -55,48 +58,60 @@ func TestNewGenerator(t *testing.T) {
 	}
 }
 
-var generatorValues = []struct {
-	name string
-	in   GeneratorData
-	out  *regexp.Regexp
-}{
-	{
-		"alpha-output",
-		GeneratorData{
-			"type":   "alpha",
-			"length": 10,
-		},
-		regexp.MustCompile(`[a-zA-Z0-9]{10}`),
-	},
-	{
-		"hex-output",
-		GeneratorData{
-			"type":   "hex",
-			"length": 32,
-		},
-		regexp.MustCompile(`[a-f0-9]{32}`),
-	},
-	{
-		"uuid-output",
-		GeneratorData{
-			"type": "uuid",
-		},
-		regexp.MustCompile(`[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}`),
-	},
-	{
-		"chbs-output",
-		GeneratorData{
-			"type":  "chbs",
-			"words": 6,
-		},
-		regexp.MustCompile(`\w+-\w+-\w+-\w+-\w+-\w+`),
-	},
-}
-
 func TestGeneratorValues(t *testing.T) {
-	for _, tc := range generatorValues {
+	client := testServer.VaultTestClient()
+	km := NewKeyMaster(client)
+
+	inputs := []struct {
+		name string
+		in   GeneratorData
+		out  *regexp.Regexp
+	}{
+		{
+			"alpha-output",
+			GeneratorData{
+				"type":   "alpha",
+				"length": 10,
+			},
+			regexp.MustCompile(`[a-zA-Z0-9]{10}`),
+		},
+		{
+			"hex-output",
+			GeneratorData{
+				"type":   "hex",
+				"length": 32,
+			},
+			regexp.MustCompile(`[a-f0-9]{32}`),
+		},
+		{
+			"uuid-output",
+			GeneratorData{
+				"type": "uuid",
+			},
+			regexp.MustCompile(`[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}`),
+		},
+		{
+			"chbs-output",
+			GeneratorData{
+				"type":  "chbs",
+				"words": 6,
+			},
+			regexp.MustCompile(`\w+-\w+-\w+-\w+-\w+-\w+`),
+		},
+		{
+			"tls-output",
+			GeneratorData{
+				"type": "tls",
+				"cn":   "foo.scribd.com",
+				"ca":   "pki",
+			},
+			regexp.MustCompile(`\{.+\}`),
+		},
+	}
+
+	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			g, err := NewGenerator(tc.in)
+			g, err := km.NewGenerator(tc.in)
 			if err != nil {
 				log.Printf("Error creating generator %q: %s", tc.name, err)
 				t.Fail()

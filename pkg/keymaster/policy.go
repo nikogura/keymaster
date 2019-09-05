@@ -1,4 +1,4 @@
-package secrets_backend
+package keymaster
 
 import (
 	"context"
@@ -16,23 +16,23 @@ type VaultPolicy struct {
 	Payload map[string]interface{}
 }
 
-// PolicyName constructs the policy name form the inputs in a regular fashion. Note: orgs like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs, but I suspect this is a non issue. (and so long as it's just 3 elements we can split, grab the first and last, and recombine any middle bits)
-func PolicyName(role string, org string, env Environment) (name string) {
+// PolicyName constructs the policy name form the inputs in a regular fashion. Note: namespaces like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs.
+func PolicyName(role string, namespace string, env Environment) (name string) {
 	switch env {
 	case Prod:
-		name = fmt.Sprintf("%s-%s-%s", PROD_NAME, org, role)
+		name = fmt.Sprintf("%s-%s-%s", PROD_NAME, namespace, role)
 	case Stage:
-		name = fmt.Sprintf("%s-%s-%s", STAGE_NAME, org, role)
+		name = fmt.Sprintf("%s-%s-%s", STAGE_NAME, namespace, role)
 	default:
-		name = fmt.Sprintf("%s-%s-%s", DEV_NAME, org, role)
+		name = fmt.Sprintf("%s-%s-%s", DEV_NAME, namespace, role)
 	}
 
 	return name
 }
 
 // PolicyPath constructs the path to the policy for the role
-func PolicyPath(role string, org string, env Environment) (path string) {
-	path = fmt.Sprintf("sys/policy/%s", PolicyName(role, org, env))
+func PolicyPath(role string, namespace string, env Environment) (path string) {
+	path = fmt.Sprintf("sys/policy/%s", PolicyName(role, namespace, env))
 
 	return path
 }
@@ -40,8 +40,8 @@ func PolicyPath(role string, org string, env Environment) (path string) {
 // NewPolicy creates a new Policy object for a given Role and Environment
 func NewPolicy(role Role, env Environment) (policy VaultPolicy) {
 	policy = VaultPolicy{
-		Name:    PolicyName(role.Name, role.Org, env),
-		Path:    PolicyPath(role.Name, role.Org, env),
+		Name:    PolicyName(role.Name, role.Namespace, env),
+		Path:    PolicyPath(role.Name, role.Namespace, env),
 		Payload: MakePolicyPayload(role, env),
 	}
 
@@ -65,14 +65,14 @@ func MakePolicyPayload(role Role, env Environment) (policy map[string]interface{
 	pathElem := make(map[string]interface{})
 
 	for _, secret := range role.Secrets {
-		secretPath := SecretPath(secret.Name, secret.Org, env)
+		secretPath := SecretPath(secret.Name, secret.Namespace, env)
 		caps := []interface{}{"read"}
 		pathPolicy := map[string]interface{}{"capabilities": caps}
 		pathElem[secretPath] = pathPolicy
 	}
 
 	// add ability to read own policy
-	secretPath := PolicyPath(role.Name, role.Org, env)
+	secretPath := PolicyPath(role.Name, role.Namespace, env)
 	caps := []interface{}{"read"}
 	pathPolicy := map[string]interface{}{"capabilities": caps}
 	pathElem[secretPath] = pathPolicy
