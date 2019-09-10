@@ -454,7 +454,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 	}
 }
 
-func TestLoadNamespaceData(t *testing.T) {
+func TestNewNamespace(t *testing.T) {
 	inputs := []struct {
 		name string
 		in   string
@@ -475,6 +475,8 @@ secrets:
       length: 12
 roles:
   - name: app1
+    realms: 
+      - k8s
     secrets:
       - name: foo
       - name: bar
@@ -497,6 +499,8 @@ secrets:
       length: 12
 roles:
   - name: app1
+    realms: 
+      - sl
     secrets:
       - name: foo
       - name: bar
@@ -519,7 +523,9 @@ secrets:
       type: hex
       length: 12
 roles:
-  - secrets:
+  - realms: 
+      - k8s
+    secrets:
       - name: foo
       - name: bar
       - name: baz
@@ -537,6 +543,8 @@ secrets:
       length: 12
 roles:
   - name: app1
+    realms: 
+      - sl
     secrets:
       - name: foo
       - name: wip
@@ -561,6 +569,8 @@ secrets:
       length: 12
 roles:
   - name: app1
+    realms:
+      - k8s
     secrets:
       - name: foo
       - name: wip
@@ -583,6 +593,8 @@ secrets:
       length: 12
 roles:
   - name: app1
+    realms: 
+      - k8s
     secrets:
       - name: foo
       - name: wip
@@ -590,13 +602,61 @@ roles:
         namespace: core-infra`,
 			ERR_NAMELESS_SECRET,
 		},
+		{
+			"empty realms role",
+			`---
+name: test-ns
+secrets:
+  - name: foo
+    generator: 
+      type: alpha
+      length: 8
+
+  - name: bar
+    generator:
+      type: hex
+      length: 12
+roles:
+  - name: app1
+    realms: 
+    secrets:
+      - name: foo
+      - name: wip
+      - name: baz
+        namespace: core-infra`,
+			ERR_REALMLESS_ROLE,
+		},
+		{
+			"realmless role",
+			`---
+name: test-ns
+secrets:
+  - name: foo
+    generator: 
+      type: alpha
+      length: 8
+
+  - name: bar
+    generator:
+      type: hex
+      length: 12
+roles:
+  - name: app1
+    realms: 
+    secrets:
+      - name: foo
+      - name: wip
+      - name: baz
+        namespace: core-infra`,
+			ERR_REALMLESS_ROLE,
+		},
 	}
 	km := NewKeyMaster(testServer.VaultTestClient())
 
 	for _, tt := range inputs {
 		t.Run(tt.name, func(t *testing.T) {
 			data := []byte(tt.in)
-			_, err := km.LoadOrgData(data)
+			_, err := km.NewNamespace(data)
 			errstr := ""
 			if err != nil {
 				errstr = err.Error()

@@ -16,6 +16,7 @@ const ERR_NAMELESS_SECRET = "nameless secrets are not supported"
 const ERR_MISSING_SECRET = "missing secret in role"
 const ERR_MISSING_GENERATOR = "missing generator in secret"
 const ERR_BAD_GENERATOR = "unable to create generator"
+const ERR_REALMLESS_ROLE = "realmless roles are not supported"
 
 // Environment Scribd's deployment environments.   One of "Prod", "Stage", "Dev"
 type Environment int
@@ -36,6 +37,19 @@ var Envs = []Environment{
 	Dev,
 }
 
+// KeyMaster The KeyMaster Interface
+type KeyMaster struct {
+	VaultClient *api.Client
+}
+
+// NewKeyMaster Creates a new KeyMaster with the vault client supplied.
+func NewKeyMaster(client *api.Client) (km *KeyMaster) {
+	km = &KeyMaster{
+		VaultClient: client,
+	}
+	return km
+}
+
 // Namespace Namespace for secrets.  Might map to a namespace such as 'core-infra', 'core-platform', or 'core-services', but also may not.  Maps directly to a Namespace in K8s.
 type Namespace struct {
 	Name       string    `yaml:"name"`
@@ -50,9 +64,11 @@ type Role struct {
 	Name       string   `yaml:"name"`
 	Secrets    []Secret `yaml:"secrets"`
 	SecretsMap map[string]Secret
-	Namespace  string
+	Realms     []string `yaml:"realms"`
+	Namespace  string   `yaml:"namespace"`
 }
 
+// GeneratorData  Generic data map for configuring a Generator
 type GeneratorData map[string]interface{}
 
 // Secret a set of information describing a string value in Vault that is protected from unauthorized access, and varies by business environment.
@@ -67,6 +83,7 @@ type Secret struct {
 	ProdValue  string `yaml:"-"`
 }
 
+// SetGenerator What else?  Set's the generator on the Secret.
 func (s *Secret) SetGenerator(generator Generator) {
 	s.Generator = generator
 }
@@ -196,19 +213,8 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret) (err error) {
 	return err
 }
 
-type KeyMaster struct {
-	VaultClient *api.Client
-}
-
-func NewKeyMaster(client *api.Client) (km *KeyMaster) {
-	km = &KeyMaster{
-		VaultClient: client,
-	}
-	return km
-}
-
-// LoadOrgData Create an Namespace interface from yaml
-func (km *KeyMaster) LoadOrgData(data []byte) (ns Namespace, err error) {
+// NewNamespace Create a new Namespace from the data provided.
+func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 	err = yaml.Unmarshal(data, &ns)
 	if err != nil {
 		err = errors.Wrap(err, ERR_NS_DATA_LOAD)
@@ -256,6 +262,11 @@ func (km *KeyMaster) LoadOrgData(data []byte) (ns Namespace, err error) {
 	for _, role := range ns.Roles {
 		if role.Name == "" {
 			err = errors.New(ERR_NAMELESS_ROLE)
+			return ns, err
+		}
+
+		if len(role.Realms) == 0 {
+			err = errors.New(ERR_REALMLESS_ROLE)
 			return ns, err
 		}
 
