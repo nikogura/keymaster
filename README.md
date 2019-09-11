@@ -2,9 +2,17 @@
 
 Secrets Definition and Management tool.
 
-Defines Secrets and their Generators based on a config file.
+Based on a config file, `keymaster` does the following:
 
-Provisions Vault to hold the Secret values, provides Authentication methods to Vault, and Access Policies to the Secrets.
+* Defines Secrets and their Generators.
+
+* Generate Secrets for each Environment, storing the Secrets in Vault. 
+
+* Creates Vault Policies granting access to the above Secrets in each Environment.
+
+* Creates Roles, generating Vault Auth endpoints allowing the `secrets` client or any other Vault savvy user to authenticate in various computing realms (k8s, Sl, etc).
+
+Users of the `secrets` tool will have to request their Role by name, and if their environment/credentials are appropriate, they'll be able to successfully retrieve secrets for that Role.
 
 ## Design Docs
 

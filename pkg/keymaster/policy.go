@@ -10,21 +10,15 @@ import (
 	"strings"
 )
 
-type VaultPolicy struct {
-	Name    string
-	Path    string
-	Payload map[string]interface{}
-}
-
 // PolicyName constructs the policy name form the inputs in a regular fashion. Note: namespaces like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs.
 func PolicyName(role string, namespace string, env Environment) (name string) {
 	switch env {
 	case Prod:
-		name = fmt.Sprintf("%s-%s-%s", PROD_NAME, namespace, role)
+		name = fmt.Sprintf("%s/%s/%s", PROD_NAME, namespace, role)
 	case Stage:
-		name = fmt.Sprintf("%s-%s-%s", STAGE_NAME, namespace, role)
+		name = fmt.Sprintf("%s/%s/%s", STAGE_NAME, namespace, role)
 	default:
-		name = fmt.Sprintf("%s-%s-%s", DEV_NAME, namespace, role)
+		name = fmt.Sprintf("%s/%s/%s", DEV_NAME, namespace, role)
 	}
 
 	return name
