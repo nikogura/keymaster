@@ -3,7 +3,6 @@ package keymaster
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"testing"
@@ -179,12 +178,6 @@ func TestTlsAuthCrud(t *testing.T) {
 				fmt.Printf("Failed reading auth: %s", err)
 				t.Fail()
 			}
-
-			fmt.Printf("Expected:\n")
-			spew.Dump(tc.first)
-
-			fmt.Printf("Actual:\n")
-			spew.Dump(authData)
 
 			assert.True(t, reflect.DeepEqual(authData, tc.first))
 
