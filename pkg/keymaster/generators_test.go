@@ -103,7 +103,7 @@ func TestGeneratorValues(t *testing.T) {
 			GeneratorData{
 				"type": "tls",
 				"cn":   "foo.scribd.com",
-				"ca":   "pki",
+				"ca":   "service",
 			},
 			regexp.MustCompile(`\{.+\}`),
 		},

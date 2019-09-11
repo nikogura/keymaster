@@ -9,16 +9,18 @@ import (
 )
 
 func TestTlsAuthCrud(t *testing.T) {
+	km := NewKeyMaster(testServer.VaultTestClient())
+
 	inputs := []struct {
 		name   string
-		role   Role
+		role   *Role
 		first  map[string]interface{}
 		add    VaultPolicy
 		second map[string]interface{}
 	}{
 		{
 			"role1",
-			Role{
+			&Role{
 				Name: "app1",
 				Secrets: []Secret{
 					{
@@ -45,12 +47,12 @@ func TestTlsAuthCrud(t *testing.T) {
 				"max_ttl":                      json.Number("0"),
 				"period":                       json.Number("0"),
 				"policies": []interface{}{
-					"dev/core-services/app1",
+					"dev-core-services-app1",
 				},
 				"required_extensions": []interface{}{},
 				"ttl":                 json.Number("0"),
 			},
-			NewPolicy(Role{
+			km.NewPolicy(&Role{
 				Name: "app2",
 				Secrets: []Secret{
 					{
@@ -77,8 +79,8 @@ func TestTlsAuthCrud(t *testing.T) {
 				"max_ttl":                      json.Number("0"),
 				"period":                       json.Number("0"),
 				"policies": []interface{}{
-					"dev/core-services/app1",
-					"dev/core-services/app2",
+					"dev-core-services-app1",
+					"dev-core-services-app2",
 				},
 				"required_extensions": []interface{}{},
 				"ttl":                 json.Number("0"),
@@ -86,7 +88,7 @@ func TestTlsAuthCrud(t *testing.T) {
 		},
 		{
 			"app2",
-			Role{
+			&Role{
 				Name: "app2",
 				Secrets: []Secret{
 					{
@@ -120,12 +122,12 @@ func TestTlsAuthCrud(t *testing.T) {
 				"max_ttl":                      json.Number("0"),
 				"period":                       json.Number("0"),
 				"policies": []interface{}{
-					"dev/core-platform/app2",
+					"dev-core-platform-app2",
 				},
 				"required_extensions": []interface{}{},
 				"ttl":                 json.Number("0"),
 			},
-			NewPolicy(Role{
+			km.NewPolicy(&Role{
 				Name: "app3",
 				Secrets: []Secret{
 					{
@@ -152,8 +154,8 @@ func TestTlsAuthCrud(t *testing.T) {
 				"max_ttl":                      json.Number("0"),
 				"period":                       json.Number("0"),
 				"policies": []interface{}{
-					"dev/core-platform/app2",
-					"dev/core-platform/app3",
+					"dev-core-platform-app2",
+					"dev-core-platform-app3",
 				},
 				"required_extensions": []interface{}{},
 				"ttl":                 json.Number("0"),
@@ -161,12 +163,9 @@ func TestTlsAuthCrud(t *testing.T) {
 		},
 	}
 
-	client := testServer.VaultTestClient()
-	km := NewKeyMaster(client)
-
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy := NewPolicy(tc.role, Dev)
+			policy := km.NewPolicy(tc.role, Dev)
 			err := km.WriteTlsAuth(tc.role, []string{policy.Name})
 			if err != nil {
 				fmt.Printf("Failed writing auth: %s", err)

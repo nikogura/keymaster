@@ -35,10 +35,16 @@ type Cluster struct {
 
 var Clusters []Cluster
 var ClustersByName map[string]Cluster
+var ClustersByEnvironment map[Environment][]Cluster
 
 func init() {
 	Clusters = make([]Cluster, 0)
 	ClustersByName = make(map[string]Cluster)
+	ClustersByEnvironment = make(map[Environment][]Cluster)
+
+	for _, env := range Envs {
+		ClustersByEnvironment[env] = make([]Cluster, 0)
+	}
 
 	// bravo
 	bravo := Cluster{
@@ -174,23 +180,42 @@ kNoCEVDI5C2RN36GljQpCFkQ8IR5eyDC4PeqXBkxg8nzrl06NN2R89H1oB3OgiL2
 
 	// EKS Dev
 
+	// Populate the map of ClustersByEnvironment
+	for _, cluster := range Clusters {
+		ClustersByEnvironment[cluster.Environment] = append(ClustersByEnvironment[cluster.Environment], cluster)
+	}
 }
 
 // AuthName constructs the policy name form the inputs in a regular fashion. Environment is not an input as the cluster's name is known, and each cluster only serves a single environment.
-func (km *KeyMaster) AuthName(role string, namespace string) (name string) {
+func (km *KeyMaster) AuthName(role string, namespace string) (name string, err error) {
+	if role == "" {
+		err = errors.New("empty role names are not supported")
+		return name, err
+	}
+
+	if namespace == "" {
+		err = errors.New("unnamed namespaces are not supported")
+		return name, err
+	}
+
 	name = fmt.Sprintf("%s-%s", namespace, role)
 
-	return name
+	return name, err
 }
 
 // K8sAuthPath constructs the auth path in a regular fashion.
-func (km *KeyMaster) K8sAuthPath(cluster Cluster, role Role) (path string) {
-	path = fmt.Sprintf("auth/%s/role/%s", cluster.Name, km.AuthName(role.Name, role.Namespace))
+func (km *KeyMaster) K8sAuthPath(cluster Cluster, role *Role) (path string, err error) {
+	authName, err := km.AuthName(role.Name, role.Name)
+	if err != nil {
+		return path, err
+	}
 
-	return path
+	path = fmt.Sprintf("auth/%s/role/%s", cluster.Name, authName)
+
+	return path, err
 }
 
-func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role *Role, policy VaultPolicy) (err error) {
 	policies, err := km.GrantedPoliciesForK8sRole(cluster, role)
 	if err != nil {
 		return err
@@ -206,7 +231,7 @@ func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role Role, policy Vault
 	return km.WriteK8sAuth(cluster, role, policies)
 }
 
-func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role *Role, policy VaultPolicy) (err error) {
 	current, err := km.GrantedPoliciesForK8sRole(cluster, role)
 	if err != nil {
 		return err
@@ -223,7 +248,7 @@ func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role Role, policy 
 	return km.WriteK8sAuth(cluster, role, updated)
 }
 
-func (km *KeyMaster) GrantedPoliciesForK8sRole(cluster Cluster, role Role) (policies []string, err error) {
+func (km *KeyMaster) GrantedPoliciesForK8sRole(cluster Cluster, role *Role) (policies []string, err error) {
 	policies = make([]string, 0)
 
 	previousData, err := km.ReadK8sAuth(cluster, role)
@@ -253,7 +278,7 @@ func (km *KeyMaster) GrantedPoliciesForK8sRole(cluster Cluster, role Role) (poli
 }
 
 // WriteK8sAuth Writes the Vault Auth definition for the Role.
-func (km *KeyMaster) WriteK8sAuth(cluster Cluster, role Role, policies []string) (err error) {
+func (km *KeyMaster) WriteK8sAuth(cluster Cluster, role *Role, policies []string) (err error) {
 
 	data := make(map[string]interface{})
 	data["bound_service_account_names"] = "default"
@@ -263,7 +288,11 @@ func (km *KeyMaster) WriteK8sAuth(cluster Cluster, role Role, policies []string)
 	boundCidrs := strings.Join(cluster.BoundCidrs, ",")
 	data["bound_cidrs"] = boundCidrs
 
-	path := km.K8sAuthPath(cluster, role)
+	path, err := km.K8sAuthPath(cluster, role)
+	if err != nil {
+		err = errors.Wrapf(err, "failed building k8s auth path")
+		return err
+	}
 
 	_, err = km.VaultClient.Logical().Write(path, data)
 	if err != nil {
@@ -275,8 +304,12 @@ func (km *KeyMaster) WriteK8sAuth(cluster Cluster, role Role, policies []string)
 }
 
 // ReadK8sAuth Reach into Vault and get the Auth config for the Role given.
-func (km *KeyMaster) ReadK8sAuth(cluster Cluster, role Role) (data map[string]interface{}, err error) {
-	path := km.K8sAuthPath(cluster, role)
+func (km *KeyMaster) ReadK8sAuth(cluster Cluster, role *Role) (data map[string]interface{}, err error) {
+	path, err := km.K8sAuthPath(cluster, role)
+	if err != nil {
+		err = errors.Wrapf(err, "failed building k8s auth path")
+		return data, err
+	}
 
 	s, err := km.VaultClient.Logical().Read(path)
 	if err != nil {
@@ -292,8 +325,12 @@ func (km *KeyMaster) ReadK8sAuth(cluster Cluster, role Role) (data map[string]in
 }
 
 // DeleteK8sAuth Delete a Vault K8s Auth config.
-func (km *KeyMaster) DeleteK8sAuth(cluster Cluster, role Role) (err error) {
-	path := km.K8sAuthPath(cluster, role)
+func (km *KeyMaster) DeleteK8sAuth(cluster Cluster, role *Role) (err error) {
+	path, err := km.K8sAuthPath(cluster, role)
+	if err != nil {
+		err = errors.Wrapf(err, "failed building k8s auth path")
+		return err
+	}
 
 	_, err = km.VaultClient.Logical().Delete(path)
 	if err != nil {

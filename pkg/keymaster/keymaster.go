@@ -3,6 +3,7 @@ package keymaster
 import (
 	"fmt"
 	"github.com/hashicorp/vault/api"
+	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"regexp"
@@ -18,6 +19,7 @@ const ERR_BAD_GENERATOR = "unable to create generator"
 const ERR_REALMLESS_ROLE = "realmless roles are not supported"
 const ERR_SLASH_IN_NAMESPACE = "namespaces cannot contain slashes"
 const ERR_SLASH_IN_ROLE_NAME = "role names cannot contain slashes"
+const ERR_UNSUPPORTED_REALM = "unsupported realm"
 
 // Environment Scribd's deployment environments.   One of "Prod", "Stage", "Dev"
 type Environment int
@@ -28,14 +30,43 @@ const (
 	Dev
 )
 
+type Realm int
+
+const (
+	K8S = iota + 1
+	AWS
+	SL
+)
+
 const PROD_NAME = "prod"
 const STAGE_NAME = "stage"
 const DEV_NAME = "dev"
+const K8S_NAME = "k8s"
+const AWS_NAME = "aws"
+const SL_NAME = "sl"
+
+var Realms = []Realm{
+	K8S,
+	AWS,
+	SL,
+}
 
 var Envs = []Environment{
 	Prod,
 	Stage,
 	Dev,
+}
+
+var EnvToName = map[Environment]string{
+	Prod:  PROD_NAME,
+	Stage: STAGE_NAME,
+	Dev:   DEV_NAME,
+}
+
+var RealmToName = map[Realm]string{
+	K8S: K8S_NAME,
+	AWS: AWS_NAME,
+	SL:  SL_NAME,
 }
 
 // KeyMaster The KeyMaster Interface
@@ -54,10 +85,10 @@ func NewKeyMaster(client *api.Client) (km *KeyMaster) {
 // Namespace Namespace for secrets.  Might map to a namespace such as 'core-infra', 'core-platform', or 'core-services', but also may not.  Maps directly to a Namespace in K8s.
 type Namespace struct {
 	Name       string    `yaml:"name"`
-	Roles      []Role    `yaml:"roles"`
+	Roles      []*Role   `yaml:"roles"`
 	Secrets    []*Secret `yaml:"secrets"`
 	SecretsMap map[string]*Secret
-	RolesMap   map[string]Role
+	RolesMap   map[string]*Role
 }
 
 // Role A named set of Secrets that is instantiated as an Auth endpoint in Vault for each computing realm.
@@ -96,6 +127,10 @@ func (s *Secret) SetGenerator(generator Generator) {
 	s.Generator = generator
 }
 
+func (r *Role) SetNamespace(namespace string) {
+	r.Namespace = namespace
+}
+
 // NewNamespace Create a new Namespace from the data provided.
 func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 	err = yaml.Unmarshal(data, &ns)
@@ -117,7 +152,7 @@ func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 
 	// Generate maps for O(1) lookups
 	ns.SecretsMap = make(map[string]*Secret)
-	ns.RolesMap = make(map[string]Role)
+	ns.RolesMap = make(map[string]*Role)
 
 	// If there's no namespace listed for the secret, it belongs to the namespace of the file from which it's loaded.
 	for _, secret := range ns.Secrets {
@@ -163,7 +198,16 @@ func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 			return ns, err
 		}
 
-		role.Namespace = ns.Name
+		for _, realm := range role.Realms {
+			if !dbt.StringInSlice(realm, []string{K8S_NAME, AWS_NAME, SL_NAME}) {
+				err = errors.New(ERR_UNSUPPORTED_REALM)
+				return ns, err
+			}
+		}
+
+		if role.Namespace == "" {
+			role.SetNamespace(ns.Name)
+		}
 
 		for _, secret := range role.Secrets {
 			if secret.Namespace == "" {
@@ -200,4 +244,63 @@ func NameToEnvironment(name string) (env Environment, err error) {
 	}
 
 	return env, err
+}
+
+// ConfigureNamespace  The grand unified config loader that, after the yaml file is read into memory, applies it to Vault.
+func (km *KeyMaster) ConfigureNamespace(namespace Namespace) (err error) {
+	// populate secrets
+	for _, secret := range namespace.Secrets {
+		err = km.WriteSecretIfBlank(secret)
+		if err != nil {
+			err = errors.Wrapf(err, "failed writing secret %s in namespace %s", secret.Name, secret.Namespace)
+			return err
+		}
+	}
+
+	for _, role := range namespace.Roles {
+		if role.Namespace == "" {
+			err = errors.New("Unnamespaced Role!")
+			return err
+		}
+
+		for _, env := range Envs {
+			// write policies
+			policy := km.NewPolicy(role, env)
+
+			err = km.WritePolicyToVault(policy)
+			if err != nil {
+				err = errors.Wrapf(err, "failed writing policy %q for role %q in env %q", policy.Name, role.Name, EnvToName[env])
+			}
+
+			// create auth configs
+			for _, realm := range role.Realms {
+				switch realm {
+				case K8S_NAME:
+					for _, cluster := range ClustersByEnvironment[env] {
+						err = km.AddPolicyToK8sRole(cluster, role, policy)
+						if err != nil {
+							err = errors.Wrapf(err, "failed to add K8S Auth for role:%q policy:%q cluster:%q env:%q", role.Name, policy.Name, cluster.Name, EnvToName[env])
+							return err
+						}
+					}
+
+				case SL_NAME:
+					err = km.AddPolicyToTlsRole(role, policy)
+					if err != nil {
+						err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, EnvToName[env])
+						return err
+					}
+				case AWS_NAME:
+					err = errors.New("AWS Realm not yet implemented")
+					return err
+
+				default:
+					err = errors.New(fmt.Sprintf("unsupported realm %q", realm))
+					return err
+				}
+			}
+		}
+	}
+
+	return err
 }

@@ -53,13 +53,13 @@ HzMKYQXmTRJV3jB1uD/1ibA9MpMVEbNN3yjPvY6wmCE3ydOBC3/XQgcooez8af7w
 -----END CERTIFICATE-----`
 
 // TlsAuthPath constructs the auth path in a regular fashion.
-func (km *KeyMaster) TlsAuthPath(role Role) (path string) {
+func (km *KeyMaster) TlsAuthPath(role *Role) (path string) {
 	path = fmt.Sprintf("auth/cert/certs/%s", role.Name)
 
 	return path
 }
 
-func (km *KeyMaster) AddPolicyToTlsRole(role Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) AddPolicyToTlsRole(role *Role, policy VaultPolicy) (err error) {
 	policies, err := km.GrantedPoliciesForTlsRole(role)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (km *KeyMaster) AddPolicyToTlsRole(role Role, policy VaultPolicy) (err erro
 	return km.WriteTlsAuth(role, policies)
 }
 
-func (km *KeyMaster) RemovePolicyFromTlsRole(role Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) RemovePolicyFromTlsRole(role *Role, policy VaultPolicy) (err error) {
 	current, err := km.GrantedPoliciesForTlsRole(role)
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func (km *KeyMaster) RemovePolicyFromTlsRole(role Role, policy VaultPolicy) (err
 	return km.WriteTlsAuth(role, updated)
 }
 
-func (km *KeyMaster) GrantedPoliciesForTlsRole(role Role) (policies []string, err error) {
+func (km *KeyMaster) GrantedPoliciesForTlsRole(role *Role) (policies []string, err error) {
 	policies = make([]string, 0)
 
 	previousData, err := km.ReadTlsAuth(role)
@@ -121,7 +121,7 @@ func (km *KeyMaster) GrantedPoliciesForTlsRole(role Role) (policies []string, er
 	return policies, err
 }
 
-func HostsForRoleInLdap(role Role) (hosts []ldapclient.HostInfo, err error) {
+func HostsForRoleInLdap(role *Role) (hosts []ldapclient.HostInfo, err error) {
 	lc := ldapclient.NewLdapClient("", "", 0, true)
 
 	err = lc.Connect()
@@ -140,7 +140,7 @@ func HostsForRoleInLdap(role Role) (hosts []ldapclient.HostInfo, err error) {
 }
 
 // Read TlsAuth path and return it's data
-func (km *KeyMaster) ReadTlsAuth(role Role) (data map[string]interface{}, err error) {
+func (km *KeyMaster) ReadTlsAuth(role *Role) (data map[string]interface{}, err error) {
 	path := km.TlsAuthPath(role)
 	s, err := km.VaultClient.Logical().Read(path)
 	if err != nil {
@@ -156,7 +156,7 @@ func (km *KeyMaster) ReadTlsAuth(role Role) (data map[string]interface{}, err er
 }
 
 // DeleteTlsAuth Delete a Tls auth config for a Role.
-func (km *KeyMaster) DeleteTlsAuth(role Role) (err error) {
+func (km *KeyMaster) DeleteTlsAuth(role *Role) (err error) {
 	path := km.TlsAuthPath(role)
 
 	_, err = km.VaultClient.Logical().Delete(path)
@@ -169,7 +169,7 @@ func (km *KeyMaster) DeleteTlsAuth(role Role) (err error) {
 }
 
 // WriteTlsAuth writes the auth config to vault
-func (km *KeyMaster) WriteTlsAuth(role Role, policies []string) (err error) {
+func (km *KeyMaster) WriteTlsAuth(role *Role, policies []string) (err error) {
 
 	hostInfo, err := HostsForRoleInLdap(role)
 	if err != nil {
