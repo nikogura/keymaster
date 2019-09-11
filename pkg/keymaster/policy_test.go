@@ -7,6 +7,53 @@ import (
 	"testing"
 )
 
+func TestPolicyName(t *testing.T) {
+	inputs := []struct {
+		name      string
+		roleName  string
+		namespace string
+		env       Environment
+		output    string
+	}{
+		{
+			"role1",
+			"foo",
+			"core-services",
+			Prod,
+			"prod/core-services/foo",
+		},
+		{
+			"role2",
+			"bar",
+			"core-platform",
+			Stage,
+			"stage/core-platform/bar",
+		},
+		{
+			"role3",
+			"baz",
+			"core-infra",
+			Dev,
+			"dev/core-infra/baz",
+		},
+		{
+			"role4",
+			"wip",
+			"payments",
+			17,
+			"dev/payments/wip",
+		},
+	}
+
+	for _, tc := range inputs {
+		t.Run(tc.name, func(t *testing.T) {
+			path := PolicyName(tc.roleName, tc.namespace, tc.env)
+
+			assert.Equal(t, tc.output, path, "Created expected policy.")
+		})
+	}
+}
+
 func TestPolicyPath(t *testing.T) {
 	inputs := []struct {
 		name string
@@ -31,7 +78,7 @@ func TestPolicyPath(t *testing.T) {
 				Namespace: "core-services",
 			},
 			Dev,
-			"sys/policy/dev-core-services-app1",
+			"sys/policy/dev/core-services/app1",
 		},
 	}
 
@@ -70,7 +117,7 @@ func TestPolicyPayload(t *testing.T) {
 							"read",
 						},
 					},
-					"sys/policy/dev-core-services-app1": map[string]interface{}{
+					"sys/policy/dev/core-services/app1": map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
@@ -113,7 +160,7 @@ func TestPolicyPayload(t *testing.T) {
 							"read",
 						},
 					},
-					"sys/policy/dev-core-platform-app2": map[string]interface{}{
+					"sys/policy/dev/core-platform/app2": map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
