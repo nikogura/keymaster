@@ -51,7 +51,11 @@ func TestSecretPath(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			path := km.SecretPath(tc.secretName, tc.namespace, tc.env)
+			path, err := km.SecretPath(tc.secretName, tc.namespace, tc.env)
+			if err != nil {
+				log.Printf("error creating path: %s", err)
+				t.Fail()
+			}
 
 			assert.Equal(t, tc.output, path, "Created expected path.")
 		})
@@ -100,7 +104,11 @@ func TestCertPath(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			path := km.CertPath(tc.secretName, tc.namespace, tc.env)
+			path, err := km.CertPath(tc.secretName, tc.namespace, tc.env)
+			if err != nil {
+				log.Printf("error creating path: %s", err)
+				t.Fail()
+			}
 
 			assert.Equal(t, tc.output, path, "Created expected path.")
 		})
@@ -198,9 +206,17 @@ func TestWriteSecretIfBlank(t *testing.T) {
 				for _, env := range Envs {
 					var path string
 					if secret.GeneratorData["type"] == "tls" {
-						path = km.CertPath(secret.Name, secret.Namespace, env)
+						path, err = km.CertPath(secret.Name, secret.Namespace, env)
+						if err != nil {
+							log.Printf("error creating path: %s", err)
+							t.Fail()
+						}
 					} else {
-						path = km.SecretPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
+						if err != nil {
+							log.Printf("error creating path: %s", err)
+							t.Fail()
+						}
 					}
 
 					s, err := km.VaultClient.Logical().Read(path)
@@ -249,7 +265,11 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		expected := make([]string, 0)
 
 		for _, env := range Envs {
-			path := km.SecretPath(input.in.Name, input.in.Namespace, env)
+			path, err := km.SecretPath(input.in.Name, input.in.Namespace, env)
+			if err != nil {
+				log.Printf("error creating path: %s", err)
+				t.Fail()
+			}
 			s, err := km.VaultClient.Logical().Read(path)
 			if err != nil {
 				log.Printf("Unable to read %q: %s\n", path, err)
@@ -278,7 +298,11 @@ func TestWriteSecretIfBlank(t *testing.T) {
 			t.Fail()
 		}
 		for _, env := range Envs {
-			path := km.SecretPath(input.in.Name, input.in.Namespace, env)
+			path, err := km.SecretPath(input.in.Name, input.in.Namespace, env)
+			if err != nil {
+				log.Printf("error creating path: %s", err)
+				t.Fail()
+			}
 			s, err := km.VaultClient.Logical().Read(path)
 			if err != nil {
 				log.Printf("Unable to read %q: %s\n", path, err)

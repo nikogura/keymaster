@@ -3,6 +3,7 @@ package keymaster
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"reflect"
 	"testing"
 )
@@ -68,7 +69,7 @@ func TestPolicyPath(t *testing.T) {
 			"app1",
 			Role{
 				Name: "app1",
-				Secrets: []Secret{
+				Secrets: []*Secret{
 					{
 						Name:      "foo",
 						Namespace: "core-services",
@@ -94,6 +95,24 @@ func TestPolicyPath(t *testing.T) {
 func TestPolicyPayload(t *testing.T) {
 	km := NewKeyMaster(testServer.VaultTestClient())
 
+	path1, err := km.SecretPath("foo", "core-services", Dev)
+	if err != nil {
+		log.Printf("Failed to create path: %s", err)
+		t.Fail()
+	}
+
+	path2, err := km.SecretPath("foo", "core-platform", Dev)
+	if err != nil {
+		log.Printf("Failed to create path: %s", err)
+		t.Fail()
+	}
+
+	path3, err := km.SecretPath("bar", "core-platform", Dev)
+	if err != nil {
+		log.Printf("Failed to create path: %s", err)
+		t.Fail()
+	}
+
 	inputs := []struct {
 		name string
 		in   *Role
@@ -103,7 +122,7 @@ func TestPolicyPayload(t *testing.T) {
 			"app1",
 			&Role{
 				Name: "app1",
-				Secrets: []Secret{
+				Secrets: []*Secret{
 					{
 						Name:      "foo",
 						Namespace: "core-services",
@@ -117,7 +136,7 @@ func TestPolicyPayload(t *testing.T) {
 			},
 			map[string]interface{}{
 				"path": map[string]interface{}{
-					km.SecretPath("foo", "core-services", Dev): map[string]interface{}{
+					path1: map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
@@ -134,7 +153,7 @@ func TestPolicyPayload(t *testing.T) {
 			"app2",
 			&Role{
 				Name: "app2",
-				Secrets: []Secret{
+				Secrets: []*Secret{
 					{
 						Name:      "foo",
 						Namespace: "core-platform",
@@ -155,12 +174,12 @@ func TestPolicyPayload(t *testing.T) {
 			},
 			map[string]interface{}{
 				"path": map[string]interface{}{
-					km.SecretPath("foo", "core-platform", Dev): map[string]interface{}{
+					path2: map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
 					},
-					km.SecretPath("bar", "core-platform", Dev): map[string]interface{}{
+					path3: map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
@@ -177,7 +196,11 @@ func TestPolicyPayload(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy := km.MakePolicyPayload(tc.in, Dev)
+			policy, err := km.MakePolicyPayload(tc.in, Dev)
+			if err != nil {
+				log.Printf("error creating policy: %s", err)
+				t.Fail()
+			}
 			assert.True(t, reflect.DeepEqual(policy, tc.out), "Generated policy matches expectations")
 		})
 	}
@@ -185,6 +208,12 @@ func TestPolicyPayload(t *testing.T) {
 
 func TestPolicyCrud(t *testing.T) {
 	km := NewKeyMaster(testServer.VaultTestClient())
+
+	path1, err := km.SecretPath("foo", "core-services", Dev)
+	if err != nil {
+		log.Printf("error creating path: %s", err)
+		t.Fail()
+	}
 
 	inputs := []struct {
 		name string
@@ -198,7 +227,7 @@ func TestPolicyCrud(t *testing.T) {
 				Path: km.PolicyPath("app1", "core-services", Dev),
 				Payload: map[string]interface{}{
 					"path": map[string]interface{}{
-						km.SecretPath("foo", "core-services", Dev): map[string]interface{}{
+						path1: map[string]interface{}{
 							"capabilities": []interface{}{
 								"read",
 							},
@@ -216,7 +245,7 @@ func TestPolicyCrud(t *testing.T) {
 				Path: km.PolicyPath("app1", "core-services", Dev),
 				Payload: map[string]interface{}{
 					"path": map[string]interface{}{
-						km.SecretPath("foo", "core-services", Dev): map[string]interface{}{
+						path1: map[string]interface{}{
 							"capabilities": []interface{}{
 								"read",
 							},

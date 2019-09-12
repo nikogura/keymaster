@@ -31,14 +31,19 @@ func (km *KeyMaster) PolicyPath(role string, namespace string, env Environment) 
 }
 
 // NewPolicy creates a new Policy object for a given Role and Environment
-func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy) {
+func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy, err error) {
+	payload, err := km.MakePolicyPayload(role, env)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create payload")
+		return policy, err
+	}
 	policy = VaultPolicy{
 		Name:    km.PolicyName(role.Name, role.Namespace, env),
 		Path:    km.PolicyPath(role.Name, role.Namespace, env),
-		Payload: km.MakePolicyPayload(role, env),
+		Payload: payload,
 	}
 
-	return policy
+	return policy, err
 }
 
 // MakePolicyPayload is the access policy to a specific secret path.  Policy Payloads give access to a single path, wildcards are not supported.
@@ -53,12 +58,17 @@ func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy)
   }
 }
 */
-func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[string]interface{}) {
+func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[string]interface{}, err error) {
 	policy = make(map[string]interface{})
 	pathElem := make(map[string]interface{})
 
 	for _, secret := range role.Secrets {
-		secretPath := km.SecretPath(secret.Name, secret.Namespace, env)
+		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to create secret path for %s role %s", secret.Name, role.Name)
+			return policy, err
+		}
+
 		caps := []interface{}{"read"}
 		pathPolicy := map[string]interface{}{"capabilities": caps}
 		pathElem[secretPath] = pathPolicy
@@ -71,7 +81,7 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[
 	pathElem[secretPath] = pathPolicy
 	policy["path"] = pathElem
 
-	return policy
+	return policy, err
 }
 
 // WritePolicyToVault does just that.  It takes a vault client and the policy and takes care of the asshattery that is the vault api for policies.

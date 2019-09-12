@@ -4,12 +4,52 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"reflect"
 	"testing"
 )
 
 func TestTlsAuthCrud(t *testing.T) {
 	km := NewKeyMaster(testServer.VaultTestClient())
+
+	policy1, err := km.NewPolicy(&Role{
+		Name: "app2",
+		Secrets: []*Secret{
+			{
+				Name:      "bar",
+				Namespace: "core-services",
+				Generator: AlphaGenerator{
+					Type:   "alpha",
+					Length: 10,
+				},
+			},
+		},
+		Namespace: "core-services",
+	}, Dev)
+	if err != nil {
+		log.Printf("error creating policy: %s", err)
+		t.Fail()
+	}
+
+	policy2, err :=
+		km.NewPolicy(&Role{
+			Name: "app3",
+			Secrets: []*Secret{
+				{
+					Name:      "baz",
+					Namespace: "core-platform",
+					Generator: AlphaGenerator{
+						Type:   "alpha",
+						Length: 10,
+					},
+				},
+			},
+			Namespace: "core-platform",
+		}, Dev)
+	if err != nil {
+		log.Printf("error creating policy: %s", err)
+		t.Fail()
+	}
 
 	inputs := []struct {
 		name   string
@@ -22,7 +62,7 @@ func TestTlsAuthCrud(t *testing.T) {
 			"role1",
 			&Role{
 				Name: "app1",
-				Secrets: []Secret{
+				Secrets: []*Secret{
 					{
 						Name:      "foo",
 						Namespace: "core-services",
@@ -52,20 +92,7 @@ func TestTlsAuthCrud(t *testing.T) {
 				"required_extensions": []interface{}{},
 				"ttl":                 json.Number("0"),
 			},
-			km.NewPolicy(&Role{
-				Name: "app2",
-				Secrets: []Secret{
-					{
-						Name:      "bar",
-						Namespace: "core-services",
-						Generator: AlphaGenerator{
-							Type:   "alpha",
-							Length: 10,
-						},
-					},
-				},
-				Namespace: "core-services",
-			}, Dev),
+			policy1,
 			map[string]interface{}{
 				"allowed_common_names":         []interface{}{},
 				"allowed_dns_sans":             []interface{}{},
@@ -90,7 +117,7 @@ func TestTlsAuthCrud(t *testing.T) {
 			"app2",
 			&Role{
 				Name: "app2",
-				Secrets: []Secret{
+				Secrets: []*Secret{
 					{
 						Name:      "foo",
 						Namespace: "core-platform",
@@ -127,20 +154,7 @@ func TestTlsAuthCrud(t *testing.T) {
 				"required_extensions": []interface{}{},
 				"ttl":                 json.Number("0"),
 			},
-			km.NewPolicy(&Role{
-				Name: "app3",
-				Secrets: []Secret{
-					{
-						Name:      "baz",
-						Namespace: "core-platform",
-						Generator: AlphaGenerator{
-							Type:   "alpha",
-							Length: 10,
-						},
-					},
-				},
-				Namespace: "core-platform",
-			}, Dev),
+			policy2,
 			map[string]interface{}{
 				"allowed_common_names":         []interface{}{},
 				"allowed_dns_sans":             []interface{}{},
@@ -165,8 +179,12 @@ func TestTlsAuthCrud(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy := km.NewPolicy(tc.role, Dev)
-			err := km.WriteTlsAuth(tc.role, []string{policy.Name})
+			policy, err := km.NewPolicy(tc.role, Dev)
+			if err != nil {
+				log.Printf("error creating policy: %s", err)
+				t.Fail()
+			}
+			err = km.WriteTlsAuth(tc.role, []string{policy.Name})
 			if err != nil {
 				fmt.Printf("Failed writing auth: %s", err)
 				t.Fail()

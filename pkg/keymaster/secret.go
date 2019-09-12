@@ -35,7 +35,12 @@ func (km *KeyMaster) NewGenerator(options GeneratorData) (generator Generator, e
 }
 
 // SecretPath Given a Name, Namespace, and Environment, returns the proper path in Vault where that secret is stored.
-func (km *KeyMaster) SecretPath(name string, namespace string, env Environment) (path string) {
+func (km *KeyMaster) SecretPath(name string, namespace string, env Environment) (path string, err error) {
+	if namespace == "" {
+		err = errors.New("cannot make secret path for blank namespace")
+		return path, err
+	}
+
 	switch env {
 	case Prod:
 		path = fmt.Sprintf("%s/data/%s/%s", PROD_NAME, namespace, name)
@@ -45,11 +50,16 @@ func (km *KeyMaster) SecretPath(name string, namespace string, env Environment) 
 		path = fmt.Sprintf("%s/data/%s/%s", DEV_NAME, namespace, name)
 	}
 
-	return path
+	return path, err
 }
 
 // CertPath Given a Name, Namespace, and Environment, returns the proper path in Vault where that Cert Secret is stored.
-func (km *KeyMaster) CertPath(name string, namespace string, env Environment) (path string) {
+func (km *KeyMaster) CertPath(name string, namespace string, env Environment) (path string, err error) {
+	if namespace == "" {
+		err = errors.New("cannot make cert secret path for blank namespace")
+		return path, err
+	}
+
 	switch env {
 	case Prod:
 		path = fmt.Sprintf("%s/data/certs/%s/%s", PROD_NAME, namespace, name)
@@ -59,13 +69,17 @@ func (km *KeyMaster) CertPath(name string, namespace string, env Environment) (p
 		path = fmt.Sprintf("%s/data/certs/%s/%s", DEV_NAME, namespace, name)
 	}
 
-	return path
+	return path, err
 }
 
 // WriteSecretIfBlank writes a secret to each environment, but only if there's not already a value there.
 func (km *KeyMaster) WriteSecretIfBlank(secret *Secret) (err error) {
 	for _, env := range Envs {
-		secretPath := km.SecretPath(secret.Name, secret.Namespace, env)
+		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to create secret path")
+			return err
+		}
 
 		// check to see if the secret does not exist
 		s, err := km.VaultClient.Logical().Read(secretPath)
@@ -96,7 +110,11 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret) (err error) {
 				data["data"] = sdata
 
 				var vcert VaultCert
-				certPath := km.CertPath(secret.Name, secret.Namespace, env)
+				certPath, err := km.CertPath(secret.Name, secret.Namespace, env)
+				if err != nil {
+					err = errors.Wrapf(err, "failed to create cert path")
+					return err
+				}
 
 				// value is a string, due to the signature on Generate(), but in this case it's parts that have to be unmarshalled and converted to interface types for writing.
 				err = json.Unmarshal([]byte(value), &vcert)
