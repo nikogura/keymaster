@@ -96,9 +96,9 @@ type Namespace struct {
 
 // Role A named set of Secrets that is instantiated as an Auth endpoint in Vault for each computing realm.
 type Role struct {
-	Name       string   `yaml:"name"`
-	Secrets    []Secret `yaml:"secrets"`
-	SecretsMap map[string]Secret
+	Name       string    `yaml:"name"`
+	Secrets    []*Secret `yaml:"secrets"`
+	SecretsMap map[string]*Secret
 	Realms     []string `yaml:"realms"`
 	Namespace  string   `yaml:"namespace"`
 }
@@ -128,6 +128,10 @@ type Secret struct {
 // SetGenerator What else?  Set's the generator on the Secret.
 func (s *Secret) SetGenerator(generator Generator) {
 	s.Generator = generator
+}
+
+func (s *Secret) SetNamespace(namespace string) {
+	s.Namespace = namespace
 }
 
 func (r *Role) SetNamespace(namespace string) {
@@ -160,7 +164,7 @@ func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 	// If there's no namespace listed for the secret, it belongs to the namespace of the file from which it's loaded.
 	for _, secret := range ns.Secrets {
 		if secret.Namespace == "" {
-			secret.Namespace = ns.Name
+			secret.SetNamespace(ns.Name)
 		}
 
 		if len(secret.GeneratorData) == 0 {
@@ -184,7 +188,6 @@ func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 		ns.SecretsMap[secret.Name] = secret
 	}
 
-	// Error out if we're passed a role without a name
 	for _, role := range ns.Roles {
 		if role.Name == "" {
 			err = errors.New(ERR_NAMELESS_ROLE)
@@ -268,7 +271,11 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace) (err error) {
 
 		for _, env := range Envs {
 			// write policies
-			policy := km.NewPolicy(role, env)
+			policy, err := km.NewPolicy(role, env)
+			if err != nil {
+				err = errors.Wrapf(err, "failed to create policy")
+				return err
+			}
 
 			err = km.WritePolicyToVault(policy)
 			if err != nil {
@@ -328,8 +335,6 @@ func LoadSecretYamls(files []string) (data [][]byte, err error) {
 
 			data = append(data, configBytes)
 
-			return data, err
-
 		case mode.IsDir():
 			// start off true, set false on any failure
 			err := filepath.Walk(fileName, func(path string, info os.FileInfo, err error) error {
@@ -362,12 +367,8 @@ func LoadSecretYamls(files []string) (data [][]byte, err error) {
 				err = errors.Wrapf(err, "error walking directory %s", fileName)
 				return data, err
 			}
-
-			return data, err
 		}
 	}
-
-	err = errors.New(fmt.Sprintf("failed to parse %s for data", files))
 
 	return data, err
 }

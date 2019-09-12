@@ -1,6 +1,7 @@
 package keymaster
 
 import (
+	"encoding/json"
 	"fmt"
 	"git.lo/ops/vaulttest/pkg/vaulttest"
 	"github.com/phayes/freeport"
@@ -535,7 +536,7 @@ roles:
         namespace: redns
 `
 	inputFile3 := `---
-name: purplens
+name: bluens
 secrets:
   - name: foo
     generator:
@@ -631,8 +632,15 @@ roles:
 		t.Fail()
 	}
 
+	log.Printf("--- %d files for processing ---", len(files))
+	assert.True(t, len(files) == 3, "Expect 3 files for processing.")
+
+	log.Printf("--- %d configs for processing ---", len(configs))
+	assert.True(t, len(configs) == 3, "expect 3 configs for processing.")
+
 	for _, config := range configs {
 		ns, err := km.NewNamespace(config)
+		log.Printf("--- Processing data for namespace: %s ---", ns.Name)
 		if err != nil {
 			log.Printf("Failed to load namespace: %s", err)
 			t.Fail()
@@ -648,7 +656,11 @@ roles:
 				for _, secret := range ns.Secrets {
 					var path string
 					if secret.GeneratorData["type"] == "tls" {
-						path = km.CertPath(secret.Name, secret.Namespace, env)
+						path, err = km.CertPath(secret.Name, secret.Namespace, env)
+						if err != nil {
+							log.Printf("Error creating path: %s", err)
+							t.Fail()
+						}
 
 						s, err := km.VaultClient.Logical().Read(path)
 						if err != nil {
@@ -680,7 +692,11 @@ roles:
 						}
 
 					} else {
-						path = km.SecretPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
+						if err != nil {
+							log.Printf("Error creating path: %s", err)
+							t.Fail()
+						}
 
 						s, err := km.VaultClient.Logical().Read(path)
 						if err != nil {
@@ -706,7 +722,11 @@ roles:
 
 				for _, role := range ns.Roles {
 					// Check Policies
-					policy := km.NewPolicy(role, env)
+					policy, err := km.NewPolicy(role, env)
+					if err != nil {
+						log.Printf("doh! error creating policy: %s", err)
+						t.Fail()
+					}
 
 					readPolicy, err := km.ReadPolicyFromVault(policy.Path)
 					if err != nil {
@@ -748,5 +768,95 @@ roles:
 				}
 			}
 		}
+	}
+
+	s, err := km.VaultClient.Logical().List("/sys/policy")
+	if err != nil {
+		log.Printf("Failed to list policies: %s", err)
+		t.Fail()
+	}
+
+	log.Printf("--- Policies ---")
+	keys, ok := s.Data["keys"].([]interface{})
+	if ok {
+		for _, key := range keys {
+			fmt.Printf("  %s\n", key)
+		}
+	}
+
+	// TODO Make this more flexible.
+	// This is 1 test of 1 secret, and yes, it should hold true for all, but a more thorough and considered approach would help.
+
+	log.Printf("--- Create Test Token ---")
+	policy := "dev-bluens-app1"
+
+	data := make(map[string]interface{})
+	data["policies"] = []string{policy}
+	data["no_parent"] = true
+
+	s, err = km.VaultClient.Logical().Write("/auth/token/create-orphan", data)
+	if err != nil {
+		log.Printf("failed to create token for test: %s", err)
+		t.Fail()
+	}
+
+	assert.True(t, s != nil, "Generated a test token.")
+	newToken := s.Auth.ClientToken
+
+	testClient, err := km.VaultClient.Clone()
+	if err != nil {
+		log.Printf("Failed to clone vault client: %s", err)
+		t.Fail()
+	}
+
+	testClient.ClearToken()
+	testClient.SetToken(newToken)
+
+	s, err = testClient.Logical().Read("sys/policy/dev-bluens-app1")
+	if err != nil {
+		log.Printf("Failed to lookup policy: %s", err)
+		t.Fail()
+	}
+
+	rules, ok := s.Data["rules"].(string)
+	if ok {
+		var rulesObj map[string]interface{}
+		err := json.Unmarshal([]byte(rules), &rulesObj)
+		if err != nil {
+			log.Printf("failed to unmarshal rules string into json: %s", err)
+			t.Fail()
+		}
+
+		jb, err := json.MarshalIndent(rulesObj, "", "  ")
+		if err != nil {
+			log.Printf("failed to marshal rules back into json: %s", err)
+
+		}
+		log.Printf("--- Rules ---")
+		log.Printf("%s", string(jb))
+	}
+
+	goodpath := "dev/data/bluens/wip"
+
+	s, err = testClient.Logical().Read(goodpath)
+	if err != nil {
+		log.Printf("Failed to lookup path %s : %s", goodpath, err)
+		t.Fail()
+	}
+
+	data, ok = s.Data["data"].(map[string]interface{})
+	if ok {
+		value, ok := data["value"].(string)
+		if ok {
+			log.Printf("Value: %s", value)
+		}
+	}
+
+	badpath := "prod/data/redns/foo"
+
+	s, err = testClient.Logical().Read(badpath)
+	if err == nil {
+		log.Printf("Lookup badpath %s should cause error: %s", badpath, err)
+		t.Fail()
 	}
 }

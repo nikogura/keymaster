@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"reflect"
 	"testing"
 )
@@ -21,6 +22,44 @@ func anonymizeStringArray(input []string) (output []interface{}) {
 func TestK8sAuthCrud(t *testing.T) {
 	km := NewKeyMaster(testServer.VaultTestClient())
 
+	addPolicy1, err := km.NewPolicy(&Role{
+		Name: "app2",
+		Secrets: []*Secret{
+			{
+				Name:      "bar",
+				Namespace: "core-services",
+				Generator: AlphaGenerator{
+					Type:   "alpha",
+					Length: 10,
+				},
+			},
+		},
+		Namespace: "core-services",
+	}, Dev)
+	if err != nil {
+		log.Printf("Error creating policy: %s", err)
+		t.Fail()
+	}
+
+	addPolicy2, err := km.NewPolicy(&Role{
+		Name: "app3",
+		Secrets: []*Secret{
+			{
+				Name:      "baz",
+				Namespace: "core-platform",
+				Generator: AlphaGenerator{
+					Type:   "alpha",
+					Length: 10,
+				},
+			},
+		},
+		Namespace: "core-platform",
+	}, Dev)
+	if err != nil {
+		log.Printf("Error creating policy: %s", err)
+		t.Fail()
+	}
+
 	inputs := []struct {
 		name    string
 		cluster Cluster
@@ -34,7 +73,7 @@ func TestK8sAuthCrud(t *testing.T) {
 			Clusters[0],
 			&Role{
 				Name: "app1",
-				Secrets: []Secret{
+				Secrets: []*Secret{
 					{
 						Name:      "foo",
 						Namespace: "core-services",
@@ -56,20 +95,7 @@ func TestK8sAuthCrud(t *testing.T) {
 				"policies":                         []interface{}{"dev-core-services-app1"},
 				"ttl":                              json.Number("0"),
 			},
-			km.NewPolicy(&Role{
-				Name: "app2",
-				Secrets: []Secret{
-					{
-						Name:      "bar",
-						Namespace: "core-services",
-						Generator: AlphaGenerator{
-							Type:   "alpha",
-							Length: 10,
-						},
-					},
-				},
-				Namespace: "core-services",
-			}, Dev),
+			addPolicy1,
 			map[string]interface{}{
 				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
@@ -89,7 +115,7 @@ func TestK8sAuthCrud(t *testing.T) {
 			Clusters[0],
 			&Role{
 				Name: "app2",
-				Secrets: []Secret{
+				Secrets: []*Secret{
 					{
 						Name:      "foo",
 						Namespace: "core-platform",
@@ -118,20 +144,7 @@ func TestK8sAuthCrud(t *testing.T) {
 				"policies":                         []interface{}{"dev-core-platform-app2"},
 				"ttl":                              json.Number("0"),
 			},
-			km.NewPolicy(&Role{
-				Name: "app3",
-				Secrets: []Secret{
-					{
-						Name:      "baz",
-						Namespace: "core-platform",
-						Generator: AlphaGenerator{
-							Type:   "alpha",
-							Length: 10,
-						},
-					},
-				},
-				Namespace: "core-platform",
-			}, Dev),
+			addPolicy2,
 			map[string]interface{}{
 				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
@@ -150,8 +163,12 @@ func TestK8sAuthCrud(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy := km.NewPolicy(tc.role, Dev)
-			err := km.WriteK8sAuth(tc.cluster, tc.role, []string{policy.Name})
+			policy, err := km.NewPolicy(tc.role, Dev)
+			if err != nil {
+				log.Printf("Error creating policy: %s", err)
+				t.Fail()
+			}
+			err = km.WriteK8sAuth(tc.cluster, tc.role, []string{policy.Name})
 			if err != nil {
 				fmt.Printf("Failed writing auth: %s", err)
 				t.Fail()
