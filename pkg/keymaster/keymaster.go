@@ -6,6 +6,9 @@ import (
 	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"regexp"
 )
 
@@ -303,4 +306,68 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace) (err error) {
 	}
 
 	return err
+}
+
+func LoadSecretYamls(files []string) (data [][]byte, err error) {
+	data = make([][]byte, 0)
+
+	for _, fileName := range files {
+		fi, err := os.Stat(fileName)
+		if err != nil {
+			err = errors.Wrap(err, fmt.Sprintf("failed to read yaml %s", fileName))
+			return data, err
+		}
+
+		switch mode := fi.Mode(); {
+		case mode.IsRegular():
+			configBytes, err := ioutil.ReadFile(fileName)
+			if err != nil {
+				err = errors.Wrapf(err, "Error reading yaml %s", fileName)
+				return data, err
+			}
+
+			data = append(data, configBytes)
+
+			return data, err
+
+		case mode.IsDir():
+			// start off true, set false on any failure
+			err := filepath.Walk(fileName, func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if !info.IsDir() { // we only care about files
+					// and we only care about yaml files
+					fileName := filepath.Base(path)
+					pat := regexp.MustCompile(`.+\.ya?ml`)
+					if !pat.MatchString(fileName) {
+						return nil
+					}
+
+					configBytes, err := ioutil.ReadFile(fileName)
+					if err != nil {
+						err = errors.Wrapf(err, "error reading yaml %s", fileName)
+						return err
+					}
+
+					data = append(data, configBytes)
+
+					return nil
+				}
+
+				return nil
+			})
+
+			if err != nil {
+				err = errors.Wrapf(err, "error walking directory %s", fileName)
+				return data, err
+			}
+
+			return data, err
+		}
+	}
+
+	err = errors.New(fmt.Sprintf("failed to parse %s for data", files))
+
+	return data, err
 }

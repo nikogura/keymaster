@@ -1,7 +1,7 @@
 {
-  "name": "secrets-backend",
+  "name": "keymaster",
   "version": "0.1.0",
-  "package": "git.lo/dbt/secrets-backend",
+  "package": "git.lo/dbt/keymaster",
   "description": "Secrets definition and management tool",
   "repository": "https://artifacts.lo/artifactory/dbt-tools",
   "building": {
@@ -35,13 +35,13 @@
         "checksums": false
       },
       {
-        "src": "secrets-backend_darwin_amd64",
+        "src": "keymaster_darwin_amd64",
         "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/darwin/amd64/{{.Name}}",
         "sig": true,
         "checksums": false
       },
       {
-        "src": "secrets-backend_linux_amd64",
+        "src": "keymaster_linux_amd64",
         "dst": "{{.Repository}}/{{.Name}}/{{.Version}}/linux/amd64/{{.Name}}",
         "sig": true,
         "checksums": false
