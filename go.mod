@@ -3,8 +3,8 @@ module git.lo/dbt/keymaster
 go 1.12
 
 require (
-	git.lo/dbt/secrets-backend v0.0.0-20190904172909-61b395bf6b8c
 	git.lo/ops/ldapclient v0.0.0-20190910200915-20df3f7d669d
+	git.lo/ops/scrutil v0.0.0-20190827221005-c3e2d0bfc048
 	git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.1.1

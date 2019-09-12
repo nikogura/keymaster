@@ -13,7 +13,7 @@
 
 package main
 
-import "git.lo/dbt/secrets-backend/cmd"
+import "git.lo/dbt/keymaster/cmd"
 
 func main() {
 	cmd.Execute()

@@ -1,6 +1,6 @@
 stages:
   - test
-#  - publish
+  - publish
   - notifications
 
 tests:
@@ -13,16 +13,16 @@ tests:
   script:
     - gomason test -v -b ${CI_COMMIT_REF_NAME}
 
-#publish:
-#  stage: publish
-#  only:
-#    - master
-#
-#  tags:
-#    - gomason
-#
-#  script:
-#    - dbt secrets exec -p infra/deploy "gomason publish -v"
+publish:
+  stage: publish
+  only:
+    - master
+
+  tags:
+    - gomason
+
+  script:
+    - dbt secrets exec -p infra/deploy "gomason publish -v"
 
 # ----- Notifications
 notify_slack_failure:
