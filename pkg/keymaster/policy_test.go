@@ -50,7 +50,11 @@ func TestPolicyName(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			path := km.PolicyName(tc.roleName, tc.namespace, tc.env)
+			path, err := km.PolicyName(tc.roleName, tc.namespace, tc.env)
+			if err != nil {
+				log.Printf("error creating policy name: %s", err)
+				t.Fail()
+			}
 
 			assert.Equal(t, tc.output, path, "Created expected policy.")
 		})
@@ -87,7 +91,11 @@ func TestPolicyPath(t *testing.T) {
 	}
 
 	for _, tc := range inputs {
-		path := km.PolicyPath(tc.role.Name, tc.role.Namespace, tc.env)
+		path, err := km.PolicyPath(tc.role.Name, tc.role.Namespace, tc.env)
+		if err != nil {
+			log.Printf("error creating policy name: %s", err)
+			t.Fail()
+		}
 		assert.Equal(t, tc.out, path, "generated policy path looks like what we expect")
 	}
 }
@@ -215,6 +223,18 @@ func TestPolicyCrud(t *testing.T) {
 		t.Fail()
 	}
 
+	pName1, err := km.PolicyName("app1", "core-services", Dev)
+	if err != nil {
+		log.Printf("error creating policy name: %s", err)
+		t.Fail()
+	}
+
+	pPath1, err := km.PolicyPath("app1", "core-services", Dev)
+	if err != nil {
+		log.Printf("error creating policy path: %s", err)
+		t.Fail()
+	}
+
 	inputs := []struct {
 		name string
 		in   VaultPolicy
@@ -223,8 +243,8 @@ func TestPolicyCrud(t *testing.T) {
 		{
 			"policy1",
 			VaultPolicy{
-				Name: km.PolicyName("app1", "core-services", Dev),
-				Path: km.PolicyPath("app1", "core-services", Dev),
+				Name: pName1,
+				Path: pPath1,
 				Payload: map[string]interface{}{
 					"path": map[string]interface{}{
 						path1: map[string]interface{}{
@@ -241,8 +261,8 @@ func TestPolicyCrud(t *testing.T) {
 				},
 			},
 			VaultPolicy{
-				Name: km.PolicyName("app1", "core-services", Dev),
-				Path: km.PolicyPath("app1", "core-services", Dev),
+				Name: pName1,
+				Path: pPath1,
 				Payload: map[string]interface{}{
 					"path": map[string]interface{}{
 						path1: map[string]interface{}{

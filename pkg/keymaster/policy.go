@@ -10,7 +10,22 @@ import (
 )
 
 // PolicyName constructs the policy name form the inputs in a regular fashion. Note: namespaces like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs.
-func (km *KeyMaster) PolicyName(role string, namespace string, env Environment) (name string) {
+func (km *KeyMaster) PolicyName(role string, namespace string, env Environment) (name string, err error) {
+	if role == "" {
+		err = errors.New("empty role names are not supported")
+		return name, err
+	}
+
+	if namespace == "" {
+		err = errors.New("empty role namespaces are not supported")
+		return name, err
+	}
+
+	if env == 0 {
+		err = errors.New("unsupported environment")
+		return name, err
+	}
+
 	switch env {
 	case Prod:
 		name = fmt.Sprintf("%s-%s-%s", PROD_NAME, namespace, role)
@@ -20,14 +35,20 @@ func (km *KeyMaster) PolicyName(role string, namespace string, env Environment) 
 		name = fmt.Sprintf("%s-%s-%s", DEV_NAME, namespace, role)
 	}
 
-	return name
+	return name, err
 }
 
 // PolicyPath constructs the path to the policy for the role
-func (km *KeyMaster) PolicyPath(role string, namespace string, env Environment) (path string) {
-	path = fmt.Sprintf("sys/policy/%s", km.PolicyName(role, namespace, env))
+func (km *KeyMaster) PolicyPath(role string, namespace string, env Environment) (path string, err error) {
+	policyName, err := km.PolicyName(role, namespace, env)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create policy name")
+		return path, err
+	}
 
-	return path
+	path = fmt.Sprintf("sys/policy/%s", policyName)
+
+	return path, err
 }
 
 // NewPolicy creates a new Policy object for a given Role and Environment
@@ -37,9 +58,22 @@ func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy,
 		err = errors.Wrapf(err, "failed to create payload")
 		return policy, err
 	}
+
+	pName, err := km.PolicyName(role.Name, role.Namespace, env)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create policy name")
+		return policy, err
+	}
+
+	pPath, err := km.PolicyPath(role.Name, role.Namespace, env)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create policy path")
+		return policy, err
+	}
+
 	policy = VaultPolicy{
-		Name:    km.PolicyName(role.Name, role.Namespace, env),
-		Path:    km.PolicyPath(role.Name, role.Namespace, env),
+		Name:    pName,
+		Path:    pPath,
 		Payload: payload,
 	}
 
@@ -75,7 +109,12 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[
 	}
 
 	// add ability to read own policy
-	secretPath := km.PolicyPath(role.Name, role.Namespace, env)
+	secretPath, err := km.PolicyPath(role.Name, role.Namespace, env)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create policy path")
+		return policy, err
+	}
+
 	caps := []interface{}{"read"}
 	pathPolicy := map[string]interface{}{"capabilities": caps}
 	pathElem[secretPath] = pathPolicy
