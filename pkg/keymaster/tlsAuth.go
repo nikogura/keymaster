@@ -53,10 +53,20 @@ HzMKYQXmTRJV3jB1uD/1ibA9MpMVEbNN3yjPvY6wmCE3ydOBC3/XQgcooez8af7w
 -----END CERTIFICATE-----`
 
 // TlsAuthPath constructs the auth path in a regular fashion.
-func (km *KeyMaster) TlsAuthPath(role *Role) (path string) {
-	path = fmt.Sprintf("auth/cert/certs/%s", role.Name)
+func (km *KeyMaster) TlsAuthPath(role *Role) (path string, err error) {
+	if role.Name == "" {
+		err = errors.New("empty role names are not supported")
+		return path, err
+	}
 
-	return path
+	if role.Namespace == "" {
+		err = errors.New("empty role namespaces are not supported")
+		return path, err
+	}
+
+	path = fmt.Sprintf("auth/cert/certs/%s-%s", role.Namespace, role.Name)
+
+	return path, err
 }
 
 func (km *KeyMaster) AddPolicyToTlsRole(role *Role, policy VaultPolicy) (err error) {
@@ -141,7 +151,12 @@ func HostsForRoleInLdap(role *Role) (hosts []ldapclient.HostInfo, err error) {
 
 // Read TlsAuth path and return it's data
 func (km *KeyMaster) ReadTlsAuth(role *Role) (data map[string]interface{}, err error) {
-	path := km.TlsAuthPath(role)
+	path, err := km.TlsAuthPath(role)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create tls auth path")
+		return data, err
+	}
+
 	s, err := km.VaultClient.Logical().Read(path)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to read %s", path)
@@ -157,7 +172,11 @@ func (km *KeyMaster) ReadTlsAuth(role *Role) (data map[string]interface{}, err e
 
 // DeleteTlsAuth Delete a Tls auth config for a Role.
 func (km *KeyMaster) DeleteTlsAuth(role *Role) (err error) {
-	path := km.TlsAuthPath(role)
+	path, err := km.TlsAuthPath(role)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create tls auth path")
+		return err
+	}
 
 	_, err = km.VaultClient.Logical().Delete(path)
 	if err != nil {
@@ -192,7 +211,11 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, policies []string) (err error) {
 	data["display_name"] = role.Name
 	data["certificate"] = HOST_CA_CERT
 
-	path := km.TlsAuthPath(role)
+	path, err := km.TlsAuthPath(role)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to create tls auth path")
+		return err
+	}
 
 	_, err = km.VaultClient.Logical().Write(path, data)
 	if err != nil {
