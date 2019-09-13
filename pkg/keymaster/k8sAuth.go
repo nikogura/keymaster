@@ -186,31 +186,19 @@ kNoCEVDI5C2RN36GljQpCFkQ8IR5eyDC4PeqXBkxg8nzrl06NN2R89H1oB3OgiL2
 	}
 }
 
-// AuthName constructs the policy name form the inputs in a regular fashion. Environment is not an input as the cluster's name is known, and each cluster only serves a single environment.
-func (km *KeyMaster) AuthName(role string, namespace string) (name string, err error) {
-	if role == "" {
-		err = errors.New("empty role names are not supported")
-		return name, err
-	}
-
-	if namespace == "" {
-		err = errors.New("unnamed namespaces are not supported")
-		return name, err
-	}
-
-	name = fmt.Sprintf("%s-%s", namespace, role)
-
-	return name, err
-}
-
 // K8sAuthPath constructs the auth path in a regular fashion.
 func (km *KeyMaster) K8sAuthPath(cluster Cluster, role *Role) (path string, err error) {
-	authName, err := km.AuthName(cluster.Name, role.Name)
-	if err != nil {
+	if role.Name == "" {
+		err = errors.New("empty role names are not supported")
 		return path, err
 	}
 
-	path = fmt.Sprintf("auth/%s/role/%s", cluster.Name, authName)
+	if role.Namespace == "" {
+		err = errors.New("empty role namespaces are not supported")
+		return path, err
+	}
+
+	path = fmt.Sprintf("auth/%s/role/%s-%s", cluster.Name, role.Namespace, role.Name)
 
 	return path, err
 }
