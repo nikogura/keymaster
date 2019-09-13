@@ -205,7 +205,7 @@ func (km *KeyMaster) AuthName(role string, namespace string) (name string, err e
 
 // K8sAuthPath constructs the auth path in a regular fashion.
 func (km *KeyMaster) K8sAuthPath(cluster Cluster, role *Role) (path string, err error) {
-	authName, err := km.AuthName(role.Name, role.Name)
+	authName, err := km.AuthName(cluster.Name, role.Name)
 	if err != nil {
 		return path, err
 	}
