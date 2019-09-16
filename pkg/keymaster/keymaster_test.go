@@ -488,6 +488,7 @@ roles:
   - name: app1
     realms:
       - k8s
+      - sl
     secrets:
       - name: foo
       - name: wip
@@ -529,6 +530,7 @@ roles:
   - name: app1
     realms:
       - k8s
+      - sl
     secrets:
       - name: foo
       - name: wip
@@ -570,6 +572,7 @@ roles:
   - name: app1
     realms:
       - k8s
+      - sl
     secrets:
       - name: foo
       - name: wip
@@ -770,13 +773,75 @@ roles:
 		}
 	}
 
-	s, err := km.VaultClient.Logical().List("/sys/policy")
+	for _, cluster := range Clusters {
+		path := fmt.Sprintf("/auth/%s/role", cluster.Name)
+		s, err := km.VaultClient.Logical().List(path)
+		if err != nil {
+			log.Printf("Failed to list k8s roles: %s", err)
+			t.Fail()
+		}
+
+		log.Printf("--- K8S Roles for %s (%s) ---", cluster.Name, EnvToName[cluster.Environment])
+		keys, ok := s.Data["keys"].([]interface{})
+		if ok {
+			for _, key := range keys {
+				path := fmt.Sprintf("/auth/%s/role/%s", cluster.Name, key)
+				s, err := km.VaultClient.Logical().Read(path)
+				if err != nil {
+					log.Printf("Failed to list k8s roles: %s", err)
+					t.Fail()
+				}
+
+				log.Printf("--- Policies for K8S Role %s ---", key)
+				policies, ok := s.Data["policies"].([]interface{})
+				if ok {
+					for _, policy := range policies {
+						log.Printf("  %s", policy)
+					}
+				}
+			}
+		}
+	}
+
+	s, err := km.VaultClient.Logical().List("auth/cert/certs")
+	if err != nil {
+		log.Printf("Failed to list TLS Roles: %s", err)
+		t.Fail()
+	}
+
+	log.Printf("--- TLS Roles ---")
+	if s != nil {
+		keys, ok := s.Data["keys"].([]interface{})
+		if ok {
+			for _, key := range keys {
+				log.Printf("  %s", key)
+				path := fmt.Sprintf("/auth/cert/certs/%s", key)
+				s, err := km.VaultClient.Logical().Read(path)
+				if err != nil {
+					log.Printf("Failed to list k8s roles: %s", err)
+					t.Fail()
+				}
+
+				log.Printf("--- Policies For TLS Role: %s ---", key)
+				policies, ok := s.Data["policies"].([]interface{})
+				if ok {
+					for _, policy := range policies {
+						log.Printf("  %s", policy)
+					}
+				}
+
+			}
+		}
+
+	}
+
+	s, err = km.VaultClient.Logical().List("/sys/policy")
 	if err != nil {
 		log.Printf("Failed to list policies: %s", err)
 		t.Fail()
 	}
 
-	log.Printf("--- Policies ---")
+	log.Printf("--- All Policies ---")
 	keys, ok := s.Data["keys"].([]interface{})
 	if ok {
 		for _, key := range keys {

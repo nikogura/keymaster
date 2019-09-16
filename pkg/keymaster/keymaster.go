@@ -295,7 +295,7 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace) (err error) {
 					}
 
 				case SL_NAME:
-					err = km.AddPolicyToTlsRole(role, policy)
+					err = km.AddPolicyToTlsRole(role, env, policy)
 					if err != nil {
 						err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, EnvToName[env])
 						return err

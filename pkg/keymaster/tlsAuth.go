@@ -69,7 +69,7 @@ func (km *KeyMaster) TlsAuthPath(role *Role) (path string, err error) {
 	return path, err
 }
 
-func (km *KeyMaster) AddPolicyToTlsRole(role *Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) AddPolicyToTlsRole(role *Role, env Environment, policy VaultPolicy) (err error) {
 	policies, err := km.GrantedPoliciesForTlsRole(role)
 	if err != nil {
 		return err
@@ -82,10 +82,10 @@ func (km *KeyMaster) AddPolicyToTlsRole(role *Role, policy VaultPolicy) (err err
 
 	policies = append(policies, policy.Name)
 
-	return km.WriteTlsAuth(role, policies)
+	return km.WriteTlsAuth(role, env, policies)
 }
 
-func (km *KeyMaster) RemovePolicyFromTlsRole(role *Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) RemovePolicyFromTlsRole(role *Role, env Environment, policy VaultPolicy) (err error) {
 	current, err := km.GrantedPoliciesForTlsRole(role)
 	if err != nil {
 		return err
@@ -99,7 +99,7 @@ func (km *KeyMaster) RemovePolicyFromTlsRole(role *Role, policy VaultPolicy) (er
 		}
 	}
 
-	return km.WriteTlsAuth(role, updated)
+	return km.WriteTlsAuth(role, env, updated)
 }
 
 func (km *KeyMaster) GrantedPoliciesForTlsRole(role *Role) (policies []string, err error) {
@@ -131,7 +131,7 @@ func (km *KeyMaster) GrantedPoliciesForTlsRole(role *Role) (policies []string, e
 	return policies, err
 }
 
-func HostsForRoleInLdap(role *Role) (hosts []ldapclient.HostInfo, err error) {
+func HostsForRoleInLdap(role *Role, env Environment) (hosts []ldapclient.HostInfo, err error) {
 	lc := ldapclient.NewLdapClient("", "", 0, true)
 
 	err = lc.Connect()
@@ -140,9 +140,11 @@ func HostsForRoleInLdap(role *Role) (hosts []ldapclient.HostInfo, err error) {
 		return hosts, err
 	}
 
-	hosts, err = lc.HostsInVaultRole(role.Name)
+	namespacedName := fmt.Sprintf("%s-%s-%s", EnvToName[env], role.Namespace, role.Name)
+
+	hosts, err = lc.HostsInVaultRole(namespacedName)
 	if err != nil {
-		err = errors.Wrapf(err, "failed searching ldap for members in role %s", role.Name)
+		err = errors.Wrapf(err, "failed searching ldap for members in role %s", namespacedName)
 		return hosts, err
 	}
 
@@ -188,11 +190,15 @@ func (km *KeyMaster) DeleteTlsAuth(role *Role) (err error) {
 }
 
 // WriteTlsAuth writes the auth config to vault
-func (km *KeyMaster) WriteTlsAuth(role *Role, policies []string) (err error) {
-
-	hostInfo, err := HostsForRoleInLdap(role)
+func (km *KeyMaster) WriteTlsAuth(role *Role, env Environment, policies []string) (err error) {
+	hostInfo, err := HostsForRoleInLdap(role, env)
 	if err != nil {
 		err = errors.Wrap(err, "failed to get roles for hosts from ldap")
+		return err
+	}
+
+	// Exit if there are no hosts in this role (otherwise we'd be allowing any valid cert to connect)
+	if len(hostInfo) == 0 {
 		return err
 	}
 
@@ -208,7 +214,7 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, policies []string) (err error) {
 	data["allowed_common_names"] = strings.Join(hostnames, ",")
 	data["bound_cidrs"] = strings.Join(ips, ",")
 	data["policies"] = policies
-	data["display_name"] = role.Name
+	data["display_name"] = fmt.Sprintf("%s-%s-%s", EnvToName[env], role.Namespace, role.Name)
 	data["certificate"] = HOST_CA_CERT
 
 	path, err := km.TlsAuthPath(role)
