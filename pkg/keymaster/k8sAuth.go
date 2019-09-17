@@ -100,37 +100,38 @@ Kxq0lynHENJpP/eXjfyC8sLDVJN8YO3n4w==
 
 	// charlie
 	// delta
-	delta := Cluster{
-		Name:         "delta",
-		ApiServerUrl: "https://devkube.inf.scribd.com:6443",
-		CACert: `-----BEGIN CERTIFICATE-----
-MIIDVTCCAj2gAwIBAgIUUUYfYM6Mu/Brko7u/BKLBobWlN8wDQYJKoZIhvcNAQEL
-BQAwIDEeMBwGA1UEAxMVZGV2a3ViZS1jYS5zY3JpYmQuY29tMB4XDTE5MDUzMTE3
-NDk0NFoXDTI0MDUyOTE3NTAxNFowIDEeMBwGA1UEAxMVZGV2a3ViZS1jYS5zY3Jp
-YmQuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2p3z+IBHIcrS
-x9FMlyRT/HgSV/wZw/KffSfxfiXIuaK/cCDxqoDK+QzKe9cwRLHYuUKR2zaS57Zv
-5KUP67wzmhMhotoXaVSr7Zht6XBL1BYbjhnn64P5OJ7aHmoZupybQF8w2AtxYlwM
-JaLhHe7An4CgPDD7i+bZWyHQm8IO0x2BuhqZhqz2dcfWURXXnRKq/oX7s8QjqSE3
-7vxUTu8+UKRlnzIbDdQGhwlNMZ9g+2OXFP0VCVzfAB5N0RkH7uH67BjqXaJ2cG3A
-3gDab3Mc381W9RBnPkuOwVKxZMmJH8STv6phOXeok/8+kWzQmS4z0gNPQDDHfQdW
-mOMMpuNSZwIDAQABo4GGMIGDMA4GA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTAD
-AQH/MB0GA1UdDgQWBBSiP999ex76YHothR5ImP6YCQNF7zAfBgNVHSMEGDAWgBSi
-P999ex76YHothR5ImP6YCQNF7zAgBgNVHREEGTAXghVkZXZrdWJlLWNhLnNjcmli
-ZC5jb20wDQYJKoZIhvcNAQELBQADggEBAEmMQNyRLfrQziU2SGRRUIAwHRFnrtei
-Y6TeFJKLiXWXaDRG1ZNMFK6I01FDAufsTIoKmFNxlQ8DRp7SoFM4qKkI/7SzSzKL
-7j+G0ZUIdAZB6rpop9hX03D5Ftiu7IFC4j65OdUw6k5FIUKf13AvWZDRabzdLKM7
-Jc15hAN5H3FGOTppW1LHTJn6wfioN2VPKlkqI3k03hEHaib9bp02zZPGxsGqumYn
-GdmD9Caj9/8jE8YYO+n/9Y9rEEg+3k8F9bvNjCMIq7Avs6aPn05MZ0QCWmG+a6ez
-2zAnZuKyLCOnT4kBYsP0bmsplL4/YWitMWkAr4xcIvb7OeFKHL26KiY=
------END CERTIFICATE-----`,
-		Environment: Dev,
-		BoundCidrs: []string{
-			"10.177.148.209",
-		},
-	}
-
-	Clusters = append(Clusters, delta)
-	ClustersByName[delta.Name] = delta
+	// Note: cannot set up devkube until we configure the vault-auth service account for devkube
+	//	devkube := Cluster{
+	//		Name:         "devkube",
+	//		ApiServerUrl: "https://devkube.inf.scribd.com:6443",
+	//		CACert: `-----BEGIN CERTIFICATE-----
+	//MIIDVTCCAj2gAwIBAgIUUUYfYM6Mu/Brko7u/BKLBobWlN8wDQYJKoZIhvcNAQEL
+	//BQAwIDEeMBwGA1UEAxMVZGV2a3ViZS1jYS5zY3JpYmQuY29tMB4XDTE5MDUzMTE3
+	//NDk0NFoXDTI0MDUyOTE3NTAxNFowIDEeMBwGA1UEAxMVZGV2a3ViZS1jYS5zY3Jp
+	//YmQuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2p3z+IBHIcrS
+	//x9FMlyRT/HgSV/wZw/KffSfxfiXIuaK/cCDxqoDK+QzKe9cwRLHYuUKR2zaS57Zv
+	//5KUP67wzmhMhotoXaVSr7Zht6XBL1BYbjhnn64P5OJ7aHmoZupybQF8w2AtxYlwM
+	//JaLhHe7An4CgPDD7i+bZWyHQm8IO0x2BuhqZhqz2dcfWURXXnRKq/oX7s8QjqSE3
+	//7vxUTu8+UKRlnzIbDdQGhwlNMZ9g+2OXFP0VCVzfAB5N0RkH7uH67BjqXaJ2cG3A
+	//3gDab3Mc381W9RBnPkuOwVKxZMmJH8STv6phOXeok/8+kWzQmS4z0gNPQDDHfQdW
+	//mOMMpuNSZwIDAQABo4GGMIGDMA4GA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTAD
+	//AQH/MB0GA1UdDgQWBBSiP999ex76YHothR5ImP6YCQNF7zAfBgNVHSMEGDAWgBSi
+	//P999ex76YHothR5ImP6YCQNF7zAgBgNVHREEGTAXghVkZXZrdWJlLWNhLnNjcmli
+	//ZC5jb20wDQYJKoZIhvcNAQELBQADggEBAEmMQNyRLfrQziU2SGRRUIAwHRFnrtei
+	//Y6TeFJKLiXWXaDRG1ZNMFK6I01FDAufsTIoKmFNxlQ8DRp7SoFM4qKkI/7SzSzKL
+	//7j+G0ZUIdAZB6rpop9hX03D5Ftiu7IFC4j65OdUw6k5FIUKf13AvWZDRabzdLKM7
+	//Jc15hAN5H3FGOTppW1LHTJn6wfioN2VPKlkqI3k03hEHaib9bp02zZPGxsGqumYn
+	//GdmD9Caj9/8jE8YYO+n/9Y9rEEg+3k8F9bvNjCMIq7Avs6aPn05MZ0QCWmG+a6ez
+	//2zAnZuKyLCOnT4kBYsP0bmsplL4/YWitMWkAr4xcIvb7OeFKHL26KiY=
+	//-----END CERTIFICATE-----`,
+	//		Environment: Dev,
+	//		BoundCidrs: []string{
+	//			"10.177.148.209",
+	//		},
+	//	}
+	//
+	//	Clusters = append(Clusters, devkube)
+	//	ClustersByName[devkube.Name] = devkube
 
 	// echo
 
@@ -170,7 +171,7 @@ kNoCEVDI5C2RN36GljQpCFkQ8IR5eyDC4PeqXBkxg8nzrl06NN2R89H1oB3OgiL2
 	}
 
 	Clusters = append(Clusters, foxtrot)
-	ClustersByName[delta.Name] = foxtrot
+	ClustersByName[foxtrot.Name] = foxtrot
 
 	// EKS Airflow
 
@@ -198,7 +199,7 @@ func (km *KeyMaster) K8sAuthPath(cluster Cluster, role *Role) (path string, err 
 		return path, err
 	}
 
-	path = fmt.Sprintf("auth/%s/role/%s-%s", cluster.Name, role.Namespace, role.Name)
+	path = fmt.Sprintf("auth/k8s-%s/role/%s-%s", cluster.Name, role.Namespace, role.Name)
 
 	return path, err
 }

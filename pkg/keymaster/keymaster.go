@@ -349,7 +349,7 @@ func LoadSecretYamls(files []string) (data [][]byte, err error) {
 						return nil
 					}
 
-					configBytes, err := ioutil.ReadFile(fileName)
+					configBytes, err := ioutil.ReadFile(path)
 					if err != nil {
 						err = errors.Wrapf(err, "error reading yaml %s", fileName)
 						return err

@@ -78,7 +78,7 @@ func setUp() {
 				"description": fmt.Sprintf("Kubernetes Cluster %s", cluster.Name),
 			}
 
-			_, err := client.Logical().Write(fmt.Sprintf("sys/auth/%s", cluster.Name), data)
+			_, err := client.Logical().Write(fmt.Sprintf("sys/auth/k8s-%s", cluster.Name), data)
 			if err != nil {
 				log.Fatalf("Failed to enable k8s auth at %s: %s", cluster.Name, err)
 			}
@@ -200,7 +200,7 @@ func WriteKeyMasterPolicy(client *api.Client) (err error) {
 	}
 
 	for _, cluster := range Clusters {
-		paths = append(paths, fmt.Sprintf("auth/%s/*", cluster.Name))
+		paths = append(paths, fmt.Sprintf("auth/k8s-%s/*", cluster.Name))
 	}
 
 	policy := make(map[string]interface{})
@@ -902,7 +902,7 @@ roles:
 	}
 
 	for _, cluster := range Clusters {
-		path := fmt.Sprintf("/auth/%s/role", cluster.Name)
+		path := fmt.Sprintf("/auth/k8s-%s/role", cluster.Name)
 		s, err := km.VaultClient.Logical().List(path)
 		if err != nil {
 			log.Printf("Failed to list k8s roles: %s", err)
@@ -913,7 +913,7 @@ roles:
 		keys, ok := s.Data["keys"].([]interface{})
 		if ok {
 			for _, key := range keys {
-				path := fmt.Sprintf("/auth/%s/role/%s", cluster.Name, key)
+				path := fmt.Sprintf("/auth/k8s-%s/role/%s", cluster.Name, key)
 				s, err := km.VaultClient.Logical().Read(path)
 				if err != nil {
 					log.Printf("Failed to list k8s roles: %s", err)
