@@ -47,7 +47,7 @@ func TestSecretPath(t *testing.T) {
 		},
 	}
 
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(kmClient)
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
@@ -100,7 +100,7 @@ func TestCertPath(t *testing.T) {
 		},
 	}
 
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(kmClient)
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
@@ -183,7 +183,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		},
 	}
 
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(kmClient)
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {

@@ -45,8 +45,7 @@ var newGeneratorErrors = []struct {
 }
 
 func TestNewGenerator(t *testing.T) {
-	client := testServer.VaultTestClient()
-	km := NewKeyMaster(client)
+	km := NewKeyMaster(kmClient)
 
 	for _, tc := range newGeneratorErrors {
 		t.Run(tc.name, func(t *testing.T) {
@@ -59,8 +58,7 @@ func TestNewGenerator(t *testing.T) {
 }
 
 func TestGeneratorValues(t *testing.T) {
-	client := testServer.VaultTestClient()
-	km := NewKeyMaster(client)
+	km := NewKeyMaster(kmClient)
 
 	inputs := []struct {
 		name string

@@ -20,7 +20,7 @@ func anonymizeStringArray(input []string) (output []interface{}) {
 }
 
 func TestK8sAuthCrud(t *testing.T) {
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(kmClient)
 
 	addPolicy1, err := km.NewPolicy(&Role{
 		Name: "app2",

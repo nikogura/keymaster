@@ -21,6 +21,8 @@ import (
 
 var tmpDir string
 var testServer *vaulttest.VaultDevServer
+var kmClient *api.Client
+var rootClient *api.Client
 
 func TestMain(m *testing.M) {
 	setUp()
@@ -127,6 +129,55 @@ func setUp() {
 			log.Fatalf("Failed to write keymaster policy: %s", err)
 		}
 
+		rootClient = testServer.VaultTestClient()
+		data = make(map[string]interface{})
+		data["policies"] = []string{"keymaster"}
+		data["no_parent"] = true
+
+		s, err := rootClient.Logical().Write("/auth/token/create-orphan", data)
+		if err != nil {
+			log.Fatalf("failed to create token for test: %s", err)
+		}
+
+		kmToken := s.Auth.ClientToken
+
+		kmClient, err = rootClient.Clone()
+		if err != nil {
+			log.Fatalf("Failed to clone vault client: %s", err)
+		}
+
+		kmClient.SetToken(kmToken)
+
+		ks, _ := kmClient.Auth().Token().LookupSelf()
+		policies, ok := ks.Data["policies"].([]interface{})
+		if ok {
+			log.Printf("--- Policies on Keymaster Token: ---")
+			for _, policy := range policies {
+				log.Printf("  %s\n", policy)
+			}
+		}
+
+		s, err = kmClient.Logical().Read("sys/policy/keymaster")
+		if err != nil {
+			log.Fatalf("Failed to lookup policy: %s", err)
+		}
+
+		rules, ok := s.Data["rules"].(string)
+		if ok {
+			var rulesObj map[string]interface{}
+			err := json.Unmarshal([]byte(rules), &rulesObj)
+			if err != nil {
+				log.Fatalf("failed to unmarshal rules string into json: %s", err)
+			}
+
+			jb, err := json.MarshalIndent(rulesObj, "", "  ")
+			if err != nil {
+				log.Printf("failed to marshal rules back into json: %s", err)
+
+			}
+			log.Printf("--- Rules ---")
+			log.Printf("%s", string(jb))
+		}
 	}
 }
 
@@ -476,7 +527,7 @@ roles:
 			ERR_UNSUPPORTED_REALM,
 		},
 	}
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(kmClient)
 
 	for _, tt := range inputs {
 		t.Run(tt.name, func(t *testing.T) {
@@ -657,61 +708,6 @@ roles:
       - name: baz
         namespace: redns
 `
-	rootClient := testServer.VaultTestClient()
-	data := make(map[string]interface{})
-	data["policies"] = []string{"keymaster"}
-	data["no_parent"] = true
-
-	s, err := rootClient.Logical().Write("/auth/token/create-orphan", data)
-	if err != nil {
-		log.Printf("failed to create token for test: %s", err)
-		t.Fail()
-	}
-
-	assert.True(t, s != nil, "Generated a test token.")
-	kmToken := s.Auth.ClientToken
-
-	kmClient, err := rootClient.Clone()
-	if err != nil {
-		log.Printf("Failed to clone vault client: %s", err)
-		t.Fail()
-	}
-
-	kmClient.SetToken(kmToken)
-
-	ks, _ := kmClient.Auth().Token().LookupSelf()
-	policies, ok := ks.Data["policies"].([]interface{})
-	if ok {
-		log.Printf("--- Policies on Keymaster Token: ---")
-		for _, policy := range policies {
-			log.Printf("  %s\n", policy)
-		}
-	}
-
-	s, err = kmClient.Logical().Read("sys/policy/keymaster")
-	if err != nil {
-		log.Printf("Failed to lookup policy: %s", err)
-		t.Fail()
-	}
-
-	rules, ok := s.Data["rules"].(string)
-	if ok {
-		var rulesObj map[string]interface{}
-		err := json.Unmarshal([]byte(rules), &rulesObj)
-		if err != nil {
-			log.Printf("failed to unmarshal rules string into json: %s", err)
-			t.Fail()
-		}
-
-		jb, err := json.MarshalIndent(rulesObj, "", "  ")
-		if err != nil {
-			log.Printf("failed to marshal rules back into json: %s", err)
-
-		}
-		log.Printf("--- Rules ---")
-		log.Printf("%s", string(jb))
-	}
-
 	km := NewKeyMaster(kmClient)
 
 	certheader := regexp.MustCompile(`-----BEGIN CERTIFICATE-----`)
@@ -720,7 +716,7 @@ roles:
 	manifestDir := fmt.Sprintf("%s/secrets", tmpDir)
 	subDir := fmt.Sprintf("%s/subdir", manifestDir)
 
-	err = os.MkdirAll(manifestDir, 0755)
+	err := os.MkdirAll(manifestDir, 0755)
 	if err != nil {
 		log.Printf("Error creating dir %s", manifestDir)
 		t.Fail()
@@ -935,7 +931,7 @@ roles:
 		}
 	}
 
-	s, err = km.VaultClient.Logical().List("auth/cert/certs")
+	s, err := km.VaultClient.Logical().List("auth/cert/certs")
 	if err != nil {
 		log.Printf("Failed to list TLS Roles: %s", err)
 		t.Fail()
@@ -987,7 +983,7 @@ roles:
 	log.Printf("--- Create Test Token ---")
 	policy := "dev-bluens-app1"
 
-	data = make(map[string]interface{})
+	data := make(map[string]interface{})
 	data["policies"] = []string{policy}
 	data["no_parent"] = true
 
@@ -1010,7 +1006,7 @@ roles:
 	testClient.SetToken(testToken)
 
 	ts, _ := testClient.Auth().Token().LookupSelf()
-	policies, ok = ts.Data["policies"].([]interface{})
+	policies, ok := ts.Data["policies"].([]interface{})
 	if ok {
 		log.Printf("--- Policies on Test Token: ---")
 		for _, policy := range policies {
@@ -1024,7 +1020,7 @@ roles:
 		t.Fail()
 	}
 
-	rules, ok = s.Data["rules"].(string)
+	rules, ok := s.Data["rules"].(string)
 	if ok {
 		var rulesObj map[string]interface{}
 		err := json.Unmarshal([]byte(rules), &rulesObj)

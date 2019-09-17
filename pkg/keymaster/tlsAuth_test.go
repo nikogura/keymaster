@@ -10,7 +10,7 @@ import (
 )
 
 func TestTlsAuthCrud(t *testing.T) {
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(kmClient)
 
 	policy1, err := km.NewPolicy(&Role{
 		Name: "app1",
