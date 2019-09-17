@@ -1,10 +1,14 @@
 package keymaster
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"git.lo/ops/vaulttest/pkg/vaulttest"
+	"github.com/hashicorp/vault/api"
 	"github.com/phayes/freeport"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
@@ -118,6 +122,11 @@ func setUp() {
 			log.Fatalf("Failed to enable TLS cert auth: %s", err)
 		}
 
+		err = WriteKeyMasterPolicy(client)
+		if err != nil {
+			log.Fatalf("Failed to write keymaster policy: %s", err)
+		}
+
 	}
 }
 
@@ -127,6 +136,75 @@ func tearDown() {
 	}
 
 	testServer.ServerShutDown()
+}
+
+func WriteKeyMasterPolicy(client *api.Client) (err error) {
+	paths := []string{
+		"prod/*",
+		"stage/*",
+		"dev/*",
+		"sys/policy/*",
+		"auth/cert/certs/*",
+		"service/issue/keymaster",
+	}
+
+	for _, cluster := range Clusters {
+		paths = append(paths, fmt.Sprintf("auth/%s/*", cluster.Name))
+	}
+
+	policy := make(map[string]interface{})
+	pathElem := make(map[string]interface{})
+	capabilities := []interface{}{
+		"create",
+		"read",
+		"update",
+		"delete",
+		"list",
+	}
+
+	for _, path := range paths {
+		pathPolicy := map[string]interface{}{"capabilities": capabilities}
+		pathElem[path] = pathPolicy
+
+	}
+
+	policy["path"] = pathElem
+
+	// policies are not normal writes, and a royal pain the butt.  Thank you Mitch.
+	jsonBytes, err := json.Marshal(policy)
+	if err != nil {
+		err = errors.Wrapf(err, "failed to marshal keymaster payload")
+		return err
+	}
+
+	payload := string(jsonBytes)
+
+	payload = base64.StdEncoding.EncodeToString(jsonBytes)
+
+	body := map[string]string{
+		"policy": payload,
+	}
+
+	reqPath := fmt.Sprintf("/v1/sys/policy/keymaster")
+
+	r := client.NewRequest("PUT", reqPath)
+	if err := r.SetJSONBody(body); err != nil {
+		err = errors.Wrapf(err, "failed to set json body on request")
+		return err
+	}
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+
+	resp, err := client.RawRequestWithContext(ctx, r)
+	if err != nil {
+		err = errors.Wrapf(err, "policy set request failed")
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	return err
 }
 
 func TestNewNamespace(t *testing.T) {
@@ -579,8 +657,62 @@ roles:
       - name: baz
         namespace: redns
 `
+	rootClient := testServer.VaultTestClient()
+	data := make(map[string]interface{})
+	data["policies"] = []string{"keymaster"}
+	data["no_parent"] = true
 
-	km := NewKeyMaster(testServer.VaultTestClient())
+	s, err := rootClient.Logical().Write("/auth/token/create-orphan", data)
+	if err != nil {
+		log.Printf("failed to create token for test: %s", err)
+		t.Fail()
+	}
+
+	assert.True(t, s != nil, "Generated a test token.")
+	kmToken := s.Auth.ClientToken
+
+	kmClient, err := rootClient.Clone()
+	if err != nil {
+		log.Printf("Failed to clone vault client: %s", err)
+		t.Fail()
+	}
+
+	kmClient.SetToken(kmToken)
+
+	ks, _ := kmClient.Auth().Token().LookupSelf()
+	policies, ok := ks.Data["policies"].([]interface{})
+	if ok {
+		log.Printf("--- Policies on Keymaster Token: ---")
+		for _, policy := range policies {
+			log.Printf("  %s\n", policy)
+		}
+	}
+
+	s, err = kmClient.Logical().Read("sys/policy/keymaster")
+	if err != nil {
+		log.Printf("Failed to lookup policy: %s", err)
+		t.Fail()
+	}
+
+	rules, ok := s.Data["rules"].(string)
+	if ok {
+		var rulesObj map[string]interface{}
+		err := json.Unmarshal([]byte(rules), &rulesObj)
+		if err != nil {
+			log.Printf("failed to unmarshal rules string into json: %s", err)
+			t.Fail()
+		}
+
+		jb, err := json.MarshalIndent(rulesObj, "", "  ")
+		if err != nil {
+			log.Printf("failed to marshal rules back into json: %s", err)
+
+		}
+		log.Printf("--- Rules ---")
+		log.Printf("%s", string(jb))
+	}
+
+	km := NewKeyMaster(kmClient)
 
 	certheader := regexp.MustCompile(`-----BEGIN CERTIFICATE-----`)
 	keyheader := regexp.MustCompile(`-----BEGIN RSA PRIVATE KEY-----`)
@@ -588,7 +720,7 @@ roles:
 	manifestDir := fmt.Sprintf("%s/secrets", tmpDir)
 	subDir := fmt.Sprintf("%s/subdir", manifestDir)
 
-	err := os.MkdirAll(manifestDir, 0755)
+	err = os.MkdirAll(manifestDir, 0755)
 	if err != nil {
 		log.Printf("Error creating dir %s", manifestDir)
 		t.Fail()
@@ -803,7 +935,7 @@ roles:
 		}
 	}
 
-	s, err := km.VaultClient.Logical().List("auth/cert/certs")
+	s, err = km.VaultClient.Logical().List("auth/cert/certs")
 	if err != nil {
 		log.Printf("Failed to list TLS Roles: %s", err)
 		t.Fail()
@@ -855,18 +987,18 @@ roles:
 	log.Printf("--- Create Test Token ---")
 	policy := "dev-bluens-app1"
 
-	data := make(map[string]interface{})
+	data = make(map[string]interface{})
 	data["policies"] = []string{policy}
 	data["no_parent"] = true
 
-	s, err = km.VaultClient.Logical().Write("/auth/token/create-orphan", data)
+	s, err = rootClient.Logical().Write("/auth/token/create-orphan", data)
 	if err != nil {
 		log.Printf("failed to create token for test: %s", err)
 		t.Fail()
 	}
 
 	assert.True(t, s != nil, "Generated a test token.")
-	newToken := s.Auth.ClientToken
+	testToken := s.Auth.ClientToken
 
 	testClient, err := km.VaultClient.Clone()
 	if err != nil {
@@ -875,7 +1007,16 @@ roles:
 	}
 
 	testClient.ClearToken()
-	testClient.SetToken(newToken)
+	testClient.SetToken(testToken)
+
+	ts, _ := testClient.Auth().Token().LookupSelf()
+	policies, ok = ts.Data["policies"].([]interface{})
+	if ok {
+		log.Printf("--- Policies on Test Token: ---")
+		for _, policy := range policies {
+			log.Printf("  %s\n", policy)
+		}
+	}
 
 	s, err = testClient.Logical().Read("sys/policy/dev-bluens-app1")
 	if err != nil {
@@ -883,7 +1024,7 @@ roles:
 		t.Fail()
 	}
 
-	rules, ok := s.Data["rules"].(string)
+	rules, ok = s.Data["rules"].(string)
 	if ok {
 		var rulesObj map[string]interface{}
 		err := json.Unmarshal([]byte(rules), &rulesObj)
