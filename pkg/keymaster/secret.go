@@ -128,7 +128,7 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret) (err error) {
 				sdata["issuing_ca"] = vcert.CA
 				sdata["serial_number"] = vcert.Serial
 				sdata["ca_chain"] = vcert.Chain
-				sdata["private_kye_type"] = vcert.Type
+				sdata["private_key_type"] = vcert.Type
 				sdata["expiration"] = vcert.Expiration
 
 				jsonBytes, err := json.Marshal(secret.GeneratorData)
