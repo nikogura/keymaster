@@ -705,6 +705,7 @@ roles:
     secrets:
       - name: foo
       - name: wip
+      - name: foo.scribd.com
       - name: baz
         namespace: redns
 `
@@ -787,7 +788,7 @@ roles:
 				for _, secret := range ns.Secrets {
 					var path string
 					if secret.GeneratorData["type"] == "tls" {
-						path, err = km.CertPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
 						if err != nil {
 							log.Printf("Error creating path: %s", err)
 							t.Fail()

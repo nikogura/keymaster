@@ -34,10 +34,7 @@ Syncs Secret config yamls with Vault.
 			log.Fatalf("failed to load secret definitions: %s", err)
 		}
 
-		// scrutil doesn't take the env var, this is how you override the default
-		scrutil.VAULT_ADDR = vaultAddress
-
-		client, err := scrutil.GetVaultClient(!noninteractive, verbose)
+		client, err := scrutil.VaultAuth("", "", !noninteractive, verbose)
 		if err != nil {
 			log.Fatalf("Failed to create Vault client: %s", err)
 		}

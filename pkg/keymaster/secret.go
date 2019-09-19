@@ -110,7 +110,7 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret) (err error) {
 				data["data"] = sdata
 
 				var vcert VaultCert
-				certPath, err := km.CertPath(secret.Name, secret.Namespace, env)
+				secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
 				if err != nil {
 					err = errors.Wrapf(err, "failed to create cert path")
 					return err
@@ -138,9 +138,9 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret) (err error) {
 
 				sdata["generator_data"] = base64.StdEncoding.EncodeToString(jsonBytes)
 
-				_, err = km.VaultClient.Logical().Write(certPath, data)
+				_, err = km.VaultClient.Logical().Write(secretPath, data)
 				if err != nil {
-					err = errors.Wrapf(err, "failed to write secret to %s", certPath)
+					err = errors.Wrapf(err, "failed to write secret to %s", secretPath)
 				}
 
 			case "rsa":
