@@ -283,7 +283,7 @@ func TestPolicyCrud(t *testing.T) {
 
 	for _, tc := range inputs {
 		// write
-		err := km.WritePolicyToVault(tc.in)
+		err := km.WritePolicyToVault(tc.in, true)
 		if err != nil {
 			fmt.Printf("Policy write error: %s", err)
 			t.Fail()

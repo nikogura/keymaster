@@ -29,7 +29,7 @@ Syncs Secret config yamls with Vault.
 			args = append(args, configPath)
 		}
 
-		data, err := keymaster.LoadSecretYamls(args)
+		data, err := keymaster.LoadSecretYamls(args, verbose)
 		if err != nil {
 			log.Fatalf("failed to load secret definitions: %s", err)
 		}
@@ -42,11 +42,11 @@ Syncs Secret config yamls with Vault.
 		km := keymaster.NewKeyMaster(client)
 
 		for _, config := range data {
-			ns, err := km.NewNamespace(config)
+			ns, err := km.NewNamespace(config, verbose)
 			if err != nil {
 				log.Fatalf("Failed to load secret definitions: %s", err)
 			} else {
-				err = km.ConfigureNamespace(ns)
+				err = km.ConfigureNamespace(ns, verbose)
 				if err != nil {
 					log.Fatalf("Failed to configure vault for secret definitions: %s", err)
 				}

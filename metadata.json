@@ -7,7 +7,12 @@
   "building": {
     "targets": [
       {
-        "name": "darwin/amd64"
+        "name": "darwin/amd64",
+        "cgo": true,
+        "flags": {
+          "CC": "o64-gcc",
+          "CXX": "o64-g++"
+        }
       },
       {
         "name": "linux/amd64"

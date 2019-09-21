@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/pkg/errors"
 )
 
@@ -72,14 +73,102 @@ func (km *KeyMaster) CertPath(name string, namespace string, env Environment) (p
 	return path, err
 }
 
+func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env Environment) (err error) {
+	if secret.Generator == nil {
+		err = errors.New(fmt.Sprintf("nil generators are not suppported.  secret: %q", secret.Name))
+		return err
+	}
+
+	switch secret.GeneratorData["type"] {
+	case "tls":
+		value, err := secret.Generator.Generate()
+		if err != nil {
+			err = errors.Wrapf(err, "failed to generate value for %q", secret.Name)
+			return err
+		}
+
+		data := make(map[string]interface{})
+		sdata := make(map[string]interface{})
+
+		data["data"] = sdata
+
+		var vcert VaultCert
+		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to create cert path")
+			return err
+		}
+
+		// value is a string, due to the signature on Generate(), but in this case it's parts that have to be unmarshalled and converted to interface types for writing.
+		err = json.Unmarshal([]byte(value), &vcert)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to unmarshal cert info returned from generator")
+			return err
+		}
+
+		sdata["private_key"] = vcert.Key
+		sdata["certificate"] = vcert.Cert
+		sdata["issuing_ca"] = vcert.CA
+		sdata["serial_number"] = vcert.Serial
+		sdata["ca_chain"] = vcert.Chain
+		sdata["private_key_type"] = vcert.Type
+		sdata["expiration"] = vcert.Expiration
+
+		jsonBytes, err := json.Marshal(secret.GeneratorData)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to marshal generator data for %q", secret.Name)
+		}
+
+		sdata["generator_data"] = base64.StdEncoding.EncodeToString(jsonBytes)
+
+		_, err = km.VaultClient.Logical().Write(secretPath, data)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to write secret to %s", secretPath)
+		}
+
+	case "rsa":
+		// TODO Implement saving RSA Secrets
+	default:
+		value, err := secret.Generator.Generate()
+		if err != nil {
+			err = errors.Wrapf(err, "failed to generate value for %q", secret.Name)
+			return err
+		}
+
+		data := make(map[string]interface{})
+		sdata := make(map[string]interface{})
+
+		data["data"] = sdata
+
+		sdata["value"] = value
+
+		jsonBytes, err := json.Marshal(secret.GeneratorData)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to marshal generator data for %q", secret.Name)
+		}
+
+		sdata["generator_data"] = base64.StdEncoding.EncodeToString(jsonBytes)
+
+		_, err = km.VaultClient.Logical().Write(secretPath, data)
+		if err != nil {
+			err = errors.Wrapf(err, "failed to write secret to %s", secretPath)
+		}
+	}
+
+	return err
+}
+
 // WriteSecretIfBlank writes a secret to each environment, but only if there's not already a value there.
-func (km *KeyMaster) WriteSecretIfBlank(secret *Secret) (err error) {
+func (km *KeyMaster) WriteSecretIfBlank(secret *Secret, verbose bool) (err error) {
+	scrutil.VerboseOutput(verbose, "checking secret %s", secret.Name)
 	for _, env := range Envs {
+		scrutil.VerboseOutput(verbose, "  checking env %s", EnvToName[env])
 		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create secret path")
 			return err
 		}
+		scrutil.VerboseOutput(verbose, "    path: %s", secretPath)
 
 		// check to see if the secret does not exist
 		s, err := km.VaultClient.Logical().Read(secretPath)
@@ -91,87 +180,20 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret) (err error) {
 		// s will be nil if the secret does not exist
 		// warning: s will not be nil if there's a warning returned by the read
 		if s == nil {
-			if secret.Generator == nil {
-				err = errors.New(fmt.Sprintf("nil generators are not suppported.  secret: %q", secret.Name))
+			scrutil.VerboseOutput(verbose, "secret is nil")
+			err = km.WriteSecretForEnv(secret, secretPath, env)
+			if err != nil {
 				return err
 			}
-
-			switch secret.GeneratorData["type"] {
-			case "tls":
-				value, err := secret.Generator.Generate()
-				if err != nil {
-					err = errors.Wrapf(err, "failed to generate value for %q", secret.Name)
-					return err
-				}
-
-				data := make(map[string]interface{})
-				sdata := make(map[string]interface{})
-
-				data["data"] = sdata
-
-				var vcert VaultCert
-				secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
-				if err != nil {
-					err = errors.Wrapf(err, "failed to create cert path")
-					return err
-				}
-
-				// value is a string, due to the signature on Generate(), but in this case it's parts that have to be unmarshalled and converted to interface types for writing.
-				err = json.Unmarshal([]byte(value), &vcert)
-				if err != nil {
-					err = errors.Wrapf(err, "failed to unmarshal cert info returned from generator")
-					return err
-				}
-
-				sdata["private_key"] = vcert.Key
-				sdata["certificate"] = vcert.Cert
-				sdata["issuing_ca"] = vcert.CA
-				sdata["serial_number"] = vcert.Serial
-				sdata["ca_chain"] = vcert.Chain
-				sdata["private_key_type"] = vcert.Type
-				sdata["expiration"] = vcert.Expiration
-
-				jsonBytes, err := json.Marshal(secret.GeneratorData)
-				if err != nil {
-					err = errors.Wrapf(err, "failed to marshal generator data for %q", secret.Name)
-				}
-
-				sdata["generator_data"] = base64.StdEncoding.EncodeToString(jsonBytes)
-
-				_, err = km.VaultClient.Logical().Write(secretPath, data)
-				if err != nil {
-					err = errors.Wrapf(err, "failed to write secret to %s", secretPath)
-				}
-
-			case "rsa":
-				// TODO Implement saving RSA Secrets
-			default:
-				value, err := secret.Generator.Generate()
-				if err != nil {
-					err = errors.Wrapf(err, "failed to generate value for %q", secret.Name)
-					return err
-				}
-
-				data := make(map[string]interface{})
-				sdata := make(map[string]interface{})
-
-				data["data"] = sdata
-
-				sdata["value"] = value
-
-				jsonBytes, err := json.Marshal(secret.GeneratorData)
-				if err != nil {
-					err = errors.Wrapf(err, "failed to marshal generator data for %q", secret.Name)
-				}
-
-				sdata["generator_data"] = base64.StdEncoding.EncodeToString(jsonBytes)
-
-				_, err = km.VaultClient.Logical().Write(secretPath, data)
-				if err != nil {
-					err = errors.Wrapf(err, "failed to write secret to %s", secretPath)
-				}
+		} else if s.Data["data"] == nil {
+			scrutil.VerboseOutput(verbose, "secret has no data element")
+			err = km.WriteSecretForEnv(secret, secretPath, env)
+			if err != nil {
+				return err
 			}
 		}
+
+		scrutil.VerboseOutput(verbose, "secret exists")
 	}
 
 	return err

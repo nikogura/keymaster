@@ -532,7 +532,7 @@ roles:
 	for _, tt := range inputs {
 		t.Run(tt.name, func(t *testing.T) {
 			data := []byte(tt.in)
-			_, err := km.NewNamespace(data)
+			_, err := km.NewNamespace(data, true)
 			errstr := ""
 			if err != nil {
 				errstr = err.Error()
@@ -758,7 +758,7 @@ roles:
 
 	files = append(files, fileName)
 
-	configs, err := LoadSecretYamls(files)
+	configs, err := LoadSecretYamls(files, true)
 	if err != nil {
 		log.Printf("Failed to load secrets from %s: %s", fileName, err)
 		t.Fail()
@@ -771,13 +771,13 @@ roles:
 	assert.True(t, len(configs) == 3, "expect 3 configs for processing.")
 
 	for _, config := range configs {
-		ns, err := km.NewNamespace(config)
+		ns, err := km.NewNamespace(config, true)
 		log.Printf("--- Processing data for namespace: %s ---", ns.Name)
 		if err != nil {
 			log.Printf("Failed to load namespace: %s", err)
 			t.Fail()
 		} else {
-			err = km.ConfigureNamespace(ns)
+			err = km.ConfigureNamespace(ns, true)
 			if err != nil {
 				log.Printf("Failed to configure namespace: %s", err)
 				t.Fail()
@@ -1047,19 +1047,24 @@ roles:
 		t.Fail()
 	}
 
-	data, ok = s.Data["data"].(map[string]interface{})
-	if ok {
-		value, ok := data["value"].(string)
+	if s != nil {
+		data, ok = s.Data["data"].(map[string]interface{})
 		if ok {
-			log.Printf("Value: %s", value)
+			value, ok := data["value"].(string)
+			if ok {
+				log.Printf("Value: %s", value)
+			}
 		}
+
 	}
 
 	badpath := "prod/data/redns/foo"
 
-	s, err = testClient.Logical().Read(badpath)
-	if err == nil {
-		log.Printf("Lookup badpath %s should cause error: %s", badpath, err)
-		t.Fail()
+	if s != nil {
+		s, err = testClient.Logical().Read(badpath)
+		if err == nil {
+			log.Printf("Lookup badpath %s should cause error: %s", badpath, err)
+			t.Fail()
+		}
 	}
 }
