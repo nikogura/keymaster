@@ -2,6 +2,7 @@ package keymaster
 
 import (
 	"fmt"
+	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/hashicorp/vault/api"
 	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
@@ -139,7 +140,7 @@ func (r *Role) SetNamespace(namespace string) {
 }
 
 // NewNamespace Create a new Namespace from the data provided.
-func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
+func (km *KeyMaster) NewNamespace(data []byte, verbose bool) (ns Namespace, err error) {
 	err = yaml.Unmarshal(data, &ns)
 	if err != nil {
 		err = errors.Wrap(err, ERR_NS_DATA_LOAD)
@@ -157,12 +158,15 @@ func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 		return ns, err
 	}
 
+	scrutil.VerboseOutput(verbose, "parsing namespace %s", ns.Name)
+
 	// Generate maps for O(1) lookups
 	ns.SecretsMap = make(map[string]*Secret)
 	ns.RolesMap = make(map[string]*Role)
 
 	// If there's no namespace listed for the secret, it belongs to the namespace of the file from which it's loaded.
 	for _, secret := range ns.Secrets {
+		scrutil.VerboseOutput(verbose, "  parsing secret %s", secret.Name)
 		if secret.Namespace == "" {
 			secret.SetNamespace(ns.Name)
 		}
@@ -185,10 +189,12 @@ func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 
 		secret.SetGenerator(generator)
 
+		scrutil.VerboseOutput(verbose, "  ... success!")
 		ns.SecretsMap[secret.Name] = secret
 	}
 
 	for _, role := range ns.Roles {
+		scrutil.VerboseOutput(verbose, "  parsing role %s", role.Name)
 		if role.Name == "" {
 			err = errors.New(ERR_NAMELESS_ROLE)
 			return ns, err
@@ -216,6 +222,7 @@ func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 		}
 
 		for _, secret := range role.Secrets {
+			scrutil.VerboseOutput(verbose, "  parsing role secrets %s", secret.Name)
 			if secret.Namespace == "" {
 				secret.Namespace = ns.Name
 			}
@@ -228,8 +235,10 @@ func (km *KeyMaster) NewNamespace(data []byte) (ns Namespace, err error) {
 					return ns, err
 				}
 			}
+			scrutil.VerboseOutput(verbose, "  ... done")
 		}
 
+		scrutil.VerboseOutput(verbose, "  ... role successfully loaded")
 		ns.RolesMap[role.Name] = role
 	}
 
@@ -253,39 +262,54 @@ func NameToEnvironment(name string) (env Environment, err error) {
 }
 
 // ConfigureNamespace  The grand unified config loader that, after the yaml file is read into memory, applies it to Vault.
-func (km *KeyMaster) ConfigureNamespace(namespace Namespace) (err error) {
+func (km *KeyMaster) ConfigureNamespace(namespace Namespace, verbose bool) (err error) {
+	scrutil.VerboseOutput(verbose, "--- Configuring namespace %s ---", namespace.Name)
 	// populate secrets
+	scrutil.VerboseOutput(verbose, "--- Populating Secrets ---")
 	for _, secret := range namespace.Secrets {
-		err = km.WriteSecretIfBlank(secret)
+		scrutil.VerboseOutput(verbose, "    configuring secret %s", secret.Name)
+		err = km.WriteSecretIfBlank(secret, verbose)
 		if err != nil {
 			err = errors.Wrapf(err, "failed writing secret %s in namespace %s", secret.Name, secret.Namespace)
 			return err
 		}
 	}
+	scrutil.VerboseOutput(verbose, "done")
 
+	scrutil.VerboseOutput(verbose, "--- Configuring Roles ---")
 	for _, role := range namespace.Roles {
+		scrutil.VerboseOutput(verbose, "  configuring role %s", role.Name)
 		if role.Namespace == "" {
 			err = errors.New("Unnamespaced Role!")
 			return err
 		}
 
+		scrutil.VerboseOutput(verbose, "  walking environments...")
 		for _, env := range Envs {
+			scrutil.VerboseOutput(verbose, "    handling %s...", EnvToName[env])
 			// write policies
+			scrutil.VerboseOutput(verbose, "      new policy for role %s in env %s...", role.Name, EnvToName[env])
 			policy, err := km.NewPolicy(role, env)
 			if err != nil {
 				err = errors.Wrapf(err, "failed to create policy")
 				return err
 			}
 
-			err = km.WritePolicyToVault(policy)
+			scrutil.VerboseOutput(verbose, "      writing policy to %s ...", policy.Path)
+			err = km.WritePolicyToVault(policy, verbose)
 			if err != nil {
 				err = errors.Wrapf(err, "failed writing policy %q for role %q in env %q", policy.Name, role.Name, EnvToName[env])
+				return err
 			}
+			scrutil.VerboseOutput(verbose, "      written")
 
+			scrutil.VerboseOutput(verbose, "      creating auth configs...")
 			// create auth configs
 			for _, realm := range role.Realms {
+				scrutil.VerboseOutput(verbose, "        config for realm %s...", realm)
 				switch realm {
 				case K8S_NAME:
+					scrutil.VerboseOutput(verbose, "          k8s")
 					for _, cluster := range ClustersByEnvironment[env] {
 						err = km.AddPolicyToK8sRole(cluster, role, policy)
 						if err != nil {
@@ -295,12 +319,14 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace) (err error) {
 					}
 
 				case SL_NAME:
+					scrutil.VerboseOutput(verbose, "          sl")
 					err = km.AddPolicyToTlsRole(role, env, policy)
 					if err != nil {
 						err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, EnvToName[env])
 						return err
 					}
 				case AWS_NAME:
+					scrutil.VerboseOutput(verbose, "          aws")
 					err = errors.New("AWS Realm not yet implemented")
 					return err
 
@@ -309,16 +335,22 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace) (err error) {
 					return err
 				}
 			}
+			scrutil.VerboseOutput(verbose, "      done")
 		}
+		scrutil.VerboseOutput(verbose, "  done")
 	}
+
+	scrutil.VerboseOutput(verbose, "done")
 
 	return err
 }
 
-func LoadSecretYamls(files []string) (data [][]byte, err error) {
+func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 	data = make([][]byte, 0)
+	scrutil.VerboseOutput(verbose, "Loading Secret Yamls")
 
 	for _, fileName := range files {
+		scrutil.VerboseOutput(verbose, "  examining %s", fileName)
 		fi, err := os.Stat(fileName)
 		if err != nil {
 			err = errors.Wrap(err, fmt.Sprintf("failed to read yaml %s", fileName))
@@ -327,21 +359,26 @@ func LoadSecretYamls(files []string) (data [][]byte, err error) {
 
 		switch mode := fi.Mode(); {
 		case mode.IsRegular():
+			scrutil.VerboseOutput(verbose, "    regular file")
 			configBytes, err := ioutil.ReadFile(fileName)
 			if err != nil {
 				err = errors.Wrapf(err, "Error reading yaml %s", fileName)
 				return data, err
 			}
 
+			scrutil.VerboseOutput(verbose, "    ... loaded")
 			data = append(data, configBytes)
 
 		case mode.IsDir():
+			scrutil.VerboseOutput(verbose, "    directory")
 			// start off true, set false on any failure
 			err := filepath.Walk(fileName, func(path string, info os.FileInfo, err error) error {
+				scrutil.VerboseOutput(verbose, "  examining file")
 				if err != nil {
 					return err
 				}
 				if !info.IsDir() { // we only care about files
+					scrutil.VerboseOutput(verbose, "    regular file")
 					// and we only care about yaml files
 					fileName := filepath.Base(path)
 					pat := regexp.MustCompile(`.+\.ya?ml`)
@@ -355,6 +392,7 @@ func LoadSecretYamls(files []string) (data [][]byte, err error) {
 						return err
 					}
 
+					scrutil.VerboseOutput(verbose, "    ... loaded")
 					data = append(data, configBytes)
 
 					return nil

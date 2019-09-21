@@ -99,8 +99,37 @@ Kxq0lynHENJpP/eXjfyC8sLDVJN8YO3n4w==
 	ClustersByName[bravo.Name] = bravo
 
 	// charlie
-	// delta
-	// Note: cannot set up devkube until we configure the vault-auth service account for devkube
+	charlie := Cluster{
+		Name:         "charlie",
+		ApiServerUrl: "https://169.60.14.112:6443",
+		CACert: `LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN3akNDQ\
+      WFxZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFTTVJBd0RnWURWUVFERXdkcmRXSmwKT\
+      FdOaE1CNFhEVEU1TURVd01qQXlNRFkwT0ZvWERUSTVNRFF5T1RBeU1EWTBPRm93RWpFUU1BNEdBM\
+      VVFQXhNSAphM1ZpWlMxallUQ0NBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ\
+      0VCQUw0Y2ZDM0Foem5iCjhpTFV0R3FFV2ZGa1R1aXd1bElGSUs2M3Z4aEs2VE5yTWpyRjZ1d253Z\
+      2hBOCtHZW4xeE1KOHVkMHd5OTlVbDcKVWU4SkJRYkdjWUtvK09JL055cExKYlB4Vjc1NjQyZnRia\
+      kxnaytMSkpaUFRlUWdpKzJZdXVKa3JSTDhLU09teQpEcUJaVnlTOWhjV2tZTHR1UGF6WE1lbGlSb\
+      lJJWE5vVFpwTDY2Z090OGhKVzFhYnlDL0k2ZFRZWVBXQTBWckU2ClEweWFLQndDWWN4M1JUWVlWW\
+      mFoUCtJcGJwZ2ZSLzVxQ2Nhc1lWMW5uQVZXdHJJaGFINmZMZ3h1a3IxWElDN2MKSUJBUzA0RUp3R\
+      3RmeWMreUZKRE9HeGovYzVXK2JjMHlkc1BCRnM1QklMQmxoSWNsSE9pYTBDNk45eDZyajVTMgovK\
+      1BTeW81YUdXRUNBd0VBQWFNak1DRXdEZ1lEVlIwUEFRSC9CQVFEQWdLa01BOEdBMVVkRXdFQi93U\
+      UZNQU1CCkFmOHdEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBQlNGUng5N1QxeHJMbHpCUjd4ZW9yR\
+      G8wQ29IRDg0OUUrWSsKVmROTG9hMDFXeGxJaEdQcnFtM0d6UDZremI5dTVEaFg3aVlVbkpHdlQ0Z\
+      3hnNnhwazFQbHJlRERiTEVKSG9TZwpuclFRSHlId0dUTHJkR2ZNZnh5ckhCVkVQNDQwRm8rbjdJZ\
+      3FCeW9IQ3lXdEZrWjZkOUgyNXRGaDhoL3JUa2RDClZQVUQ4TEZzUUcwUE1QbEhzVlNrRlh5REhtU\
+      mdPbWtUcnYxbjdGK1g3NitYSlRhVFlCMHBvVnh1UUtTd05XUWgKcjFzWGljM1creU1wbk10Q3VSV\
+      npMRlQzNnFvVEgxYUV2QWVrV2djVzNoVUtGSVROZ2V4NXFmR1ZlNGNSejc0dApVYmVTZ0ZjREdSc\
+      1VaeGVBYTJ5TmZtTW12eVdPeTJnV3J6SXA0SlEzR3ZSYkhXRlFpSU09Ci0tLS0tRU5EIENFUlRJR\
+      klDQVRFLS0tLS0K
+`,
+		Environment: Prod,
+		BoundCidrs:  []string{},
+	}
+
+	Clusters = append(Clusters, charlie)
+	ClustersByName[charlie.Name] = charlie
+
+	// devkube
 	//	devkube := Cluster{
 	//		Name:         "devkube",
 	//		ApiServerUrl: "https://devkube.inf.scribd.com:6443",
@@ -172,6 +201,36 @@ kNoCEVDI5C2RN36GljQpCFkQ8IR5eyDC4PeqXBkxg8nzrl06NN2R89H1oB3OgiL2
 
 	Clusters = append(Clusters, foxtrot)
 	ClustersByName[foxtrot.Name] = foxtrot
+
+	// Core Services Development
+	//	csvcDevel := Cluster{
+	//		Name: "csvc-devel",
+	//		ApiServerUrl: "https://CAF301109D1392DA3FAC01DCCC64FCFD.yl4.us-east-2.eks.amazonaws.com",
+	//		CACert: `-----BEGIN CERTIFICATE-----
+	//MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
+	//cm5ldGVzMB4XDTE5MDkxOTEyMzAzNloXDTI5MDkxNjEyMzAzNlowFTETMBEGA1UE
+	//AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMGo
+	//HvcJh2LQX8M7fMJpbbeVT6GtADKXvhF7ZwAJp0SfK63zYfinNvASGVLGHCKCYLgC
+	//pyqtjCEH40aN0v6m+EEyQUDod8Pt9sW54zrcJvpKydgu1FR3EH/52wxCD6xS9PsA
+	//u7AMRgcLrCZZ1+zM2wkRPGyGd6tWZesWkp/EFvSfyJupDKSjqmMdR1XvPIBuGVw/
+	//OQNQr6RojCtmJxjTgRaBqAkRhgiXcYyFJgGMGYNPtrGtEVZ5O+vuVGr3aqGOA87m
+	//CXEB8EmAUysCC9XA7X8nCHVI22Fa2Bnu0VaX/n5eeLjufJw6G8xcELvjAT7KRdRE
+	//r8J/9Hv8v65wuwzaC5kCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
+	///wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBADjmPyKXSb4nkV74hvPBwHn/zmA5
+	//K9d86+9PdH3ZWq75HwjQyT5OnyY83cPH1i9aztIlTDYSvAKgf6s7YMbQASnOthx9
+	//j2dExXcadkYxZzsunh5sHK7F5SSVAXTWLRw+syIhv1RISgCo6s6ThF52aG45FFh5
+	//e2b7vScp+GSnoLrteEc8Y1cc1+iTw7MpH3rjv/V8ufS+KQrYDW1PWJRDNY/m5zFp
+	//ITMu3QTRGbkC+VAfdi+FDALMkkecxxcFWeH/yD4pEE2D+V56kKyWw9Y3V92HTusk
+	//ac7iNtBKa2an8cWCw8HqmPmuojx5OFr+gegQ9ptilWeiyCPmNNPIxlFBi+A=
+	//-----END CERTIFICATE-----`,
+	//		Environment: Dev,
+	//		BoundCidrs: []string{
+	//
+	//		},
+	//	}
+	//
+	//	Clusters = append(Clusters, csvcDevel)
+	//	ClustersByName[csvcDevel.Name] = csvcDevel
 
 	// EKS Airflow
 

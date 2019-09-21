@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/pkg/errors"
+	"log"
 	"strings"
 )
 
@@ -124,7 +126,8 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[
 }
 
 // WritePolicyToVault does just that.  It takes a vault client and the policy and takes care of the asshattery that is the vault api for policies.
-func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy) (err error) {
+func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err error) {
+	log.Printf("-----------------------------------------------------------------------------------------------------------------")
 	// policies are not normal writes, and a royal pain the butt.  Thank you Mitch.
 	jsonBytes, err := json.Marshal(policy.Payload)
 	if err != nil {
@@ -141,6 +144,15 @@ func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy) (err error) {
 	}
 
 	reqPath := fmt.Sprintf("/v1/%s", policy.Path)
+	scrutil.VerboseOutput(verbose, "        request path: %s", reqPath)
+
+	bbytes, err := json.Marshal(body)
+	if err != nil {
+		err = errors.Wrapf(err, "unable to marshal policy request body to json")
+		return err
+	}
+
+	scrutil.VerboseOutput(verbose, "        request body: %s", string(bbytes))
 
 	r := km.VaultClient.NewRequest("PUT", reqPath)
 	if err := r.SetJSONBody(body); err != nil {
@@ -154,6 +166,13 @@ func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy) (err error) {
 	resp, err := km.VaultClient.RawRequestWithContext(ctx, r)
 	if err != nil {
 		err = errors.Wrapf(err, "policy set request failed")
+		return err
+	}
+
+	code := resp.StatusCode
+	scrutil.VerboseOutput(verbose, "        response code: %d", code)
+	if code != 204 {
+		err = errors.New(fmt.Sprintf("failed writing to %s", policy.Path))
 		return err
 	}
 
@@ -216,19 +235,3 @@ func (km *KeyMaster) DeletePolicyFromVault(path string) (err error) {
 
 	return err
 }
-
-/*
-	LDAP Auth can access only dev secrets
-
-	k8s dev auth can access dev secrets
-	k8s stage auth can access stage secrets
-	k8s prod auth can access prod secrets
-
-	aws dev auth can access dev secrets
-	aws stage auth can access stage secrets
-	aws prod auth can access prod secrets
-
-	tls prod auth can access prod secrets
-	do we need tls stage / dev access at all?
-
-*/
