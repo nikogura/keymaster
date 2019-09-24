@@ -202,6 +202,36 @@ kNoCEVDI5C2RN36GljQpCFkQ8IR5eyDC4PeqXBkxg8nzrl06NN2R89H1oB3OgiL2
 	Clusters = append(Clusters, foxtrot)
 	ClustersByName[foxtrot.Name] = foxtrot
 
+	// golf
+	golf := Cluster{
+		Name:         "golf",
+		ApiServerUrl: "https://kube-golf01:6443",
+		CACert: `-----BEGIN CERTIFICATE-----
+MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
+cm5ldGVzMB4XDTE5MDkyMzE5MDczOFoXDTI5MDkyMDE5MDczOFowFTETMBEGA1UE
+AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBANgv
+rfc2gZuHaopOScLAje0kSdyNixyi98qTwp61yGx/7KeRItQ4sgABm9d6A/352wpZ
+M41zm+N5nvVgHh6cHB4yiNt4U+jhOBCXWajYRlHqMP3eJS5cWjYpBWpHncNDDdC1
+FSarlkJmiMHVPimSoVNBCdNr6WyL4CP/nBXPcDBdECBgCXRrqidMiY8I3QynuoXx
+c6VNKshlxTvCPf8oin679KMwMQbzH6CZ9QBiEF4F9D0JWvpgpkM4iJ5wYQ9H1+ia
+CZrI9KjECuEriLr6gv/vrgRf/FhESCNvHmJDUPGVEhaDU+qp8YjNrEXkGp0599Oy
+HRvu8J5E5x1Wf/4HCSMCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
+/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAAXsbNVcADziyLUN9vcr21j3JXxD
+FmuYDEoyW0SgsCFwXwbT/JnFCntQGBcgf273hS9i9XZYcbg2v6HPqVObzsGwv960
+iqfhsHwB0vkF6+HIbV7GuYVHbufq8bxQl/6aH9zt6px63/canlQsYneEBVE/VxwB
+IYDDkFzddRCPc4sMv6m+NaFclL8KE3gn241kJFGNoNDabBNMQPooSsPRYQVlnSF7
+pQuIfEhzZIVhpEJwCwjwnKT7SBTgsKhkXprmQon1kcKgm+8RVBAOP+4V6uAxOszP
+hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
+-----END CERTIFICATE-----`,
+		Environment: Prod,
+		BoundCidrs: []string{
+			"10.177.148.240",
+		},
+	}
+
+	Clusters = append(Clusters, golf)
+	ClustersByName[golf.Name] = golf
+
 	// Core Services Development
 	//	csvcDevel := Cluster{
 	//		Name: "csvc-devel",

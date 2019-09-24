@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/pkg/errors"
-	"log"
 	"strings"
 )
 
@@ -127,7 +126,7 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[
 
 // WritePolicyToVault does just that.  It takes a vault client and the policy and takes care of the asshattery that is the vault api for policies.
 func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err error) {
-	log.Printf("-----------------------------------------------------------------------------------------------------------------")
+	scrutil.VerboseOutput(verbose, "----------------------------------------------------------------------------------------------------------------")
 	// policies are not normal writes, and a royal pain the butt.  Thank you Mitch.
 	jsonBytes, err := json.Marshal(policy.Payload)
 	if err != nil {
