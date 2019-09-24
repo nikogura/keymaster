@@ -347,7 +347,7 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace, verbose bool) (err 
 
 func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 	data = make([][]byte, 0)
-	scrutil.VerboseOutput(verbose, "Loading Secret Yamls")
+	scrutil.VerboseOutput(verbose, "\nLoading Secret Yamls")
 
 	for _, fileName := range files {
 		scrutil.VerboseOutput(verbose, "  examining %s", fileName)
