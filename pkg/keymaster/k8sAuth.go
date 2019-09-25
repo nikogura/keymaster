@@ -234,33 +234,33 @@ hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 
 	// Core Services Development
 	//	csvcDevel := Cluster{
-	//		Name: "csvc-devel",
-	//		ApiServerUrl: "https://CAF301109D1392DA3FAC01DCCC64FCFD.yl4.us-east-2.eks.amazonaws.com",
+	//		Name: "development-apps",
+	//		ApiServerUrl: "https://56E51D0A7A4FF7587BE0F094B93B1521.sk1.us-east-2.eks.amazonaws.com",
 	//		CACert: `-----BEGIN CERTIFICATE-----
 	//MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
-	//cm5ldGVzMB4XDTE5MDkxOTEyMzAzNloXDTI5MDkxNjEyMzAzNlowFTETMBEGA1UE
-	//AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMGo
-	//HvcJh2LQX8M7fMJpbbeVT6GtADKXvhF7ZwAJp0SfK63zYfinNvASGVLGHCKCYLgC
-	//pyqtjCEH40aN0v6m+EEyQUDod8Pt9sW54zrcJvpKydgu1FR3EH/52wxCD6xS9PsA
-	//u7AMRgcLrCZZ1+zM2wkRPGyGd6tWZesWkp/EFvSfyJupDKSjqmMdR1XvPIBuGVw/
-	//OQNQr6RojCtmJxjTgRaBqAkRhgiXcYyFJgGMGYNPtrGtEVZ5O+vuVGr3aqGOA87m
-	//CXEB8EmAUysCC9XA7X8nCHVI22Fa2Bnu0VaX/n5eeLjufJw6G8xcELvjAT7KRdRE
-	//r8J/9Hv8v65wuwzaC5kCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
-	///wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBADjmPyKXSb4nkV74hvPBwHn/zmA5
-	//K9d86+9PdH3ZWq75HwjQyT5OnyY83cPH1i9aztIlTDYSvAKgf6s7YMbQASnOthx9
-	//j2dExXcadkYxZzsunh5sHK7F5SSVAXTWLRw+syIhv1RISgCo6s6ThF52aG45FFh5
-	//e2b7vScp+GSnoLrteEc8Y1cc1+iTw7MpH3rjv/V8ufS+KQrYDW1PWJRDNY/m5zFp
-	//ITMu3QTRGbkC+VAfdi+FDALMkkecxxcFWeH/yD4pEE2D+V56kKyWw9Y3V92HTusk
-	//ac7iNtBKa2an8cWCw8HqmPmuojx5OFr+gegQ9ptilWeiyCPmNNPIxlFBi+A=
+	//cm5ldGVzMB4XDTE5MDkyNTEzMDkzNFoXDTI5MDkyMjEzMDkzNFowFTETMBEGA1UE
+	//AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALhs
+	//yg2Sk2ojQn5QPm4+BkUwZWKHHSm1iyVCrLF9VssG6tQI1XkkbPrpNdIVbPYozKZf
+	//qo1Hb6xaQMdTTTP7AElMkVacSDVMcgcjDOQ4Sptkh7mj9ubxMJBQQ68d02+JBM0k
+	//Wn8f2QIVFQntSh492LTIL2vr9rzF+Lrz2GPbkyL+MySelLBmNm3LxajETHbfukAK
+	//cpo91c/BBg5weiJV64idviGODayRaBYmHzOuOjdzywgRpG3aJ/5GFDP3YOI0LjbD
+	//9mRbCJDhUP1d3gi2rOCH5izUg9y0LoiyGCX1hBy0hEYWDAVwNBQb23TA7Y2QaE9w
+	//eXnRaT33MHASo0l6dskCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
+	///wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAHlDp8/Din/eaxlRMaONREgc2RfQ
+	//2OgiSN9W+emEYY5D1avleYQ1NBW+0rc8hYR8ADCh0lpH/ZOQgY58z0HJmHIXB1h0
+	//o6w41E7wUCzgpFGT5D3gK6rDCIy68TwfFNyJ/IdQ9cVK9RrfhJrIfAO94wN9OEYQ
+	//A7/GAhV4Ml0W4ThP+MD6QM20vmftW3md0eqpn+gV6Vq2ptD6nEOOo8TEIT0CIFh6
+	//sj6yFaHX5RBT7mY6pXve6hmbdkA97Ub40OCTbvryhrAGe/ueD02ntswToAcM3NnC
+	//lTYORq5Eksf5zoqyQi6aBMKpytzD8P7j4dZtFiavws1oUXbKd05WofMhrqI=
 	//-----END CERTIFICATE-----`,
-	//		Environment: Dev,
-	//		BoundCidrs: []string{
+	//			Environment: Dev,
+	//			BoundCidrs: []string{
 	//
-	//		},
-	//	}
+	//			},
+	//		}
 	//
-	//	Clusters = append(Clusters, csvcDevel)
-	//	ClustersByName[csvcDevel.Name] = csvcDevel
+	//		Clusters = append(Clusters, csvcDevel)
+	//		ClustersByName[csvcDevel.Name] = csvcDevel
 
 	// EKS Airflow
 
