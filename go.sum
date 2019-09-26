@@ -7,6 +7,8 @@ git.lo/ops/ldapclient v0.0.0-20190910161816-3d4a0b8b2e42 h1:T4YdPpXYL9Jb0CjhK2tT
 git.lo/ops/ldapclient v0.0.0-20190910161816-3d4a0b8b2e42/go.mod h1:iavwt+3/DPf4e63othX9q5tFXMsnUL+VFqY/fm2jPEE=
 git.lo/ops/ldapclient v0.0.0-20190910200915-20df3f7d669d h1:StlXClrWfBTTlwwMBRNndevQ19X5ePmjE/zFdln91Bg=
 git.lo/ops/ldapclient v0.0.0-20190910200915-20df3f7d669d/go.mod h1:iavwt+3/DPf4e63othX9q5tFXMsnUL+VFqY/fm2jPEE=
+git.lo/ops/ldapclient v0.0.0-20190926144931-2b6d0b63b562 h1:hHPsiSV9VV9H4Gn2Xa9MZrosOWWIrSGP1rZzEg0LZNM=
+git.lo/ops/ldapclient v0.0.0-20190926144931-2b6d0b63b562/go.mod h1:iavwt+3/DPf4e63othX9q5tFXMsnUL+VFqY/fm2jPEE=
 git.lo/ops/scrutil v0.0.0-20190827221005-c3e2d0bfc048 h1:HhFZUect0a/DaC72g13DPrfwBbFrluwlLKhl9wZXOTs=
 git.lo/ops/scrutil v0.0.0-20190827221005-c3e2d0bfc048/go.mod h1:SHhb2M82BCGW4lKYNxUq5sTdMNvERtU2uFlRzQ6T1qE=
 git.lo/ops/scrutil v0.0.0-20190918151704-84fe6094f0ae h1:kLhgVNOiWBupaMF8H9W7EOGaHoSn9twnAkoSSmrIsls=
@@ -19,6 +21,10 @@ git.lo/ops/scrutil v0.0.0-20190923234501-9b6626fc3eda h1:ofKliES7FMz77Qortm48obr
 git.lo/ops/scrutil v0.0.0-20190923234501-9b6626fc3eda/go.mod h1:ViUAe1gG4i9d3+6S0IUDZepFhYLIJcRk9l//gYZYHPk=
 git.lo/ops/scrutil v0.0.0-20190926034007-9c729cbea17d h1:mBD0hkStLGY6xf/luvuURXnZJIfe6Jnd3D47XD91ROA=
 git.lo/ops/scrutil v0.0.0-20190926034007-9c729cbea17d/go.mod h1:ViUAe1gG4i9d3+6S0IUDZepFhYLIJcRk9l//gYZYHPk=
+git.lo/ops/scrutil v0.0.0-20190926145010-0ba69c69f218 h1:QJfL0h7LOyk/tuRHw+u05jMNsp+M7UFx12NSXF2Fgdg=
+git.lo/ops/scrutil v0.0.0-20190926145010-0ba69c69f218/go.mod h1:ViUAe1gG4i9d3+6S0IUDZepFhYLIJcRk9l//gYZYHPk=
+git.lo/ops/scrutil v0.0.0-20190926145240-a511ba2a0af8 h1:gQYM0STMWAre9ByOF1KYRO4+hU8Kde1W6LEQM/1do1I=
+git.lo/ops/scrutil v0.0.0-20190926145240-a511ba2a0af8/go.mod h1:ViUAe1gG4i9d3+6S0IUDZepFhYLIJcRk9l//gYZYHPk=
 git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825 h1:p+M34VHEAFgbQwEBfLH6LJVMzvmdcr55Zbhc2aOA4vY=
 git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825/go.mod h1:M9hjafp59sVR3zHFp3K3BKRBAL86Semx8xMRWBnpCZU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
