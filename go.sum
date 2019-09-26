@@ -17,6 +17,8 @@ git.lo/ops/scrutil v0.0.0-20190919233553-945560da2a03 h1:7drDBsohHz2EnvvW4JeOjoY
 git.lo/ops/scrutil v0.0.0-20190919233553-945560da2a03/go.mod h1:izAX2w2NuKYe67kwCqBd9LjfJCzuM6lsi37O6/QCpns=
 git.lo/ops/scrutil v0.0.0-20190923234501-9b6626fc3eda h1:ofKliES7FMz77Qortm48obrUg3WFOssEVKJ3lebVCsY=
 git.lo/ops/scrutil v0.0.0-20190923234501-9b6626fc3eda/go.mod h1:ViUAe1gG4i9d3+6S0IUDZepFhYLIJcRk9l//gYZYHPk=
+git.lo/ops/scrutil v0.0.0-20190926034007-9c729cbea17d h1:mBD0hkStLGY6xf/luvuURXnZJIfe6Jnd3D47XD91ROA=
+git.lo/ops/scrutil v0.0.0-20190926034007-9c729cbea17d/go.mod h1:ViUAe1gG4i9d3+6S0IUDZepFhYLIJcRk9l//gYZYHPk=
 git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825 h1:p+M34VHEAFgbQwEBfLH6LJVMzvmdcr55Zbhc2aOA4vY=
 git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825/go.mod h1:M9hjafp59sVR3zHFp3K3BKRBAL86Semx8xMRWBnpCZU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=

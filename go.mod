@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	git.lo/ops/ldapclient v0.0.0-20190910200915-20df3f7d669d
-	git.lo/ops/scrutil v0.0.0-20190923234501-9b6626fc3eda
+	git.lo/ops/scrutil v0.0.0-20190926034007-9c729cbea17d
 	git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.1.1
