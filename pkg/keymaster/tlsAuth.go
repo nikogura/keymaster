@@ -13,8 +13,11 @@ import (
 	"git.lo/ops/ldapclient/pkg/ldapclient"
 	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
+	"os"
 	"strings"
 )
+
+const LDAP_SERVER_ENV_VAR = "LDAP_SERVER_URL"
 
 const HOST_CA_CERT = `-----BEGIN CERTIFICATE-----
 MIIF/jCCA+agAwIBAgIJALblM1q8ZozAMA0GCSqGSIb3DQEBCwUAMIGZMQswCQYD
@@ -132,7 +135,7 @@ func (km *KeyMaster) GrantedPoliciesForTlsRole(role *Role) (policies []string, e
 }
 
 func HostsForRoleInLdap(role *Role, env Environment) (hosts []ldapclient.HostInfo, err error) {
-	lc := ldapclient.NewLdapClient("", "", 0, true)
+	lc := ldapclient.NewLdapClient(os.Getenv(LDAP_SERVER_ENV_VAR), "", 0, true)
 
 	err = lc.Connect()
 	if err != nil {
