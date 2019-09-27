@@ -17,20 +17,19 @@ import (
 
 /*
 
-per cluster:
+per cluster (manual):
 	vault auth-enable -path=k8s-bravo kubernetes
 	vault write auth/k8s-bravo/config kubernetes_host=<apiserver url> kubernetes_ca_cert=@k8s-ca.crt token_reviewer_jwt=”<token for service account from k8s>”
 
-per role:
-	vault write auth/k8s-bravo/role/test-role bound_service_account_names=default bound_service_account_namespaces=sso policies=user
 */
 
 type Cluster struct {
-	Name         string
-	ApiServerUrl string
-	CACert       string
+	Name         string `yaml:"name"`
+	ApiServerUrl string `yaml:"apiserver"`
+	CACert       string `yaml:"ca_cert"`
+	EnvName      string `yaml:"environment"`
 	Environment  Environment
-	BoundCidrs   []string
+	BoundCidrs   []string `yaml:"bound_cidrs"`
 }
 
 var Clusters []Cluster
@@ -97,72 +96,6 @@ Kxq0lynHENJpP/eXjfyC8sLDVJN8YO3n4w==
 
 	Clusters = append(Clusters, bravo)
 	ClustersByName[bravo.Name] = bravo
-
-	// charlie
-	charlie := Cluster{
-		Name:         "charlie",
-		ApiServerUrl: "https://169.60.14.112:6443",
-		CACert: `LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUN3akNDQ\
-      WFxZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFTTVJBd0RnWURWUVFERXdkcmRXSmwKT\
-      FdOaE1CNFhEVEU1TURVd01qQXlNRFkwT0ZvWERUSTVNRFF5T1RBeU1EWTBPRm93RWpFUU1BNEdBM\
-      VVFQXhNSAphM1ZpWlMxallUQ0NBU0l3RFFZSktvWklodmNOQVFFQkJRQURnZ0VQQURDQ0FRb0NnZ\
-      0VCQUw0Y2ZDM0Foem5iCjhpTFV0R3FFV2ZGa1R1aXd1bElGSUs2M3Z4aEs2VE5yTWpyRjZ1d253Z\
-      2hBOCtHZW4xeE1KOHVkMHd5OTlVbDcKVWU4SkJRYkdjWUtvK09JL055cExKYlB4Vjc1NjQyZnRia\
-      kxnaytMSkpaUFRlUWdpKzJZdXVKa3JSTDhLU09teQpEcUJaVnlTOWhjV2tZTHR1UGF6WE1lbGlSb\
-      lJJWE5vVFpwTDY2Z090OGhKVzFhYnlDL0k2ZFRZWVBXQTBWckU2ClEweWFLQndDWWN4M1JUWVlWW\
-      mFoUCtJcGJwZ2ZSLzVxQ2Nhc1lWMW5uQVZXdHJJaGFINmZMZ3h1a3IxWElDN2MKSUJBUzA0RUp3R\
-      3RmeWMreUZKRE9HeGovYzVXK2JjMHlkc1BCRnM1QklMQmxoSWNsSE9pYTBDNk45eDZyajVTMgovK\
-      1BTeW81YUdXRUNBd0VBQWFNak1DRXdEZ1lEVlIwUEFRSC9CQVFEQWdLa01BOEdBMVVkRXdFQi93U\
-      UZNQU1CCkFmOHdEUVlKS29aSWh2Y05BUUVMQlFBRGdnRUJBQlNGUng5N1QxeHJMbHpCUjd4ZW9yR\
-      G8wQ29IRDg0OUUrWSsKVmROTG9hMDFXeGxJaEdQcnFtM0d6UDZremI5dTVEaFg3aVlVbkpHdlQ0Z\
-      3hnNnhwazFQbHJlRERiTEVKSG9TZwpuclFRSHlId0dUTHJkR2ZNZnh5ckhCVkVQNDQwRm8rbjdJZ\
-      3FCeW9IQ3lXdEZrWjZkOUgyNXRGaDhoL3JUa2RDClZQVUQ4TEZzUUcwUE1QbEhzVlNrRlh5REhtU\
-      mdPbWtUcnYxbjdGK1g3NitYSlRhVFlCMHBvVnh1UUtTd05XUWgKcjFzWGljM1creU1wbk10Q3VSV\
-      npMRlQzNnFvVEgxYUV2QWVrV2djVzNoVUtGSVROZ2V4NXFmR1ZlNGNSejc0dApVYmVTZ0ZjREdSc\
-      1VaeGVBYTJ5TmZtTW12eVdPeTJnV3J6SXA0SlEzR3ZSYkhXRlFpSU09Ci0tLS0tRU5EIENFUlRJR\
-      klDQVRFLS0tLS0K
-`,
-		Environment: Prod,
-		BoundCidrs:  []string{},
-	}
-
-	Clusters = append(Clusters, charlie)
-	ClustersByName[charlie.Name] = charlie
-
-	// devkube
-	//	devkube := Cluster{
-	//		Name:         "devkube",
-	//		ApiServerUrl: "https://devkube.inf.scribd.com:6443",
-	//		CACert: `-----BEGIN CERTIFICATE-----
-	//MIIDVTCCAj2gAwIBAgIUUUYfYM6Mu/Brko7u/BKLBobWlN8wDQYJKoZIhvcNAQEL
-	//BQAwIDEeMBwGA1UEAxMVZGV2a3ViZS1jYS5zY3JpYmQuY29tMB4XDTE5MDUzMTE3
-	//NDk0NFoXDTI0MDUyOTE3NTAxNFowIDEeMBwGA1UEAxMVZGV2a3ViZS1jYS5zY3Jp
-	//YmQuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2p3z+IBHIcrS
-	//x9FMlyRT/HgSV/wZw/KffSfxfiXIuaK/cCDxqoDK+QzKe9cwRLHYuUKR2zaS57Zv
-	//5KUP67wzmhMhotoXaVSr7Zht6XBL1BYbjhnn64P5OJ7aHmoZupybQF8w2AtxYlwM
-	//JaLhHe7An4CgPDD7i+bZWyHQm8IO0x2BuhqZhqz2dcfWURXXnRKq/oX7s8QjqSE3
-	//7vxUTu8+UKRlnzIbDdQGhwlNMZ9g+2OXFP0VCVzfAB5N0RkH7uH67BjqXaJ2cG3A
-	//3gDab3Mc381W9RBnPkuOwVKxZMmJH8STv6phOXeok/8+kWzQmS4z0gNPQDDHfQdW
-	//mOMMpuNSZwIDAQABo4GGMIGDMA4GA1UdDwEB/wQEAwIBBjAPBgNVHRMBAf8EBTAD
-	//AQH/MB0GA1UdDgQWBBSiP999ex76YHothR5ImP6YCQNF7zAfBgNVHSMEGDAWgBSi
-	//P999ex76YHothR5ImP6YCQNF7zAgBgNVHREEGTAXghVkZXZrdWJlLWNhLnNjcmli
-	//ZC5jb20wDQYJKoZIhvcNAQELBQADggEBAEmMQNyRLfrQziU2SGRRUIAwHRFnrtei
-	//Y6TeFJKLiXWXaDRG1ZNMFK6I01FDAufsTIoKmFNxlQ8DRp7SoFM4qKkI/7SzSzKL
-	//7j+G0ZUIdAZB6rpop9hX03D5Ftiu7IFC4j65OdUw6k5FIUKf13AvWZDRabzdLKM7
-	//Jc15hAN5H3FGOTppW1LHTJn6wfioN2VPKlkqI3k03hEHaib9bp02zZPGxsGqumYn
-	//GdmD9Caj9/8jE8YYO+n/9Y9rEEg+3k8F9bvNjCMIq7Avs6aPn05MZ0QCWmG+a6ez
-	//2zAnZuKyLCOnT4kBYsP0bmsplL4/YWitMWkAr4xcIvb7OeFKHL26KiY=
-	//-----END CERTIFICATE-----`,
-	//		Environment: Dev,
-	//		BoundCidrs: []string{
-	//			"10.177.148.209",
-	//		},
-	//	}
-	//
-	//	Clusters = append(Clusters, devkube)
-	//	ClustersByName[devkube.Name] = devkube
-
-	// echo
 
 	// foxtrot
 	foxtrot := Cluster{
@@ -233,47 +166,46 @@ hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 	ClustersByName[golf.Name] = golf
 
 	// Core Services Development
-	//	csvcDevel := Cluster{
-	//		Name: "development-apps",
-	//		ApiServerUrl: "https://56E51D0A7A4FF7587BE0F094B93B1521.sk1.us-east-2.eks.amazonaws.com",
-	//		CACert: `-----BEGIN CERTIFICATE-----
-	//MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
-	//cm5ldGVzMB4XDTE5MDkyNTEzMDkzNFoXDTI5MDkyMjEzMDkzNFowFTETMBEGA1UE
-	//AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALhs
-	//yg2Sk2ojQn5QPm4+BkUwZWKHHSm1iyVCrLF9VssG6tQI1XkkbPrpNdIVbPYozKZf
-	//qo1Hb6xaQMdTTTP7AElMkVacSDVMcgcjDOQ4Sptkh7mj9ubxMJBQQ68d02+JBM0k
-	//Wn8f2QIVFQntSh492LTIL2vr9rzF+Lrz2GPbkyL+MySelLBmNm3LxajETHbfukAK
-	//cpo91c/BBg5weiJV64idviGODayRaBYmHzOuOjdzywgRpG3aJ/5GFDP3YOI0LjbD
-	//9mRbCJDhUP1d3gi2rOCH5izUg9y0LoiyGCX1hBy0hEYWDAVwNBQb23TA7Y2QaE9w
-	//eXnRaT33MHASo0l6dskCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
-	///wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAHlDp8/Din/eaxlRMaONREgc2RfQ
-	//2OgiSN9W+emEYY5D1avleYQ1NBW+0rc8hYR8ADCh0lpH/ZOQgY58z0HJmHIXB1h0
-	//o6w41E7wUCzgpFGT5D3gK6rDCIy68TwfFNyJ/IdQ9cVK9RrfhJrIfAO94wN9OEYQ
-	//A7/GAhV4Ml0W4ThP+MD6QM20vmftW3md0eqpn+gV6Vq2ptD6nEOOo8TEIT0CIFh6
-	//sj6yFaHX5RBT7mY6pXve6hmbdkA97Ub40OCTbvryhrAGe/ueD02ntswToAcM3NnC
-	//lTYORq5Eksf5zoqyQi6aBMKpytzD8P7j4dZtFiavws1oUXbKd05WofMhrqI=
-	//-----END CERTIFICATE-----`,
-	//			Environment: Dev,
-	//			BoundCidrs: []string{
-	//
-	//			},
-	//		}
-	//
-	//		Clusters = append(Clusters, csvcDevel)
-	//		ClustersByName[csvcDevel.Name] = csvcDevel
+	csvcDevel := Cluster{
+		Name:         "development-apps",
+		ApiServerUrl: "https://56E51D0A7A4FF7587BE0F094B93B1521.sk1.us-east-2.eks.amazonaws.com",
+		CACert: `-----BEGIN CERTIFICATE-----
+	MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
+	cm5ldGVzMB4XDTE5MDkyNTEzMDkzNFoXDTI5MDkyMjEzMDkzNFowFTETMBEGA1UE
+	AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALhs
+	yg2Sk2ojQn5QPm4+BkUwZWKHHSm1iyVCrLF9VssG6tQI1XkkbPrpNdIVbPYozKZf
+	qo1Hb6xaQMdTTTP7AElMkVacSDVMcgcjDOQ4Sptkh7mj9ubxMJBQQ68d02+JBM0k
+	Wn8f2QIVFQntSh492LTIL2vr9rzF+Lrz2GPbkyL+MySelLBmNm3LxajETHbfukAK
+	cpo91c/BBg5weiJV64idviGODayRaBYmHzOuOjdzywgRpG3aJ/5GFDP3YOI0LjbD
+	9mRbCJDhUP1d3gi2rOCH5izUg9y0LoiyGCX1hBy0hEYWDAVwNBQb23TA7Y2QaE9w
+	eXnRaT33MHASo0l6dskCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
+	/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAHlDp8/Din/eaxlRMaONREgc2RfQ
+	2OgiSN9W+emEYY5D1avleYQ1NBW+0rc8hYR8ADCh0lpH/ZOQgY58z0HJmHIXB1h0
+	o6w41E7wUCzgpFGT5D3gK6rDCIy68TwfFNyJ/IdQ9cVK9RrfhJrIfAO94wN9OEYQ
+	A7/GAhV4Ml0W4ThP+MD6QM20vmftW3md0eqpn+gV6Vq2ptD6nEOOo8TEIT0CIFh6
+	sj6yFaHX5RBT7mY6pXve6hmbdkA97Ub40OCTbvryhrAGe/ueD02ntswToAcM3NnC
+	lTYORq5Eksf5zoqyQi6aBMKpytzD8P7j4dZtFiavws1oUXbKd05WofMhrqI=
+	-----END CERTIFICATE-----`,
+		Environment: Dev,
+		BoundCidrs: []string{
+			"10.226.0.0/19",
+			"10.226.32.0/19",
+			"10.226.64.0/19",
+		},
+	}
 
-	// EKS Airflow
-
-	// EKS Prod
-
-	// EKS Stage
-
-	// EKS Dev
+	Clusters = append(Clusters, csvcDevel)
+	ClustersByName[csvcDevel.Name] = csvcDevel
 
 	// Populate the map of ClustersByEnvironment
 	for _, cluster := range Clusters {
 		ClustersByEnvironment[cluster.Environment] = append(ClustersByEnvironment[cluster.Environment], cluster)
 	}
+}
+
+func (km *KeyMaster) NewCluster(data []byte, verbose bool) (cluster Cluster, err error) {
+
+	return cluster, err
 }
 
 // K8sAuthPath constructs the auth path in a regular fashion.

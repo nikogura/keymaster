@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 const ERR_NS_DATA_LOAD = "failed to load data in supplied config"
@@ -247,6 +248,7 @@ func (km *KeyMaster) NewNamespace(data []byte, verbose bool) (ns Namespace, err 
 
 // NameToEnvironment Maps an Environment name to the actual Environment type interface.
 func NameToEnvironment(name string) (env Environment, err error) {
+	name = strings.ToLower(name)
 	switch name {
 	case PROD_NAME:
 		env = Prod
