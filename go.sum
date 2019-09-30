@@ -25,6 +25,8 @@ git.lo/ops/scrutil v0.0.0-20190926145010-0ba69c69f218 h1:QJfL0h7LOyk/tuRHw+u05jM
 git.lo/ops/scrutil v0.0.0-20190926145010-0ba69c69f218/go.mod h1:ViUAe1gG4i9d3+6S0IUDZepFhYLIJcRk9l//gYZYHPk=
 git.lo/ops/scrutil v0.0.0-20190926145240-a511ba2a0af8 h1:gQYM0STMWAre9ByOF1KYRO4+hU8Kde1W6LEQM/1do1I=
 git.lo/ops/scrutil v0.0.0-20190926145240-a511ba2a0af8/go.mod h1:ViUAe1gG4i9d3+6S0IUDZepFhYLIJcRk9l//gYZYHPk=
+git.lo/ops/scrutil v0.0.0-20190930152932-df31411a0e8c h1:UBwELWjsEOcnJ+dwt43Yalpf3NVEjsWJiNpyD3DLAVs=
+git.lo/ops/scrutil v0.0.0-20190930152932-df31411a0e8c/go.mod h1:fn5e9QHgpN7su3/kwV0/81vDP8TJCVEbHgfwqKp6wro=
 git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825 h1:p+M34VHEAFgbQwEBfLH6LJVMzvmdcr55Zbhc2aOA4vY=
 git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825/go.mod h1:M9hjafp59sVR3zHFp3K3BKRBAL86Semx8xMRWBnpCZU=
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
@@ -192,6 +194,7 @@ github.com/nikogura/gomason v0.0.0-20180623164404-5bb5e6a9169c/go.mod h1:STap11t
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
+github.com/pavel-v-chernykh/keystore-go v2.1.0+incompatible/go.mod h1:xlUlxe/2ItGlQyMTstqeDv9r3U4obH7xYd26TbDQutY=
 github.com/pelletier/go-toml v1.2.0 h1:T5zMGML61Wp+FlcbWjRDT7yAxhJNAiPPLOFECq181zc=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.4.0 h1:u3Z1r+oOXJIkxqw34zVhyPgjBsm6X2wn21NWs/HfSeg=
