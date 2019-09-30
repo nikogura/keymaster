@@ -169,36 +169,36 @@ hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 	ClustersByName[golf.Name] = golf
 
 	// Core Services Development
-	//csvcDevel := Cluster{
-	//	Name:         "development-apps",
-	//	ApiServerUrl: "https://56E51D0A7A4FF7587BE0F094B93B1521.sk1.us-east-2.eks.amazonaws.com",
-	//	CACert: `-----BEGIN CERTIFICATE-----
-	//MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
-	//cm5ldGVzMB4XDTE5MDkyNTEzMDkzNFoXDTI5MDkyMjEzMDkzNFowFTETMBEGA1UE
-	//AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALhs
-	//yg2Sk2ojQn5QPm4+BkUwZWKHHSm1iyVCrLF9VssG6tQI1XkkbPrpNdIVbPYozKZf
-	//qo1Hb6xaQMdTTTP7AElMkVacSDVMcgcjDOQ4Sptkh7mj9ubxMJBQQ68d02+JBM0k
-	//Wn8f2QIVFQntSh492LTIL2vr9rzF+Lrz2GPbkyL+MySelLBmNm3LxajETHbfukAK
-	//cpo91c/BBg5weiJV64idviGODayRaBYmHzOuOjdzywgRpG3aJ/5GFDP3YOI0LjbD
-	//9mRbCJDhUP1d3gi2rOCH5izUg9y0LoiyGCX1hBy0hEYWDAVwNBQb23TA7Y2QaE9w
-	//eXnRaT33MHASo0l6dskCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
-	///wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAHlDp8/Din/eaxlRMaONREgc2RfQ
-	//2OgiSN9W+emEYY5D1avleYQ1NBW+0rc8hYR8ADCh0lpH/ZOQgY58z0HJmHIXB1h0
-	//o6w41E7wUCzgpFGT5D3gK6rDCIy68TwfFNyJ/IdQ9cVK9RrfhJrIfAO94wN9OEYQ
-	//A7/GAhV4Ml0W4ThP+MD6QM20vmftW3md0eqpn+gV6Vq2ptD6nEOOo8TEIT0CIFh6
-	//sj6yFaHX5RBT7mY6pXve6hmbdkA97Ub40OCTbvryhrAGe/ueD02ntswToAcM3NnC
-	//lTYORq5Eksf5zoqyQi6aBMKpytzD8P7j4dZtFiavws1oUXbKd05WofMhrqI=
-	//-----END CERTIFICATE-----`,
-	//	Environment: Dev,
-	//	BoundCidrs: []string{
-	//		"10.226.0.0/19",
-	//		"10.226.32.0/19",
-	//		"10.226.64.0/19",
-	//	},
-	//}
-	//
-	//Clusters = append(Clusters, csvcDevel)
-	//ClustersByName[csvcDevel.Name] = csvcDevel
+	csvcDevel := Cluster{
+		Name:         "development-apps",
+		ApiServerUrl: "https://56E51D0A7A4FF7587BE0F094B93B1521.sk1.us-east-2.eks.amazonaws.com",
+		CACert: `-----BEGIN CERTIFICATE-----
+	MIICyDCCAbCgAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
+	cm5ldGVzMB4XDTE5MDkyNTEzMDkzNFoXDTI5MDkyMjEzMDkzNFowFTETMBEGA1UE
+	AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALhs
+	yg2Sk2ojQn5QPm4+BkUwZWKHHSm1iyVCrLF9VssG6tQI1XkkbPrpNdIVbPYozKZf
+	qo1Hb6xaQMdTTTP7AElMkVacSDVMcgcjDOQ4Sptkh7mj9ubxMJBQQ68d02+JBM0k
+	Wn8f2QIVFQntSh492LTIL2vr9rzF+Lrz2GPbkyL+MySelLBmNm3LxajETHbfukAK
+	cpo91c/BBg5weiJV64idviGODayRaBYmHzOuOjdzywgRpG3aJ/5GFDP3YOI0LjbD
+	9mRbCJDhUP1d3gi2rOCH5izUg9y0LoiyGCX1hBy0hEYWDAVwNBQb23TA7Y2QaE9w
+	eXnRaT33MHASo0l6dskCAwEAAaMjMCEwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
+	/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAHlDp8/Din/eaxlRMaONREgc2RfQ
+	2OgiSN9W+emEYY5D1avleYQ1NBW+0rc8hYR8ADCh0lpH/ZOQgY58z0HJmHIXB1h0
+	o6w41E7wUCzgpFGT5D3gK6rDCIy68TwfFNyJ/IdQ9cVK9RrfhJrIfAO94wN9OEYQ
+	A7/GAhV4Ml0W4ThP+MD6QM20vmftW3md0eqpn+gV6Vq2ptD6nEOOo8TEIT0CIFh6
+	sj6yFaHX5RBT7mY6pXve6hmbdkA97Ub40OCTbvryhrAGe/ueD02ntswToAcM3NnC
+	lTYORq5Eksf5zoqyQi6aBMKpytzD8P7j4dZtFiavws1oUXbKd05WofMhrqI=
+	-----END CERTIFICATE-----`,
+		Environment: Dev,
+		BoundCidrs: []string{
+			"10.226.0.0/19",
+			"10.226.32.0/19",
+			"10.226.64.0/19",
+		},
+	}
+
+	Clusters = append(Clusters, csvcDevel)
+	ClustersByName[csvcDevel.Name] = csvcDevel
 
 	// Populate the map of ClustersByEnvironment
 	for _, cluster := range Clusters {
