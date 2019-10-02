@@ -56,7 +56,7 @@ HzMKYQXmTRJV3jB1uD/1ibA9MpMVEbNN3yjPvY6wmCE3ydOBC3/XQgcooez8af7w
 -----END CERTIFICATE-----`
 
 // TlsAuthPath constructs the auth path in a regular fashion.
-func (km *KeyMaster) TlsAuthPath(role *Role) (path string, err error) {
+func (km *KeyMaster) TlsAuthPath(role *Role, env Environment) (path string, err error) {
 	if role.Name == "" {
 		err = errors.New("empty role names are not supported")
 		return path, err
@@ -67,13 +67,13 @@ func (km *KeyMaster) TlsAuthPath(role *Role) (path string, err error) {
 		return path, err
 	}
 
-	path = fmt.Sprintf("auth/cert/certs/%s-%s", role.Namespace, role.Name)
+	path = fmt.Sprintf("auth/cert/certs/%s-%s-%s", EnvToName[env], role.Namespace, role.Name)
 
 	return path, err
 }
 
 func (km *KeyMaster) AddPolicyToTlsRole(role *Role, env Environment, policy VaultPolicy) (err error) {
-	policies, err := km.GrantedPoliciesForTlsRole(role)
+	policies, err := km.GrantedPoliciesForTlsRole(role, env)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (km *KeyMaster) AddPolicyToTlsRole(role *Role, env Environment, policy Vaul
 }
 
 func (km *KeyMaster) RemovePolicyFromTlsRole(role *Role, env Environment, policy VaultPolicy) (err error) {
-	current, err := km.GrantedPoliciesForTlsRole(role)
+	current, err := km.GrantedPoliciesForTlsRole(role, env)
 	if err != nil {
 		return err
 	}
@@ -105,10 +105,10 @@ func (km *KeyMaster) RemovePolicyFromTlsRole(role *Role, env Environment, policy
 	return km.WriteTlsAuth(role, env, updated)
 }
 
-func (km *KeyMaster) GrantedPoliciesForTlsRole(role *Role) (policies []string, err error) {
+func (km *KeyMaster) GrantedPoliciesForTlsRole(role *Role, env Environment) (policies []string, err error) {
 	policies = make([]string, 0)
 
-	previousData, err := km.ReadTlsAuth(role)
+	previousData, err := km.ReadTlsAuth(role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to fetch policy data for role %s", role.Name)
 		return policies, err
@@ -155,8 +155,8 @@ func HostsForRoleInLdap(role *Role, env Environment) (hosts []ldapclient.HostInf
 }
 
 // Read TlsAuth path and return it's data
-func (km *KeyMaster) ReadTlsAuth(role *Role) (data map[string]interface{}, err error) {
-	path, err := km.TlsAuthPath(role)
+func (km *KeyMaster) ReadTlsAuth(role *Role, env Environment) (data map[string]interface{}, err error) {
+	path, err := km.TlsAuthPath(role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create tls auth path")
 		return data, err
@@ -176,8 +176,8 @@ func (km *KeyMaster) ReadTlsAuth(role *Role) (data map[string]interface{}, err e
 }
 
 // DeleteTlsAuth Delete a Tls auth config for a Role.
-func (km *KeyMaster) DeleteTlsAuth(role *Role) (err error) {
-	path, err := km.TlsAuthPath(role)
+func (km *KeyMaster) DeleteTlsAuth(role *Role, env Environment) (err error) {
+	path, err := km.TlsAuthPath(role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create tls auth path")
 		return err
@@ -220,7 +220,7 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, env Environment, policies []string
 	data["display_name"] = fmt.Sprintf("%s-%s-%s", EnvToName[env], role.Namespace, role.Name)
 	data["certificate"] = HOST_CA_CERT
 
-	path, err := km.TlsAuthPath(role)
+	path, err := km.TlsAuthPath(role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create tls auth path")
 		return err

@@ -884,7 +884,7 @@ roles:
 								//spew.Dump(data)
 							}
 						case SL_NAME:
-							_, err := km.ReadTlsAuth(role)
+							_, err := km.ReadTlsAuth(role, env)
 							if err != nil {
 								log.Printf("failed to read tls policy for %s", role.Name)
 								t.Fail()

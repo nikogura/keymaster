@@ -190,7 +190,7 @@ func TestTlsAuthCrud(t *testing.T) {
 				t.Fail()
 			}
 
-			authData, err := km.ReadTlsAuth(tc.role)
+			authData, err := km.ReadTlsAuth(tc.role, Prod)
 			if err != nil {
 				fmt.Printf("Failed reading auth: %s", err)
 				t.Fail()
@@ -209,7 +209,7 @@ func TestTlsAuthCrud(t *testing.T) {
 				t.Fail()
 			}
 
-			authData, err = km.ReadTlsAuth(tc.role)
+			authData, err = km.ReadTlsAuth(tc.role, Prod)
 			if err != nil {
 				fmt.Printf("Failed reading auth: %s", err)
 				t.Fail()
