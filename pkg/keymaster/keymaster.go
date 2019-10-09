@@ -352,7 +352,7 @@ func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 	scrutil.VerboseOutput(verbose, "\nLoading Secret Yamls")
 
 	for _, fileName := range files {
-		scrutil.VerboseOutput(verbose, "  examining %s", fileName)
+		scrutil.VerboseOutput(verbose, "  examining %q", fileName)
 		fi, err := os.Stat(fileName)
 		if err != nil {
 			err = errors.Wrap(err, fmt.Sprintf("failed to read yaml %s", fileName))
@@ -361,26 +361,26 @@ func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 
 		switch mode := fi.Mode(); {
 		case mode.IsRegular():
-			scrutil.VerboseOutput(verbose, "    regular file")
+			scrutil.VerboseOutput(verbose, "      it's a regular file")
 			configBytes, err := ioutil.ReadFile(fileName)
 			if err != nil {
 				err = errors.Wrapf(err, "Error reading yaml %s", fileName)
 				return data, err
 			}
 
-			scrutil.VerboseOutput(verbose, "    ... loaded")
+			scrutil.VerboseOutput(verbose, "      ... loaded")
 			data = append(data, configBytes)
 
 		case mode.IsDir():
-			scrutil.VerboseOutput(verbose, "    directory")
+			scrutil.VerboseOutput(verbose, "      it's a directory")
 			// start off true, set false on any failure
 			err := filepath.Walk(fileName, func(path string, info os.FileInfo, err error) error {
-				scrutil.VerboseOutput(verbose, "  examining file")
+				scrutil.VerboseOutput(verbose, "  examining %q", path)
 				if err != nil {
 					return err
 				}
 				if !info.IsDir() { // we only care about files
-					scrutil.VerboseOutput(verbose, "    regular file")
+					scrutil.VerboseOutput(verbose, "        it's a regular file")
 					// and we only care about yaml files
 					fileName := filepath.Base(path)
 					pat := regexp.MustCompile(`.+\.ya?ml`)
@@ -394,11 +394,12 @@ func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 						return err
 					}
 
-					scrutil.VerboseOutput(verbose, "    ... loaded")
+					scrutil.VerboseOutput(verbose, "          ... loaded")
 					data = append(data, configBytes)
 
 					return nil
 				}
+				scrutil.VerboseOutput(verbose, "        it's a directory")
 
 				return nil
 			})
