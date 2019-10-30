@@ -24,6 +24,8 @@ func (km *KeyMaster) NewGenerator(options GeneratorData) (generator Generator, e
 			return NewRSAGenerator(options)
 		case "tls":
 			return NewTlsGenerator(km.VaultClient, options)
+		case "static":
+			return NewStaticGenerator()
 		default:
 			err = errors.New(fmt.Sprintf("%s: %s", ERR_UNKNOWN_GENERATOR, genType))
 			return generator, err
@@ -128,6 +130,8 @@ func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env En
 
 	case "rsa":
 		// TODO Implement saving RSA Secrets
+	case "static":
+		// do nothing, cos it's static
 	default:
 		value, err := secret.Generator.Generate()
 		if err != nil {

@@ -20,6 +20,7 @@ const (
 	CHBS
 	RSA
 	TLS
+	STATIC
 )
 
 const ERR_UNKNOWN_GENERATOR = "unknown generator"
@@ -311,6 +312,26 @@ func NewTlsGenerator(vaultClient *api.Client, options GeneratorData) (generator 
 		CA:          ca,
 		TTL:         ttl,
 		VaultClient: vaultClient,
+	}
+
+	return generator, err
+}
+
+// Static Secrets
+// Static Secrets don't chenge, hence this is just a no-op
+type StaticGenerator struct {
+	Type string
+}
+
+// Generate produces.... nothing.
+func (g StaticGenerator) Generate() (string, error) {
+	return "", nil
+}
+
+// NewStaticGenerrator makes an StaticGenerator
+func NewStaticGenerator() (generator Generator, err error) {
+	generator = StaticGenerator{
+		Type: "static",
 	}
 
 	return generator, err

@@ -1,6 +1,6 @@
 {
   "name": "keymaster",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "package": "git.lo/dbt/keymaster",
   "description": "Secrets definition and management tool",
   "repository": "https://artifacts.lo/artifactory/dbt-tools",

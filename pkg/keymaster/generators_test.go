@@ -105,6 +105,13 @@ func TestGeneratorValues(t *testing.T) {
 			},
 			regexp.MustCompile(`\{.+\}`),
 		},
+		{
+			"static-output",
+			GeneratorData{
+				"type": "static",
+			},
+			regexp.MustCompile(``),
+		},
 	}
 
 	for _, tc := range inputs {
