@@ -224,7 +224,7 @@ func TestTlsAuthCrud(t *testing.T) {
 				t.Fail()
 			}
 
-			assert.True(t, reflect.DeepEqual(authData, tc.first), "role successfully added without info being in lda without info being in ldapp")
+			assert.True(t, reflect.DeepEqual(authData, tc.first), "role successfully added without info being in ldap")
 
 			// TODO The rest of these crud tests need to have a test ldap directory integrated.
 			//assert.True(t, reflect.DeepEqual(authData, tc.second), "role successfully added")
