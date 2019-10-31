@@ -44,14 +44,7 @@ func (km *KeyMaster) SecretPath(name string, namespace string, env Environment) 
 		return path, err
 	}
 
-	switch env {
-	case Prod:
-		path = fmt.Sprintf("%s/data/%s/%s", PROD_NAME, namespace, name)
-	case Stage:
-		path = fmt.Sprintf("%s/data/%s/%s", STAGE_NAME, namespace, name)
-	default:
-		path = fmt.Sprintf("%s/data/%s/%s", DEV_NAME, namespace, name)
-	}
+	path = fmt.Sprintf("%s/data/%s/%s", env, namespace, name)
 
 	return path, err
 }
@@ -63,14 +56,7 @@ func (km *KeyMaster) CertPath(name string, namespace string, env Environment) (p
 		return path, err
 	}
 
-	switch env {
-	case Prod:
-		path = fmt.Sprintf("%s/data/certs/%s/%s", PROD_NAME, namespace, name)
-	case Stage:
-		path = fmt.Sprintf("%s/data/certs/%s/%s", STAGE_NAME, namespace, name)
-	default:
-		path = fmt.Sprintf("%s/data/certs/%s/%s", DEV_NAME, namespace, name)
-	}
+	path = fmt.Sprintf("%s/data/certs/%s/%s", env, namespace, name)
 
 	return path, err
 }
@@ -166,7 +152,7 @@ func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env En
 func (km *KeyMaster) WriteSecretIfBlank(secret *Secret, verbose bool) (err error) {
 	scrutil.VerboseOutput(verbose, "checking secret %s", secret.Name)
 	for _, env := range Envs {
-		scrutil.VerboseOutput(verbose, "  checking env %s", EnvToName[env])
+		scrutil.VerboseOutput(verbose, "  checking env %s", env)
 		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create secret path")

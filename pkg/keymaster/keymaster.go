@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 )
 
 const ERR_NS_DATA_LOAD = "failed to load data in supplied config"
@@ -27,13 +26,7 @@ const ERR_SLASH_IN_ROLE_NAME = "role names cannot contain slashes"
 const ERR_UNSUPPORTED_REALM = "unsupported realm"
 
 // Environment Scribd's deployment environments.   One of "Prod", "Stage", "Dev"
-type Environment int
-
-const (
-	Prod Environment = iota + 1
-	Stage
-	Dev
-)
+type Environment string
 
 type Realm int
 
@@ -43,9 +36,9 @@ const (
 	SL
 )
 
-const PROD_NAME = "prod"
-const STAGE_NAME = "stage"
-const DEV_NAME = "dev"
+const PROD = "prod"
+const STAGE = "stage"
+const DEV = "dev"
 const K8S_NAME = "k8s"
 const AWS_NAME = "aws"
 const SL_NAME = "sl"
@@ -57,15 +50,9 @@ var Realms = []Realm{
 }
 
 var Envs = []Environment{
-	Prod,
-	Stage,
-	Dev,
-}
-
-var EnvToName = map[Environment]string{
-	Prod:  PROD_NAME,
-	Stage: STAGE_NAME,
-	Dev:   DEV_NAME,
+	PROD,
+	STAGE,
+	DEV,
 }
 
 var RealmToName = map[Realm]string{
@@ -246,23 +233,6 @@ func (km *KeyMaster) NewNamespace(data []byte, verbose bool) (ns Namespace, err 
 	return ns, err
 }
 
-// NameToEnvironment Maps an Environment name to the actual Environment type interface.
-func NameToEnvironment(name string) (env Environment, err error) {
-	name = strings.ToLower(name)
-	switch name {
-	case PROD_NAME:
-		env = Prod
-	case STAGE_NAME:
-		env = Stage
-	case DEV_NAME:
-		env = Dev
-	default:
-		err = errors.New(fmt.Sprintf("Unable to relate %s to any known environment", name))
-	}
-
-	return env, err
-}
-
 // ConfigureNamespace  The grand unified config loader that, after the yaml file is read into memory, applies it to Vault.
 func (km *KeyMaster) ConfigureNamespace(namespace Namespace, verbose bool) (err error) {
 	scrutil.VerboseOutput(verbose, "--- Configuring namespace %s ---", namespace.Name)
@@ -288,9 +258,9 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace, verbose bool) (err 
 
 		scrutil.VerboseOutput(verbose, "  walking environments...")
 		for _, env := range Envs {
-			scrutil.VerboseOutput(verbose, "    handling %s...", EnvToName[env])
+			scrutil.VerboseOutput(verbose, "    handling %s...", env)
 			// write policies
-			scrutil.VerboseOutput(verbose, "      new policy for role %s in env %s...", role.Name, EnvToName[env])
+			scrutil.VerboseOutput(verbose, "      new policy for role %s in env %s...", role.Name, env)
 			policy, err := km.NewPolicy(role, env)
 			if err != nil {
 				err = errors.Wrapf(err, "failed to create policy")
@@ -300,7 +270,7 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace, verbose bool) (err 
 			scrutil.VerboseOutput(verbose, "      writing policy to %s ...", policy.Path)
 			err = km.WritePolicyToVault(policy, verbose)
 			if err != nil {
-				err = errors.Wrapf(err, "failed writing policy %q for role %q in env %q", policy.Name, role.Name, EnvToName[env])
+				err = errors.Wrapf(err, "failed writing policy %q for role %q in env %q", policy.Name, role.Name, env)
 				return err
 			}
 			scrutil.VerboseOutput(verbose, "      written")
@@ -315,7 +285,7 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace, verbose bool) (err 
 					for _, cluster := range ClustersByEnvironment[env] {
 						err = km.AddPolicyToK8sRole(cluster, role, policy)
 						if err != nil {
-							err = errors.Wrapf(err, "failed to add K8S Auth for role:%q policy:%q cluster:%q env:%q", role.Name, policy.Name, cluster.Name, EnvToName[env])
+							err = errors.Wrapf(err, "failed to add K8S Auth for role:%q policy:%q cluster:%q env:%q", role.Name, policy.Name, cluster.Name, env)
 							return err
 						}
 					}
@@ -324,7 +294,7 @@ func (km *KeyMaster) ConfigureNamespace(namespace Namespace, verbose bool) (err 
 					scrutil.VerboseOutput(verbose, "          sl")
 					err = km.AddPolicyToTlsRole(role, env, policy)
 					if err != nil {
-						err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, EnvToName[env])
+						err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
 						return err
 					}
 				case AWS_NAME:

@@ -67,7 +67,7 @@ func (km *KeyMaster) TlsAuthPath(role *Role, env Environment) (path string, err 
 		return path, err
 	}
 
-	path = fmt.Sprintf("auth/cert/certs/%s-%s-%s", EnvToName[env], role.Namespace, role.Name)
+	path = fmt.Sprintf("auth/cert/certs/%s-%s-%s", env, role.Namespace, role.Name)
 
 	return path, err
 }
@@ -143,7 +143,7 @@ func HostsForRoleInLdap(role *Role, env Environment) (hosts []ldapclient.HostInf
 		return hosts, err
 	}
 
-	namespacedName := fmt.Sprintf("%s-%s-%s", EnvToName[env], role.Namespace, role.Name)
+	namespacedName := fmt.Sprintf("%s-%s-%s", env, role.Namespace, role.Name)
 
 	hosts, err = lc.HostsInVaultRole(namespacedName)
 	if err != nil {
@@ -217,7 +217,7 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, env Environment, policies []string
 	data["allowed_common_names"] = strings.Join(hostnames, ",")
 	data["bound_cidrs"] = strings.Join(ips, ",")
 	data["policies"] = policies
-	data["display_name"] = fmt.Sprintf("%s-%s-%s", EnvToName[env], role.Namespace, role.Name)
+	data["display_name"] = fmt.Sprintf("%s-%s-%s", env, role.Namespace, role.Name)
 	data["certificate"] = HOST_CA_CERT
 
 	path, err := km.TlsAuthPath(role, env)

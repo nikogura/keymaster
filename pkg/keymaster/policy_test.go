@@ -20,28 +20,28 @@ func TestPolicyName(t *testing.T) {
 			"role1",
 			"foo",
 			"core-services",
-			Prod,
+			PROD,
 			"prod-core-services-foo",
 		},
 		{
 			"role2",
 			"bar",
 			"core-platform",
-			Stage,
+			STAGE,
 			"stage-core-platform-bar",
 		},
 		{
 			"role3",
 			"baz",
 			"core-infra",
-			Dev,
+			DEV,
 			"dev-core-infra-baz",
 		},
 		{
 			"role4",
 			"wip",
 			"payments",
-			17,
+			DEV,
 			"dev-payments-wip",
 		},
 	}
@@ -85,7 +85,7 @@ func TestPolicyPath(t *testing.T) {
 				},
 				Namespace: "core-services",
 			},
-			Dev,
+			DEV,
 			"sys/policy/dev-core-services-app1",
 		},
 	}
@@ -103,19 +103,19 @@ func TestPolicyPath(t *testing.T) {
 func TestPolicyPayload(t *testing.T) {
 	km := NewKeyMaster(testServer.VaultTestClient())
 
-	path1, err := km.SecretPath("foo", "core-services", Dev)
+	path1, err := km.SecretPath("foo", "core-services", DEV)
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
 	}
 
-	path2, err := km.SecretPath("foo", "core-platform", Dev)
+	path2, err := km.SecretPath("foo", "core-platform", DEV)
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
 	}
 
-	path3, err := km.SecretPath("bar", "core-platform", Dev)
+	path3, err := km.SecretPath("bar", "core-platform", DEV)
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
@@ -204,7 +204,7 @@ func TestPolicyPayload(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy, err := km.MakePolicyPayload(tc.in, Dev)
+			policy, err := km.MakePolicyPayload(tc.in, DEV)
 			if err != nil {
 				log.Printf("error creating policy: %s", err)
 				t.Fail()
@@ -217,19 +217,19 @@ func TestPolicyPayload(t *testing.T) {
 func TestPolicyCrud(t *testing.T) {
 	km := NewKeyMaster(testServer.VaultTestClient())
 
-	path1, err := km.SecretPath("foo", "core-services", Dev)
+	path1, err := km.SecretPath("foo", "core-services", DEV)
 	if err != nil {
 		log.Printf("error creating path: %s", err)
 		t.Fail()
 	}
 
-	pName1, err := km.PolicyName("app1", "core-services", Dev)
+	pName1, err := km.PolicyName("app1", "core-services", DEV)
 	if err != nil {
 		log.Printf("error creating policy name: %s", err)
 		t.Fail()
 	}
 
-	pPath1, err := km.PolicyPath("app1", "core-services", Dev)
+	pPath1, err := km.PolicyPath("app1", "core-services", DEV)
 	if err != nil {
 		log.Printf("error creating policy path: %s", err)
 		t.Fail()

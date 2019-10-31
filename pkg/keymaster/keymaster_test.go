@@ -550,37 +550,6 @@ roles:
 	}
 }
 
-func TestNameToEnvironment(t *testing.T) {
-	inputs := []struct {
-		in  string
-		out Environment
-	}{
-		{
-			"prod",
-			Prod,
-		},
-		{
-			"stage",
-			Stage,
-		},
-		{
-			"dev",
-			Dev,
-		},
-	}
-
-	for _, tc := range inputs {
-		t.Run(tc.in, func(t *testing.T) {
-			env, err := NameToEnvironment(tc.in)
-			if err != nil {
-				log.Printf("Error: %s", err)
-				t.Fail()
-			}
-			assert.Equal(t, env, tc.out, "outputted environment matches expectations")
-		})
-	}
-}
-
 func TestConfigureNamespace(t *testing.T) {
 	inputFile1 := `---
 name: redns
@@ -910,7 +879,7 @@ roles:
 			t.Fail()
 		}
 
-		log.Printf("--- K8S Roles for %s (%s) ---", cluster.Name, EnvToName[cluster.Environment])
+		log.Printf("--- K8S Roles for %s (%s) ---", cluster.Name, cluster.Environment)
 		keys, ok := s.Data["keys"].([]interface{})
 		if ok {
 			for _, key := range keys {

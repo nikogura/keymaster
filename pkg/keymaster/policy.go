@@ -22,19 +22,12 @@ func (km *KeyMaster) PolicyName(role string, namespace string, env Environment) 
 		return name, err
 	}
 
-	if env == 0 {
+	if env == "" {
 		err = errors.New("unsupported environment")
 		return name, err
 	}
 
-	switch env {
-	case Prod:
-		name = fmt.Sprintf("%s-%s-%s", PROD_NAME, namespace, role)
-	case Stage:
-		name = fmt.Sprintf("%s-%s-%s", STAGE_NAME, namespace, role)
-	default:
-		name = fmt.Sprintf("%s-%s-%s", DEV_NAME, namespace, role)
-	}
+	name = fmt.Sprintf("%s-%s-%s", env, namespace, role)
 
 	return name, err
 }
