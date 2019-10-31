@@ -301,7 +301,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		//	t.Fail()
 		//}
 		//for i, env := range Envs {
-		//	path, err := km.SecretPath(input.in.Name, input.in.Namespace, env)
+		//	path, err := km.SecretPath(input.in.Name, input.in.Team, env)
 		//	if err != nil {
 		//		log.Printf("error creating path: %s", err)
 		//		t.Fail()

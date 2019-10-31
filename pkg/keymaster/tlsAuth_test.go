@@ -37,14 +37,14 @@ func TestTlsAuthCrud(t *testing.T) {
 	//		Secrets: []*Secret{
 	//			{
 	//				Name:      "baz",
-	//				Namespace: "testns2",
+	//				Team: "testns2",
 	//				Generator: AlphaGenerator{
 	//					Type:   "alpha",
 	//					Length: 10,
 	//				},
 	//			},
 	//		},
-	//		Namespace: "testns2",
+	//		Team: "testns2",
 	//	}, Prod)
 	//if err != nil {
 	//	log.Printf("error creating policy: %s", err)
@@ -128,7 +128,7 @@ func TestTlsAuthCrud(t *testing.T) {
 		//		Secrets: []*Secret{
 		//			{
 		//				Name:      "foo",
-		//				Namespace: "testns2",
+		//				Team: "testns2",
 		//				Generator: AlphaGenerator{
 		//					Type:   "alpha",
 		//					Length: 10,
@@ -136,13 +136,13 @@ func TestTlsAuthCrud(t *testing.T) {
 		//			},
 		//			{
 		//				Name:      "bar",
-		//				Namespace: "testns2",
+		//				Team: "testns2",
 		//				Generator: UUIDGenerator{
 		//					Type: "uuid",
 		//				},
 		//			},
 		//		},
-		//		Namespace: "testns2",
+		//		Team: "testns2",
 		//	},
 		//	map[string]interface{}{
 		//		"allowed_common_names":         []interface{}{"testbed01.inf.scribd.com"},

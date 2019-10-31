@@ -73,8 +73,8 @@ func NewKeyMaster(client *api.Client) (km *KeyMaster) {
 	return km
 }
 
-// Namespace Namespace for secrets.  Might map to a namespace such as 'core-infra', 'core-platform', or 'core-services', but also may not.  Maps directly to a Namespace in K8s.
-type Namespace struct {
+// Team  Group of humans who control their own destiny in regard to secrets
+type Team struct {
 	Name       string    `yaml:"name"`
 	Roles      []*Role   `yaml:"roles"`
 	Secrets    []*Secret `yaml:"secrets"`
@@ -126,8 +126,8 @@ func (r *Role) SetNamespace(namespace string) {
 	r.Namespace = namespace
 }
 
-// NewNamespace Create a new Namespace from the data provided.
-func (km *KeyMaster) NewNamespace(data []byte, verbose bool) (ns Namespace, err error) {
+// NewTeam Create a new Team from the data provided.
+func (km *KeyMaster) NewTeam(data []byte, verbose bool) (ns Team, err error) {
 	err = yaml.Unmarshal(data, &ns)
 	if err != nil {
 		err = errors.Wrap(err, ERR_NS_DATA_LOAD)
@@ -232,8 +232,8 @@ func (km *KeyMaster) NewNamespace(data []byte, verbose bool) (ns Namespace, err 
 	return ns, err
 }
 
-// ConfigureNamespace  The grand unified config loader that, after the yaml file is read into memory, applies it to Vault.
-func (km *KeyMaster) ConfigureNamespace(namespace Namespace, verbose bool) (err error) {
+// ConfigureTeam  The grand unified config loader that, after the yaml file is read into memory, applies it to Vault.
+func (km *KeyMaster) ConfigureTeam(namespace Team, verbose bool) (err error) {
 	scrutil.VerboseOutput(verbose, "--- Configuring namespace %s ---", namespace.Name)
 	// populate secrets
 	scrutil.VerboseOutput(verbose, "--- Populating Secrets ---")

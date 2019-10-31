@@ -37,7 +37,7 @@ func (km *KeyMaster) NewGenerator(options GeneratorData) (generator Generator, e
 	return generator, err
 }
 
-// SecretPath Given a Name, Namespace, and Environment, returns the proper path in Vault where that secret is stored.
+// SecretPath Given a Name, Team, and Environment, returns the proper path in Vault where that secret is stored.
 func (km *KeyMaster) SecretPath(name string, namespace string, env Environment) (path string, err error) {
 	if namespace == "" {
 		err = errors.New("cannot make secret path for blank namespace")
@@ -49,7 +49,7 @@ func (km *KeyMaster) SecretPath(name string, namespace string, env Environment) 
 	return path, err
 }
 
-// CertPath Given a Name, Namespace, and Environment, returns the proper path in Vault where that Cert Secret is stored.
+// CertPath Given a Name, Team, and Environment, returns the proper path in Vault where that Cert Secret is stored.
 func (km *KeyMaster) CertPath(name string, namespace string, env Environment) (path string, err error) {
 	if namespace == "" {
 		err = errors.New("cannot make cert secret path for blank namespace")

@@ -532,7 +532,7 @@ roles:
 	for _, tt := range inputs {
 		t.Run(tt.name, func(t *testing.T) {
 			data := []byte(tt.in)
-			_, err := km.NewNamespace(data, true)
+			_, err := km.NewTeam(data, true)
 			errstr := ""
 			if err != nil {
 				errstr = err.Error()
@@ -740,13 +740,13 @@ roles:
 	assert.True(t, len(configs) == 3, "expect 3 configs for processing.")
 
 	for _, config := range configs {
-		ns, err := km.NewNamespace(config, true)
+		ns, err := km.NewTeam(config, true)
 		log.Printf("--- Processing data for namespace: %s ---", ns.Name)
 		if err != nil {
 			log.Printf("Failed to load namespace: %s", err)
 			t.Fail()
 		} else {
-			err = km.ConfigureNamespace(ns, true)
+			err = km.ConfigureTeam(ns, true)
 			if err != nil {
 				log.Printf("Failed to configure namespace: %s", err)
 				t.Fail()
