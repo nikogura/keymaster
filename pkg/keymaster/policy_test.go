@@ -21,28 +21,28 @@ func TestPolicyName(t *testing.T) {
 			"foo",
 			"core-services",
 			PROD,
-			"prod-core-services-foo",
+			fmt.Sprintf("%s-core-services-foo", PROD),
 		},
 		{
 			"role2",
 			"bar",
 			"core-platform",
 			STAGE,
-			"stage-core-platform-bar",
+			fmt.Sprintf("%s-core-platform-bar", STAGE),
 		},
 		{
 			"role3",
 			"baz",
 			"core-infra",
 			DEV,
-			"dev-core-infra-baz",
+			fmt.Sprintf("%s-core-infra-baz", DEV),
 		},
 		{
 			"role4",
 			"wip",
 			"payments",
 			DEV,
-			"dev-payments-wip",
+			fmt.Sprintf("%s-payments-wip", DEV),
 		},
 	}
 

@@ -25,8 +25,13 @@ const ERR_SLASH_IN_NAMESPACE = "namespaces cannot contain slashes"
 const ERR_SLASH_IN_ROLE_NAME = "role names cannot contain slashes"
 const ERR_UNSUPPORTED_REALM = "unsupported realm"
 
-// Environment Scribd's deployment environments.   One of "Prod", "Stage", "Dev"
 type Environment string
+
+var Envs = []Environment{
+	PROD,
+	STAGE,
+	DEV,
+}
 
 type Realm int
 
@@ -36,9 +41,9 @@ const (
 	SL
 )
 
-const PROD = "prod"
-const STAGE = "stage"
-const DEV = "dev"
+const PROD = "production"
+const STAGE = "staging"
+const DEV = "development"
 const K8S_NAME = "k8s"
 const AWS_NAME = "aws"
 const SL_NAME = "sl"
@@ -47,12 +52,6 @@ var Realms = []Realm{
 	K8S,
 	AWS,
 	SL,
-}
-
-var Envs = []Environment{
-	PROD,
-	STAGE,
-	DEV,
 }
 
 var RealmToName = map[Realm]string{
