@@ -13,37 +13,37 @@ func TestSecretPath(t *testing.T) {
 	inputs := []struct {
 		name       string
 		secretName string
-		namespace  string
+		team       string
 		env        Environment
 		output     string
 	}{
 		{
 			"secret1",
 			"foo",
-			"core-services",
+			"team6",
 			PROD,
-			fmt.Sprintf("%s/data/core-services/foo", PROD),
+			fmt.Sprintf("team6/data/%s/foo", PROD),
 		},
 		{
 			"secret2",
 			"bar",
-			"core-platform",
+			"team7",
 			STAGE,
-			fmt.Sprintf("%s/data/core-platform/bar", STAGE),
+			fmt.Sprintf("team7/data/%s/bar", STAGE),
 		},
 		{
 			"secret3",
 			"baz",
-			"core-infra",
+			"team5",
 			DEV,
-			fmt.Sprintf("%s/data/core-infra/baz", DEV),
+			fmt.Sprintf("team5/data/%s/baz", DEV),
 		},
 		{
 			"secret4",
 			"wip",
-			"payments",
+			"team7",
 			DEV,
-			fmt.Sprintf("%s/data/payments/wip", DEV),
+			fmt.Sprintf("team7/data/%s/wip", DEV),
 		},
 	}
 
@@ -51,7 +51,7 @@ func TestSecretPath(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			path, err := km.SecretPath(tc.secretName, tc.namespace, tc.env)
+			path, err := km.SecretPath(tc.team, tc.secretName, tc.env)
 			if err != nil {
 				log.Printf("error creating path: %s", err)
 				t.Fail()
@@ -66,7 +66,7 @@ func TestSecretPath(t *testing.T) {
 //	inputs := []struct {
 //		name       string
 //		secretName string
-//		namespace  string
+//		team       string
 //		env        Environment
 //		output     string
 //	}{
@@ -94,9 +94,9 @@ func TestSecretPath(t *testing.T) {
 //		{
 //			"cert4",
 //			"wip",
-//			"payments",
+//			"team3",
 //			17,
-//			"dev/data/certs/payments/wip",
+//			"dev/data/certs/team3/wip",
 //		},
 //	}
 //
@@ -104,7 +104,7 @@ func TestSecretPath(t *testing.T) {
 //
 //	for _, tc := range inputs {
 //		t.Run(tc.name, func(t *testing.T) {
-//			path, err := km.SecretPath(tc.secretName, tc.namespace, tc.env)
+//			path, err := km.SecretPath(tc.team, tc.secretName, tc.env)
 //			if err != nil {
 //				log.Printf("error creating path: %s", err)
 //				t.Fail()
@@ -124,8 +124,8 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"foo",
 			&Secret{
-				Name:      "foo",
-				Namespace: "testns1",
+				Name: "foo",
+				Team: "team4",
 				GeneratorData: GeneratorData{
 					"type":   "alpha",
 					"length": 10,
@@ -136,8 +136,8 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"bar",
 			&Secret{
-				Name:      "bar",
-				Namespace: "testns1",
+				Name: "bar",
+				Team: "team5",
 				GeneratorData: GeneratorData{
 					"type":   "hex",
 					"length": 32,
@@ -148,8 +148,8 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"wip",
 			&Secret{
-				Name:      "wip",
-				Namespace: "testns1",
+				Name: "wip",
+				Team: "team5",
 				GeneratorData: GeneratorData{
 					"type": "uuid",
 				},
@@ -159,8 +159,8 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"zoz",
 			&Secret{
-				Name:      "zoz",
-				Namespace: "payments",
+				Name: "zoz",
+				Team: "team7",
 				GeneratorData: GeneratorData{
 					"type":  "chbs",
 					"words": 6,
@@ -171,8 +171,8 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"foo.scribd.com",
 			&Secret{
-				Name:      "",
-				Namespace: "testns2",
+				Name: "",
+				Team: "team6",
 				GeneratorData: GeneratorData{
 					"type": "tls",
 					"cn":   "foo.scribd.com",
@@ -206,13 +206,13 @@ func TestWriteSecretIfBlank(t *testing.T) {
 				for _, env := range Envs {
 					var path string
 					if secret.GeneratorData["type"] == "tls" {
-						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Team, secret.Name, env)
 						if err != nil {
 							log.Printf("error creating path: %s", err)
 							t.Fail()
 						}
 					} else {
-						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Team, secret.Name, env)
 						if err != nil {
 							log.Printf("error creating path: %s", err)
 							t.Fail()
@@ -256,7 +256,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 					}
 				}
 				// Uncomment the following to debug manually
-				//fmt.Printf("VAULT_TOKEN=%s VAULT_ADDR=http://%s\n", testServer.RootToken, testServer.Address)
+				//fmt.Printf("VAULT_TOKEN=%s VAULT_ADDR=http://%s\n", testVault.RootToken, testVault.Address)
 				//time.Sleep(10 * time.Minute)
 			}
 		})
@@ -265,7 +265,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		expected := make([]string, 0)
 
 		for _, env := range Envs {
-			path, err := km.SecretPath(input.in.Name, input.in.Namespace, env)
+			path, err := km.SecretPath(input.in.Team, input.in.Name, env)
 			if err != nil {
 				log.Printf("error creating path: %s", err)
 				t.Fail()
@@ -301,7 +301,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		//	t.Fail()
 		//}
 		//for i, env := range Envs {
-		//	path, err := km.SecretPath(input.in.Name, input.in.Team, env)
+		//	path, err := km.SecretPath(input.in.Team, input.in.Name, env)
 		//	if err != nil {
 		//		log.Printf("error creating path: %s", err)
 		//		t.Fail()

@@ -223,17 +223,17 @@ func (km *KeyMaster) K8sAuthPath(cluster Cluster, role *Role) (path string, err 
 		return path, err
 	}
 
-	if role.Namespace == "" {
-		err = errors.New("empty role namespaces are not supported")
+	if role.Team == "" {
+		err = errors.New("teamless roles are not supported")
 		return path, err
 	}
 
-	path = fmt.Sprintf("auth/k8s-%s/role/%s-%s", cluster.Name, role.Namespace, role.Name)
+	path = fmt.Sprintf("auth/k8s-%s/role/%s-%s", cluster.Name, role.Team, role.Name)
 
 	return path, err
 }
 
-func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role *Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role *Role, realm *Realm, policy VaultPolicy) (err error) {
 	policies, err := km.GrantedPoliciesForK8sRole(cluster, role)
 	if err != nil {
 		return err
@@ -246,10 +246,10 @@ func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role *Role, policy Vaul
 
 	policies = append(policies, policy.Name)
 
-	return km.WriteK8sAuth(cluster, role, policies)
+	return km.WriteK8sAuth(cluster, role, realm, policies)
 }
 
-func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role *Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role *Role, realm *Realm, policy VaultPolicy) (err error) {
 	current, err := km.GrantedPoliciesForK8sRole(cluster, role)
 	if err != nil {
 		return err
@@ -263,7 +263,7 @@ func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role *Role, policy
 		}
 	}
 
-	return km.WriteK8sAuth(cluster, role, updated)
+	return km.WriteK8sAuth(cluster, role, realm, updated)
 }
 
 func (km *KeyMaster) GrantedPoliciesForK8sRole(cluster Cluster, role *Role) (policies []string, err error) {
@@ -296,11 +296,11 @@ func (km *KeyMaster) GrantedPoliciesForK8sRole(cluster Cluster, role *Role) (pol
 }
 
 // WriteK8sAuth Writes the Vault Auth definition for the Role.
-func (km *KeyMaster) WriteK8sAuth(cluster Cluster, role *Role, policies []string) (err error) {
+func (km *KeyMaster) WriteK8sAuth(cluster Cluster, role *Role, realm *Realm, policies []string) (err error) {
 
 	data := make(map[string]interface{})
 	data["bound_service_account_names"] = "default"
-	data["bound_service_account_namespaces"] = role.Namespace
+	data["bound_service_account_namespaces"] = strings.Join(realm.Principals, ",")
 	data["policies"] = policies
 
 	boundCidrs := strings.Join(cluster.BoundCidrs, ",")

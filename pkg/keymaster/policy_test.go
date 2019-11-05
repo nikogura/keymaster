@@ -10,47 +10,47 @@ import (
 
 func TestPolicyName(t *testing.T) {
 	inputs := []struct {
-		name      string
-		roleName  string
-		namespace string
-		env       Environment
-		output    string
+		name     string
+		roleName string
+		team     string
+		env      Environment
+		output   string
 	}{
 		{
 			"role1",
 			"foo",
 			"core-services",
 			PROD,
-			fmt.Sprintf("%s-core-services-foo", PROD),
+			fmt.Sprintf("core-services-%s-foo", PROD),
 		},
 		{
 			"role2",
 			"bar",
 			"core-platform",
 			STAGE,
-			fmt.Sprintf("%s-core-platform-bar", STAGE),
+			fmt.Sprintf("core-platform-%s-bar", STAGE),
 		},
 		{
 			"role3",
 			"baz",
 			"core-infra",
 			DEV,
-			fmt.Sprintf("%s-core-infra-baz", DEV),
+			fmt.Sprintf("core-infra-%s-baz", DEV),
 		},
 		{
 			"role4",
 			"wip",
-			"payments",
+			"team3",
 			DEV,
-			fmt.Sprintf("%s-payments-wip", DEV),
+			fmt.Sprintf("team3-%s-wip", DEV),
 		},
 	}
 
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(testVault.VaultTestClient())
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			path, err := km.PolicyName(tc.roleName, tc.namespace, tc.env)
+			path, err := km.PolicyName(tc.team, tc.roleName, tc.env)
 			if err != nil {
 				log.Printf("error creating policy name: %s", err)
 				t.Fail()
@@ -62,7 +62,7 @@ func TestPolicyName(t *testing.T) {
 }
 
 func TestPolicyPath(t *testing.T) {
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(testVault.VaultTestClient())
 	inputs := []struct {
 		name string
 		role Role
@@ -75,23 +75,23 @@ func TestPolicyPath(t *testing.T) {
 				Name: "app1",
 				Secrets: []*Secret{
 					{
-						Name:      "foo",
-						Namespace: "core-services",
+						Name: "foo",
+						Team: "core-services",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 				},
-				Namespace: "core-services",
+				Team: "core-services",
 			},
 			DEV,
-			"sys/policy/dev-core-services-app1",
+			"sys/policy/core-services-development-app1",
 		},
 	}
 
 	for _, tc := range inputs {
-		path, err := km.PolicyPath(tc.role.Name, tc.role.Namespace, tc.env)
+		path, err := km.PolicyPath(tc.role.Team, tc.role.Name, tc.env)
 		if err != nil {
 			log.Printf("error creating policy name: %s", err)
 			t.Fail()
@@ -101,21 +101,21 @@ func TestPolicyPath(t *testing.T) {
 }
 
 func TestPolicyPayload(t *testing.T) {
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(testVault.VaultTestClient())
 
-	path1, err := km.SecretPath("foo", "core-services", DEV)
+	path1, err := km.SecretPath("core-services", "foo", DEV)
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
 	}
 
-	path2, err := km.SecretPath("foo", "core-platform", DEV)
+	path2, err := km.SecretPath("core-platform", "foo", DEV)
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
 	}
 
-	path3, err := km.SecretPath("bar", "core-platform", DEV)
+	path3, err := km.SecretPath("core-platform", "bar", DEV)
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
@@ -132,15 +132,15 @@ func TestPolicyPayload(t *testing.T) {
 				Name: "app1",
 				Secrets: []*Secret{
 					{
-						Name:      "foo",
-						Namespace: "core-services",
+						Name: "foo",
+						Team: "core-services",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 				},
-				Namespace: "core-services",
+				Team: "core-services",
 			},
 			map[string]interface{}{
 				"path": map[string]interface{}{
@@ -149,7 +149,7 @@ func TestPolicyPayload(t *testing.T) {
 							"read",
 						},
 					},
-					"sys/policy/dev-core-services-app1": map[string]interface{}{
+					"sys/policy/core-services-development-app1": map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
@@ -163,22 +163,22 @@ func TestPolicyPayload(t *testing.T) {
 				Name: "app2",
 				Secrets: []*Secret{
 					{
-						Name:      "foo",
-						Namespace: "core-platform",
+						Name: "foo",
+						Team: "core-platform",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 					{
-						Name:      "bar",
-						Namespace: "core-platform",
+						Name: "bar",
+						Team: "core-platform",
 						Generator: UUIDGenerator{
 							Type: "uuid",
 						},
 					},
 				},
-				Namespace: "core-platform",
+				Team: "core-platform",
 			},
 			map[string]interface{}{
 				"path": map[string]interface{}{
@@ -192,7 +192,7 @@ func TestPolicyPayload(t *testing.T) {
 							"read",
 						},
 					},
-					"sys/policy/dev-core-platform-app2": map[string]interface{}{
+					"sys/policy/core-platform-development-app2": map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
@@ -215,7 +215,7 @@ func TestPolicyPayload(t *testing.T) {
 }
 
 func TestPolicyCrud(t *testing.T) {
-	km := NewKeyMaster(testServer.VaultTestClient())
+	km := NewKeyMaster(testVault.VaultTestClient())
 
 	path1, err := km.SecretPath("foo", "core-services", DEV)
 	if err != nil {

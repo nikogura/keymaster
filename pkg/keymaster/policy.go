@@ -10,15 +10,15 @@ import (
 	"strings"
 )
 
-// PolicyName constructs the policy name form the inputs in a regular fashion. Note: namespaces like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs.
-func (km *KeyMaster) PolicyName(role string, namespace string, env Environment) (name string, err error) {
+// PolicyName constructs the policy name form the inputs in a regular fashion. Note: team names like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs.
+func (km *KeyMaster) PolicyName(team string, role string, env Environment) (name string, err error) {
 	if role == "" {
 		err = errors.New("empty role names are not supported")
 		return name, err
 	}
 
-	if namespace == "" {
-		err = errors.New("empty role namespaces are not supported")
+	if team == "" {
+		err = errors.New("teamless roles are not supported")
 		return name, err
 	}
 
@@ -27,14 +27,14 @@ func (km *KeyMaster) PolicyName(role string, namespace string, env Environment) 
 		return name, err
 	}
 
-	name = fmt.Sprintf("%s-%s-%s", env, namespace, role)
+	name = fmt.Sprintf("%s-%s-%s", team, env, role)
 
 	return name, err
 }
 
 // PolicyPath constructs the path to the policy for the role
-func (km *KeyMaster) PolicyPath(role string, namespace string, env Environment) (path string, err error) {
-	policyName, err := km.PolicyName(role, namespace, env)
+func (km *KeyMaster) PolicyPath(team string, role string, env Environment) (path string, err error) {
+	policyName, err := km.PolicyName(team, role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy name")
 		return path, err
@@ -53,13 +53,13 @@ func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy,
 		return policy, err
 	}
 
-	pName, err := km.PolicyName(role.Name, role.Namespace, env)
+	pName, err := km.PolicyName(role.Team, role.Name, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy name")
 		return policy, err
 	}
 
-	pPath, err := km.PolicyPath(role.Name, role.Namespace, env)
+	pPath, err := km.PolicyPath(role.Team, role.Name, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy path")
 		return policy, err
@@ -91,7 +91,7 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[
 	pathElem := make(map[string]interface{})
 
 	for _, secret := range role.Secrets {
-		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+		secretPath, err := km.SecretPath(secret.Team, secret.Name, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create secret path for %s role %s", secret.Name, role.Name)
 			return policy, err
@@ -103,7 +103,7 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[
 	}
 
 	// add ability to read own policy
-	secretPath, err := km.PolicyPath(role.Name, role.Namespace, env)
+	secretPath, err := km.PolicyPath(role.Team, role.Name, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy path")
 		return policy, err
@@ -227,3 +227,5 @@ func (km *KeyMaster) DeletePolicyFromVault(path string) (err error) {
 
 	return err
 }
+
+// TODO how to grant universal access to development?

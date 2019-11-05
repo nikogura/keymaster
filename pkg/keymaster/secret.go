@@ -38,25 +38,25 @@ func (km *KeyMaster) NewGenerator(options GeneratorData) (generator Generator, e
 }
 
 // SecretPath Given a Name, Team, and Environment, returns the proper path in Vault where that secret is stored.
-func (km *KeyMaster) SecretPath(name string, namespace string, env Environment) (path string, err error) {
-	if namespace == "" {
-		err = errors.New("cannot make secret path for blank namespace")
+func (km *KeyMaster) SecretPath(team string, name string, env Environment) (path string, err error) {
+	if team == "" {
+		err = errors.New("cannot make secret path for nameless team")
 		return path, err
 	}
 
-	path = fmt.Sprintf("%s/data/%s/%s", env, namespace, name)
+	path = fmt.Sprintf("%s/data/%s/%s", team, env, name)
 
 	return path, err
 }
 
 // CertPath Given a Name, Team, and Environment, returns the proper path in Vault where that Cert Secret is stored.
-func (km *KeyMaster) CertPath(name string, namespace string, env Environment) (path string, err error) {
-	if namespace == "" {
-		err = errors.New("cannot make cert secret path for blank namespace")
+func (km *KeyMaster) CertPath(team string, name string, env Environment) (path string, err error) {
+	if team == "" {
+		err = errors.New("cannot make cert secret path for nameless team")
 		return path, err
 	}
 
-	path = fmt.Sprintf("%s/data/certs/%s/%s", env, namespace, name)
+	path = fmt.Sprintf("%s/data/certs/%s/%s", team, env, name)
 
 	return path, err
 }
@@ -81,7 +81,7 @@ func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env En
 		data["data"] = sdata
 
 		var vcert VaultCert
-		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+		secretPath, err := km.SecretPath(secret.Team, secret.Name, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create cert path")
 			return err
@@ -153,7 +153,7 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret, verbose bool) (err error
 	scrutil.VerboseOutput(verbose, "checking secret %s", secret.Name)
 	for _, env := range Envs {
 		scrutil.VerboseOutput(verbose, "  checking env %s", env)
-		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+		secretPath, err := km.SecretPath(secret.Team, secret.Name, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create secret path")
 			return err

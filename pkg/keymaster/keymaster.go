@@ -14,16 +14,20 @@ import (
 )
 
 const ERR_NS_DATA_LOAD = "failed to load data in supplied config"
-const ERR_NAMELESS_NS = "nameless namespaces are not supported"
+const ERR_NAMELESS_TEAM = "nameless teams are not supported"
 const ERR_NAMELESS_ROLE = "nameless roles are not supported"
 const ERR_NAMELESS_SECRET = "nameless secrets are not supported"
 const ERR_MISSING_SECRET = "missing secret in role"
 const ERR_MISSING_GENERATOR = "missing generator in secret"
 const ERR_BAD_GENERATOR = "unable to create generator"
 const ERR_REALMLESS_ROLE = "realmless roles are not supported"
-const ERR_SLASH_IN_NAMESPACE = "namespaces cannot contain slashes"
+const ERR_SLASH_IN_TEAM_NAME = "team names cannot contain slashes"
 const ERR_SLASH_IN_ROLE_NAME = "role names cannot contain slashes"
 const ERR_UNSUPPORTED_REALM = "unsupported realm"
+
+const PROD = "production"
+const STAGE = "staging"
+const DEV = "development"
 
 type Environment string
 
@@ -33,31 +37,20 @@ var Envs = []Environment{
 	DEV,
 }
 
-type Realm int
-
-const (
-	K8S = iota + 1
-	AWS
-	SL
-)
-
-const PROD = "production"
-const STAGE = "staging"
-const DEV = "development"
-const K8S_NAME = "k8s"
-const AWS_NAME = "aws"
-const SL_NAME = "sl"
-
-var Realms = []Realm{
-	K8S,
-	AWS,
-	SL,
+type Realm struct {
+	Type        string   `yaml:"type"`        // k8s iam sl
+	Identifiers []string `yaml:"identifiers"` // cluster names for k8s, hostnames for TLS, meaningless for IAM unless account number?
+	Principals  []string `yaml:"principals"`  // namespaces for k8s, ARN's for IAM
 }
 
-var RealmToName = map[Realm]string{
-	K8S: K8S_NAME,
-	AWS: AWS_NAME,
-	SL:  SL_NAME,
+const K8S = "k8s"
+const IAM = "iam"
+const TLS = "tls"
+
+var RealmTypes = []string{
+	IAM,
+	K8S,
+	TLS,
 }
 
 // KeyMaster The KeyMaster Interface
@@ -66,10 +59,11 @@ type KeyMaster struct {
 }
 
 // NewKeyMaster Creates a new KeyMaster with the vault client supplied.
-func NewKeyMaster(client *api.Client) (km *KeyMaster) {
+func NewKeyMaster(vaultClient *api.Client) (km *KeyMaster) {
 	km = &KeyMaster{
-		VaultClient: client,
+		VaultClient: vaultClient,
 	}
+
 	return km
 }
 
@@ -87,8 +81,8 @@ type Role struct {
 	Name       string    `yaml:"name"`
 	Secrets    []*Secret `yaml:"secrets"`
 	SecretsMap map[string]*Secret
-	Realms     []string `yaml:"realms"`
-	Namespace  string   `yaml:"namespace"`
+	Realms     []*Realm `yaml:"realms"`
+	Team       string   `yaml:"team"`
 }
 
 // VaultPolicy Vault Policy that allows a Role access to a Secret
@@ -104,7 +98,7 @@ type GeneratorData map[string]interface{}
 // Secret a set of information describing a string value in Vault that is protected from unauthorized access, and varies by business environment.
 type Secret struct {
 	Name          string        `yaml:"name"`
-	Namespace     string        `yaml:"namespace"`
+	Team          string        `yaml:"team"`
 	GeneratorData GeneratorData `yaml:"generator"`
 	Generator     Generator     `yaml:"-"`
 
@@ -118,140 +112,140 @@ func (s *Secret) SetGenerator(generator Generator) {
 	s.Generator = generator
 }
 
-func (s *Secret) SetNamespace(namespace string) {
-	s.Namespace = namespace
+func (s *Secret) SetTeam(team string) {
+	s.Team = team
 }
 
-func (r *Role) SetNamespace(namespace string) {
-	r.Namespace = namespace
+func (r *Role) SetTeam(team string) {
+	r.Team = team
 }
 
 // NewTeam Create a new Team from the data provided.
-func (km *KeyMaster) NewTeam(data []byte, verbose bool) (ns Team, err error) {
-	err = yaml.Unmarshal(data, &ns)
+func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team Team, err error) {
+	err = yaml.Unmarshal(data, &team)
 	if err != nil {
 		err = errors.Wrap(err, ERR_NS_DATA_LOAD)
-		return ns, err
+		return team, err
 	}
 
-	// Error out if there's a missing namespace tag
-	if ns.Name == "" {
-		err = errors.New(ERR_NAMELESS_NS)
-		return ns, err
+	// Error out if there's a missing team name
+	if team.Name == "" {
+		err = errors.New(ERR_NAMELESS_TEAM)
+		return team, err
 	}
 
-	if regexp.MustCompile(`/`).MatchString(ns.Name) {
-		err = errors.New(ERR_SLASH_IN_NAMESPACE)
-		return ns, err
+	if regexp.MustCompile(`/`).MatchString(team.Name) {
+		err = errors.New(ERR_SLASH_IN_TEAM_NAME)
+		return team, err
 	}
 
-	scrutil.VerboseOutput(verbose, "parsing namespace %s", ns.Name)
+	scrutil.VerboseOutput(verbose, "parsing team %s", team.Name)
 
 	// Generate maps for O(1) lookups
-	ns.SecretsMap = make(map[string]*Secret)
-	ns.RolesMap = make(map[string]*Role)
+	team.SecretsMap = make(map[string]*Secret)
+	team.RolesMap = make(map[string]*Role)
 
-	// If there's no namespace listed for the secret, it belongs to the namespace of the file from which it's loaded.
-	for _, secret := range ns.Secrets {
+	// If there's no team listed for the secret, it belongs to the team of the file from which it's loaded.
+	for _, secret := range team.Secrets {
 		scrutil.VerboseOutput(verbose, "  parsing secret %s", secret.Name)
-		if secret.Namespace == "" {
-			secret.SetNamespace(ns.Name)
+		if secret.Team == "" {
+			secret.SetTeam(team.Name)
 		}
 
 		if len(secret.GeneratorData) == 0 {
 			err = errors.New(ERR_MISSING_GENERATOR)
-			return ns, err
+			return team, err
 		}
 
 		if secret.Name == "" {
 			err = errors.New(ERR_NAMELESS_SECRET)
-			return ns, err
+			return team, err
 		}
 
 		generator, err := km.NewGenerator(secret.GeneratorData)
 		if err != nil {
 			err = errors.Wrap(err, ERR_BAD_GENERATOR)
-			return ns, err
+			return team, err
 		}
 
 		secret.SetGenerator(generator)
 
 		scrutil.VerboseOutput(verbose, "  ... success!")
-		ns.SecretsMap[secret.Name] = secret
+		team.SecretsMap[secret.Name] = secret
 	}
 
-	for _, role := range ns.Roles {
+	for _, role := range team.Roles {
 		scrutil.VerboseOutput(verbose, "  parsing role %s", role.Name)
 		if role.Name == "" {
 			err = errors.New(ERR_NAMELESS_ROLE)
-			return ns, err
+			return team, err
 		}
 
 		if regexp.MustCompile(`/`).MatchString(role.Name) {
 			err = errors.New(ERR_SLASH_IN_ROLE_NAME)
-			return ns, err
+			return team, err
 		}
 
 		if len(role.Realms) == 0 {
 			err = errors.New(ERR_REALMLESS_ROLE)
-			return ns, err
+			return team, err
 		}
 
 		for _, realm := range role.Realms {
-			if !dbt.StringInSlice(realm, []string{K8S_NAME, AWS_NAME, SL_NAME}) {
+			if !dbt.StringInSlice(realm.Type, RealmTypes) {
 				err = errors.New(ERR_UNSUPPORTED_REALM)
-				return ns, err
+				return team, err
 			}
 		}
 
-		if role.Namespace == "" {
-			role.SetNamespace(ns.Name)
+		if role.Team == "" {
+			role.SetTeam(team.Name)
 		}
 
 		for _, secret := range role.Secrets {
 			scrutil.VerboseOutput(verbose, "  parsing role secrets %s", secret.Name)
-			if secret.Namespace == "" {
-				secret.Namespace = ns.Name
+			if secret.Team == "" {
+				secret.Team = team.Name
 			}
 
-			if secret.Namespace == ns.Name {
-				_, ok := ns.SecretsMap[secret.Name]
+			if secret.Team == team.Name {
+				_, ok := team.SecretsMap[secret.Name]
 
 				if !ok {
 					err = errors.New(fmt.Sprintf(ERR_MISSING_SECRET))
-					return ns, err
+					return team, err
 				}
 			}
 			scrutil.VerboseOutput(verbose, "  ... done")
 		}
 
 		scrutil.VerboseOutput(verbose, "  ... role successfully loaded")
-		ns.RolesMap[role.Name] = role
+		team.RolesMap[role.Name] = role
 	}
 
-	return ns, err
+	return team, err
 }
 
 // ConfigureTeam  The grand unified config loader that, after the yaml file is read into memory, applies it to Vault.
-func (km *KeyMaster) ConfigureTeam(namespace Team, verbose bool) (err error) {
-	scrutil.VerboseOutput(verbose, "--- Configuring namespace %s ---", namespace.Name)
+func (km *KeyMaster) ConfigureTeam(team Team, verbose bool) (err error) {
+	scrutil.VerboseOutput(verbose, "--- Configuring team %s ---", team.Name)
 	// populate secrets
 	scrutil.VerboseOutput(verbose, "--- Populating Secrets ---")
-	for _, secret := range namespace.Secrets {
+	for _, secret := range team.Secrets {
 		scrutil.VerboseOutput(verbose, "    configuring secret %s", secret.Name)
 		err = km.WriteSecretIfBlank(secret, verbose)
 		if err != nil {
-			err = errors.Wrapf(err, "failed writing secret %s in namespace %s", secret.Name, secret.Namespace)
+			err = errors.Wrapf(err, "failed writing secret %s for team %s", secret.Name, secret.Team)
 			return err
 		}
 	}
 	scrutil.VerboseOutput(verbose, "done")
 
 	scrutil.VerboseOutput(verbose, "--- Configuring Roles ---")
-	for _, role := range namespace.Roles {
+	for _, role := range team.Roles {
 		scrutil.VerboseOutput(verbose, "  configuring role %s", role.Name)
-		if role.Namespace == "" {
-			err = errors.New("Unnamespaced Role!")
+		if role.Team == "" {
+			err = errors.New("Role without a Team!")
 			return err
 		}
 
@@ -278,27 +272,27 @@ func (km *KeyMaster) ConfigureTeam(namespace Team, verbose bool) (err error) {
 			// create auth configs
 			for _, realm := range role.Realms {
 				scrutil.VerboseOutput(verbose, "        config for realm %s...", realm)
-				switch realm {
-				case K8S_NAME:
+				switch realm.Type {
+				case K8S:
 					scrutil.VerboseOutput(verbose, "          k8s")
 					for _, cluster := range ClustersByEnvironment[env] {
-						err = km.AddPolicyToK8sRole(cluster, role, policy)
+						err = km.AddPolicyToK8sRole(cluster, role, realm, policy)
 						if err != nil {
 							err = errors.Wrapf(err, "failed to add K8S Auth for role:%q policy:%q cluster:%q env:%q", role.Name, policy.Name, cluster.Name, env)
 							return err
 						}
 					}
 
-				case SL_NAME:
+				case TLS:
 					scrutil.VerboseOutput(verbose, "          sl")
 					err = km.AddPolicyToTlsRole(role, env, policy)
 					if err != nil {
 						err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
 						return err
 					}
-				case AWS_NAME:
+				case IAM:
 					scrutil.VerboseOutput(verbose, "          aws")
-					err = errors.New("AWS Realm not yet implemented")
+					err = errors.New("IAM Realm not yet implemented")
 					return err
 
 				default:
@@ -382,3 +376,6 @@ func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 
 	return data, err
 }
+
+// TODO make K/V backend for team if it doesn't exist
+// TODO make CA backends per team?

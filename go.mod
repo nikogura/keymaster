@@ -4,8 +4,9 @@ go 1.12
 
 require (
 	git.lo/ops/ldapclient v0.0.0-20190926144931-2b6d0b63b562
-	git.lo/ops/scrutil v0.0.0-20191002012537-dfcd98841f34
+	git.lo/ops/scrutil v0.0.0-20191029195031-779f0ad832a6
 	git.lo/ops/vaulttest v0.0.0-20190708201423-cb974752a825
+	git.lo/security/go-testslapd v0.0.0-20191104211007-4dd5e9786ee9
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/vault/api v1.0.4
@@ -19,11 +20,10 @@ require (
 	github.com/sethvargo/go-diceware v0.0.0-20181024230814-74428ac65346
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.4.0
 	golang.org/x/sys v0.0.0-20190520201301-c432e742b0af // indirect
 	golang.org/x/text v0.3.2 // indirect
-	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
+	gopkg.in/ldap.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.2.2
 )
