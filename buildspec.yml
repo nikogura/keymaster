@@ -2,6 +2,7 @@ version: 0.2
 env:
   variables:
     VAULT_ADDR: https://vault-prod.inf.scribd.com
+    GOPRIVATE: git.lo
 phases:
   install:
     runtime-versions:
