@@ -5,7 +5,7 @@ phases:
       golang: 1.13
     commands:
       - echo "Installing dbt"
-      - bash -c "$(curl http://10.177.148.216/artifactory/dbt/install_dbt_aws.sh)"
+      - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
     finally:
       - echo "Prereqs Installed"
   build:
