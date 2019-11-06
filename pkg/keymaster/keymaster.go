@@ -376,6 +376,3 @@ func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 
 	return data, err
 }
-
-// TODO make K/V backend for team if it doesn't exist
-// TODO make CA backends per team?
