@@ -9,6 +9,7 @@ phases:
     commands:
       - echo "Installing gomason"
       - go get github.com/nikogura/gomason
+      - gomason version
       - echo "Installing dbt"
       - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
     finally:
