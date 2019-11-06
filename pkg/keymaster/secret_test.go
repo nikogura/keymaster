@@ -125,7 +125,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 			"foo",
 			&Secret{
 				Name: "foo",
-				Team: "team4",
+				Team: "secret-team1",
 				GeneratorData: GeneratorData{
 					"type":   "alpha",
 					"length": 10,
@@ -137,7 +137,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 			"bar",
 			&Secret{
 				Name: "bar",
-				Team: "team5",
+				Team: "secret-team2",
 				GeneratorData: GeneratorData{
 					"type":   "hex",
 					"length": 32,
@@ -149,7 +149,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 			"wip",
 			&Secret{
 				Name: "wip",
-				Team: "team5",
+				Team: "secret-team2",
 				GeneratorData: GeneratorData{
 					"type": "uuid",
 				},
@@ -160,7 +160,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 			"zoz",
 			&Secret{
 				Name: "zoz",
-				Team: "team7",
+				Team: "secret-team4",
 				GeneratorData: GeneratorData{
 					"type":  "chbs",
 					"words": 6,
@@ -172,7 +172,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 			"foo.scribd.com",
 			&Secret{
 				Name: "",
-				Team: "team6",
+				Team: "secret-team3",
 				GeneratorData: GeneratorData{
 					"type": "tls",
 					"cn":   "foo.scribd.com",

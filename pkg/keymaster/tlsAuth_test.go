@@ -2,13 +2,11 @@ package keymaster
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"net"
 	"reflect"
-	"sort"
 	"testing"
 )
 
@@ -28,7 +26,7 @@ func TestTlsAuthCrud(t *testing.T) {
 		testIps = append(testIps, ip.String())
 	}
 
-	ipInterfaces := anonymizeStringArray(testIps)
+	ipInterfaces := AnonymizeStringArray(testIps)
 
 	policy1, err :=
 		km.NewPolicy(&Role{
@@ -202,30 +200,4 @@ func TestTlsAuthCrud(t *testing.T) {
 			assert.True(t, reflect.DeepEqual(authData, tc.first))
 		})
 	}
-}
-
-func MapDiff(expected map[string]interface{}, actual map[string]interface{}) (err error) {
-	expectedKeys := make([]string, 0)
-	actualKeys := make([]string, 0)
-
-	for k := range expected {
-		expectedKeys = append(expectedKeys, k)
-	}
-
-	for k := range actual {
-		actualKeys = append(actualKeys, k)
-	}
-
-	sort.Strings(expectedKeys)
-	sort.Strings(actualKeys)
-
-	for _, k := range expectedKeys {
-		//fmt.Printf("%s: %s vs %s\n", k, expected[k], actual[k])
-		if !reflect.DeepEqual(expected[k], actual[k]) {
-			err = errors.New(fmt.Sprintf("Maps differ at %s: %s vs %s", k, expected[k], actual[k]))
-			return err
-		}
-	}
-
-	return err
 }

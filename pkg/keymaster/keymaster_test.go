@@ -54,7 +54,8 @@ func setUp() {
 
 	if !testVault.Running {
 		testVault.ServerStart()
-		// configure the secret backends
+
+		// Create normal Secret engines
 		client := testVault.VaultTestClient()
 
 		for _, endpoint := range []string{
@@ -62,10 +63,10 @@ func setUp() {
 			"team2",
 			"team3",
 			"team4",
-			"team5",
-			"team6",
-			"team7",
-			"team8",
+			"secret-team1",
+			"secret-team2",
+			"secret-team3",
+			"secret-team4",
 		} {
 			data := map[string]interface{}{
 				"type":        "kv-v2",
@@ -77,6 +78,7 @@ func setUp() {
 			}
 		}
 
+		// Create K8s Auth endpoints
 		for _, cluster := range Clusters {
 			data := map[string]interface{}{
 				"type":        "kubernetes",
@@ -89,6 +91,7 @@ func setUp() {
 			}
 		}
 
+		// Create PKI Engine
 		data := map[string]interface{}{
 			"type":        "pki",
 			"description": "PKI backend",
@@ -107,6 +110,17 @@ func setUp() {
 			log.Fatalf("Failed to create root cert: %s", err)
 		}
 
+		// Create IAM Auth endpoint
+		data = map[string]interface{}{
+			"type":        "aws",
+			"description": "AWS Auth",
+		}
+		_, err = client.Logical().Write("sys/auth/aws", data)
+		if err != nil {
+			log.Fatalf("Failed to create root cert: %s", err)
+		}
+
+		// Create Keymaster TLS role
 		data = map[string]interface{}{
 			"max_ttl":         "24h",
 			"ttl":             "24h",
@@ -119,6 +133,7 @@ func setUp() {
 			log.Fatalf("Failed to create cert issuing role: %s", err)
 		}
 
+		// Create TLS Auth endpoint
 		data = map[string]interface{}{
 			"type":        "cert",
 			"description": "TLS Cert Auth endpoint",
@@ -200,13 +215,14 @@ func WriteKeyMasterPolicy(client *api.Client) (err error) {
 		"team2/*",
 		"team3/*",
 		"team4/*",
-		"team5/*",
-		"team6/*",
-		"team7/*",
-		"team8/*",
+		"secret-team1/*",
+		"secret-team2/*",
+		"secret-team3/*",
+		"secret-team4/*",
 		"sys/policy/*",
 		"auth/cert/certs/*",
 		"service/issue/keymaster",
+		"auth/aws/role/*",
 	}
 
 	for _, cluster := range Clusters {

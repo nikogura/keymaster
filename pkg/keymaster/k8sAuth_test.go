@@ -9,16 +9,6 @@ import (
 	"testing"
 )
 
-// anonymizeStringArray turns an []string into []interface{} so that we can use reflect.DeepEqual() to compare.
-func anonymizeStringArray(input []string) (output []interface{}) {
-	output = make([]interface{}, 0)
-	for _, i := range input {
-		output = append(output, i)
-	}
-
-	return output
-}
-
 func TestK8sAuthCrud(t *testing.T) {
 	km := NewKeyMaster(kmClient)
 
@@ -93,13 +83,13 @@ func TestK8sAuthCrud(t *testing.T) {
 				},
 			},
 			map[string]interface{}{
-				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
+				"bound_cidrs":                      AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
 				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
 					"core-services-development-app1",
 				},
-				"token_bound_cidrs":       anonymizeStringArray(Clusters[0].BoundCidrs),
+				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
 				"token_max_ttl":           json.Number("0"),
 				"token_no_default_policy": false,
@@ -113,14 +103,14 @@ func TestK8sAuthCrud(t *testing.T) {
 			},
 			addPolicy1,
 			map[string]interface{}{
-				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
+				"bound_cidrs":                      AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
 				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
 					"core-services-development-app1",
 					"core-services-development-app2",
 				},
-				"token_bound_cidrs":       anonymizeStringArray(Clusters[0].BoundCidrs),
+				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
 				"token_max_ttl":           json.Number("0"),
 				"token_no_default_policy": false,
@@ -166,13 +156,13 @@ func TestK8sAuthCrud(t *testing.T) {
 				},
 			},
 			map[string]interface{}{
-				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
+				"bound_cidrs":                      AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
 				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
 					"core-platform-development-app2",
 				},
-				"token_bound_cidrs":       anonymizeStringArray(Clusters[0].BoundCidrs),
+				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
 				"token_max_ttl":           json.Number("0"),
 				"token_no_default_policy": false,
@@ -186,14 +176,14 @@ func TestK8sAuthCrud(t *testing.T) {
 			},
 			addPolicy2,
 			map[string]interface{}{
-				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
+				"bound_cidrs":                      AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
 				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
 					"core-platform-development-app2",
 					"core-platform-development-app3",
 				},
-				"token_bound_cidrs":       anonymizeStringArray(Clusters[0].BoundCidrs),
+				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
 				"token_max_ttl":           json.Number("0"),
 				"token_no_default_policy": false,
