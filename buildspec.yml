@@ -15,5 +15,5 @@ phases:
       - echo "Prereqs Installed"
   build:
     commands:
-      - gomason test -v -b ${CODEBUILD_WEBHOOK_HEAD_REF}
-      - echo "Build Successful!"
+#      - gomason test -v -b ${CODEBUILD_WEBHOOK_HEAD_REF}
+#      - echo "Build Successful!"
