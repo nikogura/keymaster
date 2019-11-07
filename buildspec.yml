@@ -9,8 +9,10 @@ phases:
       golang: 1.13
     commands:
       - echo "Installing Scribd Root CA Certificate"
-      - wget http://artifacts.lo/artifactory/certificates/scribd-root-ca.crt -o /etc/pki/ca-trust/source/anchors/scribd-root-ca.crt
-      - update-ca-trust extract
+#      - wget http://artifacts.lo/artifactory/certificates/scribd-root-ca.crt -o /etc/pki/ca-trust/source/anchors/scribd-root-ca.crt
+#      - update-ca-trust extract
+      - wget http://artifacts.lo/artifactory/certificates/scribd-root-ca.crt -o /usr/local/share/ca-certificates/scribd-root-ca.crt
+      - update-ca-certificates
       - echo "Installing gomason"
       - go get github.com/nikogura/gomason
       - gomason version
