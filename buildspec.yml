@@ -9,7 +9,7 @@ phases:
       golang: 1.13
     commands:
       - echo "Testing DNS"
-      - host git.lo
+      - dig git.lo
 #      - echo "Installing gomason"
 #      - go get github.com/nikogura/gomason
 #      - gomason version
