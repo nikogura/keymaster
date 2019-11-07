@@ -8,13 +8,11 @@ phases:
     runtime-versions:
       golang: 1.13
     commands:
-      - echo "Testing DNS"
-      - dig git.lo
-#      - echo "Installing gomason"
-#      - go get github.com/nikogura/gomason
-#      - gomason version
-#      - echo "Installing dbt"
-#      - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
+      - echo "Installing gomason"
+      - go get github.com/nikogura/gomason
+      - gomason version
+      - echo "Installing dbt"
+      - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
     finally:
       - echo "Prereqs Installed"
   build:
