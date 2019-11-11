@@ -13,6 +13,7 @@ phases:
       - update-ca-trust extract
       - echo ${DEPLOY_KEY} | base64 -d > ~/.ssh/id_rsa && chmod 700 ~/.ssh/id_rsa
       - echo "W3VybCAiZ2l0QGdpdGh1Yi5jb206Il0KICBpbnN0ZWFkT2YgPSBodHRwczovL2dpdGh1Yi5jb20vCgpbdXJsICJnaXRAZ2l0LmxvOiJdCiAgaW5zdGVhZE9mID0gaHR0cHM6Ly9naXQubG8vCg==" | base64 -d > ~/.gitconfig
+      - cat ~/.gitconfig
       - ssh-keyscan git.lo > ~/.ssh/known_hosts
       - go get github.com/nikogura/gomason
       - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
