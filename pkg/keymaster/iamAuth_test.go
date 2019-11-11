@@ -148,6 +148,7 @@ func TestIamAuthCrud(t *testing.T) {
 
 	awsRegion := scrutil.GetAwsRegion(true)
 
+	// don't run tests if we cannot get the aws region (means we're not running in aws)
 	if awsRegion != "" {
 		for _, tc := range inputs {
 			t.Run(tc.name, func(t *testing.T) {
