@@ -3,6 +3,7 @@ env:
   variables:
     VAULT_ADDR: https://vault-prod.inf.scribd.com
     GOPRIVATE: git.lo
+
 phases:
   install:
     runtime-versions:
@@ -20,5 +21,5 @@ phases:
       - echo "Prereqs Installed"
   build:
     commands:
-      - echo "Build Command gomason test -v -b ${CODEBUILD_WEBHOOK_HEAD_REF}"
-      - gomason test -v -b "${CODEBUILD_WEBHOOK_HEAD_REF}"
+      - export BRANCH=$(echo "${CODEBUILD_WEBHOOK_HEAD_REF" | sed 's/refs\/heads\///')
+      - gomason test -v -b $BRANCH
