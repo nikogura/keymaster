@@ -146,7 +146,7 @@ func TestIamAuthCrud(t *testing.T) {
 		},
 	}
 
-	assert.False(t, false, "duuuuu")
+	assert.True(t, false, "duuuuu")
 
 	awsRegion := scrutil.GetAwsRegion(true)
 
