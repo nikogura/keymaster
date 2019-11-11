@@ -14,11 +14,11 @@ phases:
       - echo ${DEPLOY_KEY} | base64 -d > ~/.ssh/id_rsa && chmod 700 ~/.ssh/id_rsa
       - echo "W3VybCAiZ2l0QGdpdC5sbzoiXQogIGluc3RlYWRPZiA9IGh0dHBzOi8vZ2l0LmxvLwo=" | base64 -d > ~/.gitconfig
       - ssh-keyscan git.lo > ~/.ssh/known_hosts
-      - echo "Installing gomason"
-      - go get github.com/nikogura/gomason
-      - gomason version
-      - echo "Installing dbt"
-      - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
+#      - echo "Installing gomason"
+#      - go get github.com/nikogura/gomason
+#      - gomason version
+#      - echo "Installing dbt"
+#      - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
     finally:
       - echo "Prereqs Installed"
   build:
