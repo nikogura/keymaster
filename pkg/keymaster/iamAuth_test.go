@@ -12,7 +12,7 @@ import (
 func TestIamAuthCrud(t *testing.T) {
 	km := NewKeyMaster(kmClient)
 
-	testArn := "arn:aws:iam::130231011399:role/fargle-role20191025175930670600000001"
+	testArn := "arn:aws:iam::130231011399:role/keymaster-test"
 
 	addPolicy1, err := km.NewPolicy(&Role{
 		Name: "app2",
