@@ -146,6 +146,8 @@ func TestIamAuthCrud(t *testing.T) {
 		},
 	}
 
+	assert.False(t, false, "duuuuu")
+
 	awsRegion := scrutil.GetAwsRegion(true)
 
 	assert.True(t, awsRegion != "", "Not Running in AWS")
@@ -225,9 +227,7 @@ func TestIamAuthCrud(t *testing.T) {
 				return
 			}
 		})
-
 	}
-
 }
 
 /* Example Policy Output
