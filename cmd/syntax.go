@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"git.lo/dbt/keymaster/pkg/keymaster"
+	"github.com/scribd/keymaster/pkg/keymaster"
 	"github.com/spf13/cobra"
 	"log"
 )

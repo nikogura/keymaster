@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"git.lo/dbt/keymaster/pkg/keymaster"
 	"git.lo/ops/scrutil/pkg/scrutil"
+	"github.com/scribd/keymaster/pkg/keymaster"
 	"github.com/spf13/cobra"
 	"log"
 )
