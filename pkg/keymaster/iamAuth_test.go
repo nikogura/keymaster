@@ -2,7 +2,6 @@ package keymaster
 
 import (
 	"fmt"
-	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"reflect"
@@ -147,10 +146,6 @@ func TestIamAuthCrud(t *testing.T) {
 	}
 
 	assert.True(t, false, "duuuuu")
-
-	awsRegion := scrutil.GetAwsRegion(true)
-
-	assert.True(t, awsRegion != "", "Not Running in AWS")
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
