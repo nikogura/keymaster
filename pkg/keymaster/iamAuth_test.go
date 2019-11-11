@@ -154,18 +154,18 @@ func TestIamAuthCrud(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				policy, err := km.NewPolicy(tc.role, DEV)
 				if err != nil {
-					log.Printf("Error creating policy: %s", err)
+					log.Printf("Error creating policy: %s\n", err)
 					t.Fail()
 				}
 				err = km.WriteIamAuth(tc.role, tc.role.Realms[0], []string{policy.Name})
 				if err != nil {
-					fmt.Printf("Failed writing auth: %s", err)
+					fmt.Printf("Failed writing auth: %s\n", err)
 					t.Fail()
 				}
 
 				authData, err := km.ReadIamAuth(tc.role)
 				if err != nil {
-					fmt.Printf("Failed reading auth: %s", err)
+					fmt.Printf("Failed reading auth\n: %s", err)
 					t.Fail()
 				}
 
