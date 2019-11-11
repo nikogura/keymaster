@@ -152,7 +152,6 @@ func TestIamAuthCrud(t *testing.T) {
 
 	// don't run tests if we cannot get the aws region (means we're not running in aws)
 	if awsRegion != "" {
-		fmt.Printf("--- Running in AWS.  Testing IAM Auth ---")
 		for _, tc := range inputs {
 			t.Run(tc.name, func(t *testing.T) {
 				policy, err := km.NewPolicy(tc.role, DEV)
