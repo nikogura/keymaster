@@ -14,6 +14,8 @@ func TestIamAuthCrud(t *testing.T) {
 
 	testArn := "arn:aws:iam::130231011399:role/keymaster-test"
 
+	testArnList := AnonymizeStringArray([]string{testArn})
+
 	addPolicy1, err := km.NewPolicy(&Role{
 		Name: "app2",
 		Secrets: []*Secret{
@@ -83,7 +85,7 @@ func TestIamAuthCrud(t *testing.T) {
 			},
 			map[string]interface{}{
 				"auth_type":               "iam",
-				"bound_iam_principal_arn": testArn,
+				"bound_iam_principal_arn": testArnList,
 				"policies": []interface{}{
 					"core-services-development-app1",
 				},
@@ -91,7 +93,7 @@ func TestIamAuthCrud(t *testing.T) {
 			addPolicy1,
 			map[string]interface{}{
 				"auth_type":               "iam",
-				"bound_iam_principal_arn": testArn,
+				"bound_iam_principal_arn": testArnList,
 				"policies": []interface{}{
 					"core-services-development-app1",
 					"core-services-development-app2",
@@ -129,7 +131,7 @@ func TestIamAuthCrud(t *testing.T) {
 			},
 			map[string]interface{}{
 				"auth_type":               "iam",
-				"bound_iam_principal_arn": testArn,
+				"bound_iam_principal_arn": testArnList,
 				"policies": []interface{}{
 					"core-platform-development-app2",
 				},
@@ -137,7 +139,7 @@ func TestIamAuthCrud(t *testing.T) {
 			addPolicy2,
 			map[string]interface{}{
 				"auth_type":               "iam",
-				"bound_iam_principal_arn": testArn,
+				"bound_iam_principal_arn": testArnList,
 				"policies": []interface{}{
 					"core-platform-development-app2",
 					"core-platform-development-app3",
