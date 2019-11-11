@@ -15,6 +15,7 @@ phases:
       - ssh-keyscan git.lo > ~/.ssh/known_hosts
       - go get github.com/nikogura/gomason
       - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
+      - yum install -y wget && wget https://releases.hashicorp.com/vault/1.2.3/vault_1.2.3_linux_amd64.zip && unzip vault*.zip && mv vault /usr/local/bin/vault && chmod 755 /usr/local/bin/vault
     finally:
       - echo "Prereqs Installed"
   build:
