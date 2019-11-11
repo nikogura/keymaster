@@ -12,7 +12,7 @@ import (
 func TestIamAuthCrud(t *testing.T) {
 	km := NewKeyMaster(kmClient)
 
-	testArn := "arn:aws:iam::130231011399:role/keymaster-test"
+	testArn := "arn:aws:iam::130231011399:role/service-role/codebuild-Keymaster-service-role"
 
 	testArnList := AnonymizeStringArray([]string{testArn})
 
