@@ -14,11 +14,9 @@ phases:
       - echo "W3VybCAiZ2l0QGdpdC5sbzoiXQogIGluc3RlYWRPZiA9IGh0dHBzOi8vZ2l0LmxvLwo=" | base64 -d > ~/.gitconfig
       - ssh-keyscan git.lo > ~/.ssh/known_hosts
       - go get github.com/nikogura/gomason
-#      - echo "Installing dbt"
-#      - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
+      - bash -c "$(curl http://artifacts.lo/artifactory/dbt/install_dbt_aws.sh)"
     finally:
       - echo "Prereqs Installed"
   build:
     commands:
-#      - gomason test -v -b ${CODEBUILD_WEBHOOK_HEAD_REF}
-#      - echo "Build Successful!"
+      - gomason test -v -b ${CODEBUILD_WEBHOOK_HEAD_REF}
