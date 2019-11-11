@@ -11,6 +11,7 @@ phases:
       - echo "Installing Scribd Root CA Certificate"
       - wget http://artifacts.lo/artifactory/certificates/scribd-root-ca.crt -O /etc/pki/ca-trust/source/anchors/scribd-root-ca.crt
       - update-ca-trust extract
+      - echo ${DEPLOY_KEY} | base64 -d > ~/.ssh/id_rsa && chmod 700 ~/.ssh/id_rsa
       - echo "Installing gomason"
       - go get github.com/nikogura/gomason
       - gomason version
