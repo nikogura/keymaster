@@ -150,84 +150,81 @@ func TestIamAuthCrud(t *testing.T) {
 
 	assert.True(t, awsRegion != "", "Not Running in AWS")
 
-	// don't run tests if we cannot get the aws region (means we're not running in aws)
-	if awsRegion != "" {
-		for _, tc := range inputs {
-			t.Run(tc.name, func(t *testing.T) {
-				policy, err := km.NewPolicy(tc.role, DEV)
-				if err != nil {
-					log.Printf("Error creating policy: %s", err)
-					t.Fail()
-				}
-				err = km.WriteIamAuth(tc.role, tc.role.Realms[0], []string{policy.Name})
-				if err != nil {
-					fmt.Printf("Failed writing auth: %s", err)
-					t.Fail()
-				}
+	for _, tc := range inputs {
+		t.Run(tc.name, func(t *testing.T) {
+			policy, err := km.NewPolicy(tc.role, DEV)
+			if err != nil {
+				log.Printf("Error creating policy: %s", err)
+				t.Fail()
+			}
+			err = km.WriteIamAuth(tc.role, tc.role.Realms[0], []string{policy.Name})
+			if err != nil {
+				fmt.Printf("Failed writing auth: %s", err)
+				t.Fail()
+			}
 
-				authData, err := km.ReadIamAuth(tc.role)
-				if err != nil {
-					fmt.Printf("Failed reading auth: %s", err)
-					t.Fail()
-				}
+			authData, err := km.ReadIamAuth(tc.role)
+			if err != nil {
+				fmt.Printf("Failed reading auth: %s", err)
+				t.Fail()
+			}
 
-				assert.True(t, reflect.DeepEqual(authData, tc.first))
+			assert.True(t, reflect.DeepEqual(authData, tc.first))
 
-				matchKeys := []string{
-					"auth_type",
-					"bound_iam_principal_arn",
-					"policies",
-				}
-				err = AuthMatch(matchKeys, tc.first, authData)
-				if err != nil {
-					fmt.Printf("Initial values do not meet expectations: %s\n", err)
-					t.Fail()
-					return
-				}
+			matchKeys := []string{
+				"auth_type",
+				"bound_iam_principal_arn",
+				"policies",
+			}
+			err = AuthMatch(matchKeys, tc.first, authData)
+			if err != nil {
+				fmt.Printf("Initial values do not meet expectations: %s\n", err)
+				t.Fail()
+				return
+			}
 
-				err = km.AddPolicyToIamRole(tc.role, tc.role.Realms[0], tc.add)
-				if err != nil {
-					fmt.Printf("Failed adding policy\n")
-					t.Fail()
-					return
-				}
+			err = km.AddPolicyToIamRole(tc.role, tc.role.Realms[0], tc.add)
+			if err != nil {
+				fmt.Printf("Failed adding policy\n")
+				t.Fail()
+				return
+			}
 
-				authData, err = km.ReadIamAuth(tc.role)
-				if err != nil {
-					fmt.Printf("Failed reading auth: %s\n", err)
-					t.Fail()
-					return
-				}
+			authData, err = km.ReadIamAuth(tc.role)
+			if err != nil {
+				fmt.Printf("Failed reading auth: %s\n", err)
+				t.Fail()
+				return
+			}
 
-				err = AuthMatch(matchKeys, tc.second, authData)
-				if err != nil {
-					fmt.Printf("Failed adding policy to role: %s\n", err)
-					t.Fail()
-					return
-				}
+			err = AuthMatch(matchKeys, tc.second, authData)
+			if err != nil {
+				fmt.Printf("Failed adding policy to role: %s\n", err)
+				t.Fail()
+				return
+			}
 
-				err = km.RemovePolicyFromIamRole(tc.role, tc.role.Realms[0], tc.add)
-				if err != nil {
-					fmt.Printf("Failed removing policy\n")
-					t.Fail()
-					return
-				}
+			err = km.RemovePolicyFromIamRole(tc.role, tc.role.Realms[0], tc.add)
+			if err != nil {
+				fmt.Printf("Failed removing policy\n")
+				t.Fail()
+				return
+			}
 
-				authData, err = km.ReadIamAuth(tc.role)
-				if err != nil {
-					fmt.Printf("Failed reading auth: %s\n", err)
-					t.Fail()
-					return
-				}
+			authData, err = km.ReadIamAuth(tc.role)
+			if err != nil {
+				fmt.Printf("Failed reading auth: %s\n", err)
+				t.Fail()
+				return
+			}
 
-				err = AuthMatch(matchKeys, tc.first, authData)
-				if err != nil {
-					fmt.Printf("Failed to remove policy from role: %s\n", err)
-					t.Fail()
-					return
-				}
-			})
-		}
+			err = AuthMatch(matchKeys, tc.first, authData)
+			if err != nil {
+				fmt.Printf("Failed to remove policy from role: %s\n", err)
+				t.Fail()
+				return
+			}
+		})
 
 	}
 
