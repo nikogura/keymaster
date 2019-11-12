@@ -46,8 +46,16 @@ func AnonymizeStringArray(input []string) (output []interface{}) {
 
 // AuthMatch compares two maps, and returns true if the keys you care about match.  Other keys are ignored
 func AuthMatch(matchKeys []string, expected map[string]interface{}, actual map[string]interface{}) (err error) {
+	if reflect.TypeOf(expected) != reflect.TypeOf(actual) {
+		err = errors.New(fmt.Sprintf("Type mismatch: %s vs %s", reflect.TypeOf(expected).String(), reflect.TypeOf(actual).String()))
+		return err
+	}
 	for _, k := range matchKeys {
-		if expected[k] != actual[k] {
+		if reflect.TypeOf(expected[k]) != reflect.TypeOf(actual[k]) {
+			err = errors.New(fmt.Sprintf("Type mismatch at %s: %s vs %s", k, reflect.TypeOf(expected).String(), reflect.TypeOf(actual).String()))
+			return err
+		}
+		if !reflect.DeepEqual(expected[k], actual[k]) {
 			err = errors.New(fmt.Sprintf("Mismatch at %s: %q vs %q", k, expected[k], actual[k]))
 			return err
 		}

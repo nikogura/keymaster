@@ -3,16 +3,14 @@ package keymaster
 import (
 	"fmt"
 	"git.lo/ops/scrutil/pkg/scrutil"
-	"github.com/stretchr/testify/assert"
 	"log"
-	"reflect"
 	"testing"
 )
 
 func TestIamAuthCrud(t *testing.T) {
 	km := NewKeyMaster(kmClient)
 
-	testArn := "arn:aws:iam::130231011399:role/keymaster-test"
+	testArn := "arn:aws:iam::130231011399:role/fargle-role20191025175930670600000001"
 
 	testArnList := AnonymizeStringArray([]string{testArn})
 
@@ -172,13 +170,12 @@ func TestIamAuthCrud(t *testing.T) {
 					t.Fail()
 				}
 
-				assert.True(t, reflect.DeepEqual(authData, tc.first))
-
 				matchKeys := []string{
 					"auth_type",
 					"bound_iam_principal_arn",
 					"policies",
 				}
+
 				err = AuthMatch(matchKeys, tc.first, authData)
 				if err != nil {
 					fmt.Printf("Initial values do not meet expectations: %s\n", err)
