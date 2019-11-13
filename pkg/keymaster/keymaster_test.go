@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/vault/api"
 	"github.com/phayes/freeport"
 	"github.com/pkg/errors"
@@ -291,7 +292,7 @@ func TestNewTeam(t *testing.T) {
 		out  string
 	}{
 		{
-			"good-ns",
+			"good-team",
 			`---
 name: team1
 secrets:
@@ -311,15 +312,51 @@ roles:
           - bravo
         principals: 
           - app1
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			"",
 		},
 		{
-			"name-ns",
+			"missing-environments",
+			`---
+name: team1
+secrets:
+  - name: foo
+    generator: 
+      type: alpha
+      length: 8
+  - name: bar
+    generator:
+      type: hex
+      length: 12
+roles:
+  - name: app1
+    realms: 
+      - type: k8s
+        identifiers: 
+          - bravo
+        principals: 
+          - app1
+        environment: production
+    secrets:
+      - name: foo
+      - name: bar
+      - name: baz
+        team: core-infra
+`,
+			ERR_MISSING_ENVIRONMENTS,
+		},
+		{
+			"nameless-team",
 			`---
 secrets:
   - name: foo
@@ -337,11 +374,17 @@ roles:
       - type: tls
         principals: 
           - www.scribd.com
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_NAMELESS_TEAM,
 		},
 		{
@@ -365,11 +408,17 @@ roles:
           - bravo
         principals: 
           - app1
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_NAMELESS_ROLE,
 		},
 		{
@@ -387,17 +436,23 @@ roles:
       - type: tls
         principals:
           - app1
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_MISSING_SECRET,
 		},
 		{
 			"garbage",
 			`asd;lkfjqw4p9rui4tw`,
-			ERR_NS_DATA_LOAD,
+			ERR_TEAM_DATA_LOAD,
 		},
 		{
 			"missing-generator",
@@ -417,11 +472,17 @@ roles:
           - bravo
         principals:
           - app1
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_MISSING_GENERATOR,
 		},
 		{
@@ -445,11 +506,17 @@ roles:
           - bravo
         principals:
           - app1
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_NAMELESS_SECRET,
 		},
 		{
@@ -473,7 +540,12 @@ roles:
       - name: foo
       - name: wip
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_REALMLESS_ROLE,
 		},
 		{
@@ -497,7 +569,12 @@ roles:
       - name: foo
       - name: wip
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_REALMLESS_ROLE,
 		},
 		{
@@ -521,11 +598,17 @@ roles:
           - bravo
         principals:
           - app1
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_SLASH_IN_TEAM_NAME,
 		},
 		{
@@ -549,11 +632,17 @@ roles:
           - bravo
         principals:
           - foo/bar
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_SLASH_IN_ROLE_NAME,
 		},
 		{
@@ -577,11 +666,17 @@ roles:
           - bar
         principals:
           - app1
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        team: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_UNSUPPORTED_REALM,
 		},
 	}
@@ -648,14 +743,21 @@ roles:
           - bravo
         principals:
           - app1
+        environment: production
       - type: tls
         principals:
           - www.scribd.com
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
         team: team4
+
+environments:
+  - production
+  - staging
+  - development
 `
 	inputFile2 := `---
 name: team2
@@ -696,14 +798,21 @@ roles:
           - bravo
         principals:
           - app1
+        environment: production
       - type: tls
         principals:
           - www.scribd.com
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
         team: team4
+
+environments:
+  - production
+  - staging
+  - development
 `
 	inputFile3 := `---
 name: team3
@@ -744,15 +853,22 @@ roles:
           - bravo
         principals:
           - app1
+        environment: production
       - type: tls
         principals:
           - www.scribd.com
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: foo.scribd.com
       - name: baz
         team: team1
+
+environments:
+  - production
+  - staging
+  - development
 `
 	km := NewKeyMaster(kmClient)
 
@@ -835,7 +951,7 @@ roles:
 				return
 			}
 
-			for _, env := range Envs {
+			for _, env := range team.Environments {
 				// Check Secrets
 				for _, secret := range team.Secrets {
 					var path string
@@ -904,9 +1020,13 @@ roles:
 					}
 				}
 
-				for _, role := range team.Roles {
+			}
+
+			for _, role := range team.Roles {
+				fmt.Printf("Checking role %s\n", role.Name)
+				for _, realm := range role.Realms {
 					// Check Policies
-					policy, err := km.NewPolicy(role, env)
+					policy, err := km.NewPolicy(role, realm.Environment)
 					if err != nil {
 						log.Printf("doh! error creating policy: %s", err)
 						t.Fail()
@@ -918,16 +1038,28 @@ roles:
 						t.Fail()
 					}
 
+					err = MapDiff(policy.Payload, readPolicy.Payload)
+					if err != nil {
+						fmt.Printf("%s\n", err)
+						fmt.Printf("Expected: \n")
+						spew.Dump(policy.Payload)
+						fmt.Printf("Actual: \n")
+						spew.Dump(readPolicy.Payload)
+						t.Fail()
+					} else {
+						fmt.Printf("  ... Match!\n")
+					}
+
 					assert.True(t, reflect.DeepEqual(policy.Payload, readPolicy.Payload), "payload meets expectations")
 
 					// Check Auth configs
 					for _, realm := range role.Realms {
 						switch realm.Type {
 						case K8S:
-							for _, cluster := range ClustersByEnvironment[env] {
-								_, err := km.ReadK8sAuth(cluster, role)
+							for _, cluster := range realm.Identifiers {
+								_, err := km.ReadK8sAuth(ClustersByName[cluster], role)
 								if err != nil {
-									log.Printf("failed to read k8s policy for %s and %s", cluster.Name, role.Name)
+									log.Printf("failed to read k8s policy for %s and %s", cluster, role.Name)
 									t.Fail()
 								}
 
@@ -936,7 +1068,7 @@ roles:
 								//spew.Dump(data)
 							}
 						case TLS:
-							_, err := km.ReadTlsAuth(role, env)
+							_, err := km.ReadTlsAuth(role, realm.Environment)
 							if err != nil {
 								log.Printf("failed to read tls policy for %s", role.Name)
 								t.Fail()
@@ -954,6 +1086,7 @@ roles:
 		}
 	}
 
+	// Test k8s auth configs
 	for _, cluster := range Clusters {
 		path := fmt.Sprintf("/auth/k8s-%s/role", cluster.Name)
 		s, err := km.VaultClient.Logical().List(path)
@@ -962,22 +1095,24 @@ roles:
 			t.Fail()
 		}
 
-		log.Printf("--- K8S Roles for %s (%s) ---", cluster.Name, cluster.Environment)
-		keys, ok := s.Data["keys"].([]interface{})
-		if ok {
-			for _, key := range keys {
-				path := fmt.Sprintf("/auth/k8s-%s/role/%s", cluster.Name, key)
-				s, err := km.VaultClient.Logical().Read(path)
-				if err != nil {
-					log.Printf("Failed to list k8s roles: %s", err)
-					t.Fail()
-				}
+		if s != nil {
+			log.Printf("--- K8S Roles for %s (%s) ---", cluster.Name, cluster.Environment)
+			keys, ok := s.Data["keys"].([]interface{})
+			if ok {
+				for _, key := range keys {
+					path := fmt.Sprintf("/auth/k8s-%s/role/%s", cluster.Name, key)
+					s, err := km.VaultClient.Logical().Read(path)
+					if err != nil {
+						log.Printf("Failed to list k8s roles: %s", err)
+						t.Fail()
+					}
 
-				log.Printf("--- Policies for K8S Role %s ---", key)
-				policies, ok := s.Data["policies"].([]interface{})
-				if ok {
-					for _, policy := range policies {
-						log.Printf("  %s", policy)
+					log.Printf("--- Policies for K8S Role %s ---", key)
+					policies, ok := s.Data["policies"].([]interface{})
+					if ok {
+						for _, policy := range policies {
+							log.Printf("  %s", policy)
+						}
 					}
 				}
 			}
@@ -1034,7 +1169,7 @@ roles:
 	// This is 1 test of 1 secret, and yes, it should hold true for all, but a more thorough and considered approach would help.
 
 	log.Printf("--- Create Test Token ---")
-	policy := "team3-app1-development"
+	policy := "team3-app1-production"
 
 	data := make(map[string]interface{})
 	data["policies"] = []string{policy}
@@ -1067,31 +1202,37 @@ roles:
 		}
 	}
 
-	s, err = testClient.Logical().Read("sys/policy/team3-app1-development")
+	s, err = testClient.Logical().Read("sys/policy/team3-app1-production")
 	if err != nil {
 		log.Printf("Failed to lookup policy: %s", err)
 		t.Fail()
 	}
 
-	rules, ok := s.Data["rules"].(string)
-	if ok {
-		var rulesObj map[string]interface{}
-		err := json.Unmarshal([]byte(rules), &rulesObj)
-		if err != nil {
-			log.Printf("failed to unmarshal rules string into json: %s", err)
-			t.Fail()
+	if s != nil {
+		rules, ok := s.Data["rules"].(string)
+		if ok {
+			var rulesObj map[string]interface{}
+			err := json.Unmarshal([]byte(rules), &rulesObj)
+			if err != nil {
+				log.Printf("failed to unmarshal rules string into json: %s", err)
+				t.Fail()
+			}
+
+			//jb, err := json.MarshalIndent(rulesObj, "", "  ")
+			//if err != nil {
+			//	log.Printf("failed to marshal rules back into json: %s", err)
+			//
+			//}
+			//log.Printf("--- Rules ---")
+			//log.Printf("%s", string(jb))
 		}
 
-		//jb, err := json.MarshalIndent(rulesObj, "", "  ")
-		//if err != nil {
-		//	log.Printf("failed to marshal rules back into json: %s", err)
-		//
-		//}
-		//log.Printf("--- Rules ---")
-		//log.Printf("%s", string(jb))
+	} else {
+		log.Printf("No policy at sys/policy/team3-app1-production")
+		t.Fail()
 	}
 
-	goodpath := "team3/data/wip/development"
+	goodpath := "team3/data/wip/production"
 
 	s, err = testClient.Logical().Read(goodpath)
 	if err != nil {

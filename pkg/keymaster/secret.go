@@ -38,7 +38,7 @@ func (km *KeyMaster) NewGenerator(options GeneratorData) (generator Generator, e
 }
 
 // SecretPath Given a Name, Team, and Environment, returns the proper path in Vault where that secret is stored.
-func (km *KeyMaster) SecretPath(team string, name string, env Environment) (path string, err error) {
+func (km *KeyMaster) SecretPath(team string, name string, env string) (path string, err error) {
 	if team == "" {
 		err = errors.New("cannot make secret path for nameless team")
 		return path, err
@@ -50,7 +50,7 @@ func (km *KeyMaster) SecretPath(team string, name string, env Environment) (path
 }
 
 // CertPath Given a Name, Team, and Environment, returns the proper path in Vault where that Cert Secret is stored.
-func (km *KeyMaster) CertPath(team string, name string, env Environment) (path string, err error) {
+func (km *KeyMaster) CertPath(team string, name string, env string) (path string, err error) {
 	if team == "" {
 		err = errors.New("cannot make cert secret path for nameless team")
 		return path, err
@@ -61,7 +61,7 @@ func (km *KeyMaster) CertPath(team string, name string, env Environment) (path s
 	return path, err
 }
 
-func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env Environment) (err error) {
+func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env string) (err error) {
 	if secret.Generator == nil {
 		err = errors.New(fmt.Sprintf("nil generators are not suppported.  secret: %q", secret.Name))
 		return err
@@ -151,7 +151,7 @@ func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env En
 // WriteSecretIfBlank writes a secret to each environment, but only if there's not already a value there.
 func (km *KeyMaster) WriteSecretIfBlank(secret *Secret, verbose bool) (err error) {
 	scrutil.VerboseOutput(verbose, "checking secret %s", secret.Name)
-	for _, env := range Envs {
+	for _, env := range secret.Environments {
 		scrutil.VerboseOutput(verbose, "  checking env %s", env)
 		secretPath, err := km.SecretPath(secret.Team, secret.Name, env)
 		if err != nil {

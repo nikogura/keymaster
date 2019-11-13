@@ -28,7 +28,7 @@ func TestIamAuthCrud(t *testing.T) {
 			},
 		},
 		Team: "core-services",
-	}, DEV)
+	}, "development")
 	if err != nil {
 		log.Printf("Error creating policy: %s", err)
 		t.Fail()
@@ -47,7 +47,7 @@ func TestIamAuthCrud(t *testing.T) {
 			},
 		},
 		Team: "core-platform",
-	}, DEV)
+	}, "development")
 	if err != nil {
 		log.Printf("Error creating policy: %s", err)
 		t.Fail()
@@ -154,7 +154,7 @@ func TestIamAuthCrud(t *testing.T) {
 		fmt.Printf("--- Running in AWS.  Running IAM Auth tests ---")
 		for _, tc := range inputs {
 			t.Run(tc.name, func(t *testing.T) {
-				policy, err := km.NewPolicy(tc.role, DEV)
+				policy, err := km.NewPolicy(tc.role, "development")
 				if err != nil {
 					log.Printf("Error creating policy: %s\n", err)
 					t.Fail()
@@ -232,6 +232,8 @@ func TestIamAuthCrud(t *testing.T) {
 		assert.True(t, awsRegion == "", "aws region detection confused.")
 		fmt.Printf("--- Not running in AWS.  IAM Auth tests will not be performed ---")
 	}
+	// this nonsense test makes sure this test file runs at least 1 test, which stops some test runners from being confused when run outside of AWS.
+	assert.True(t, 1 == 1, "Houston, we have a problem.")
 }
 
 /* Example Policy Output

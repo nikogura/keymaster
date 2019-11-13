@@ -11,7 +11,7 @@ import (
 )
 
 // PolicyName constructs the policy name form the inputs in a regular fashion. Note: team names like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs.
-func (km *KeyMaster) PolicyName(team string, role string, env Environment) (name string, err error) {
+func (km *KeyMaster) PolicyName(team string, role string, env string) (name string, err error) {
 	if role == "" {
 		err = errors.New("empty role names are not supported")
 		return name, err
@@ -23,7 +23,7 @@ func (km *KeyMaster) PolicyName(team string, role string, env Environment) (name
 	}
 
 	if env == "" {
-		err = errors.New("unsupported environment")
+		err = errors.New("blank environments are not supported")
 		return name, err
 	}
 
@@ -33,7 +33,7 @@ func (km *KeyMaster) PolicyName(team string, role string, env Environment) (name
 }
 
 // PolicyPath constructs the path to the policy for the role
-func (km *KeyMaster) PolicyPath(team string, role string, env Environment) (path string, err error) {
+func (km *KeyMaster) PolicyPath(team string, role string, env string) (path string, err error) {
 	policyName, err := km.PolicyName(team, role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy name")
@@ -46,7 +46,7 @@ func (km *KeyMaster) PolicyPath(team string, role string, env Environment) (path
 }
 
 // NewPolicy creates a new Policy object for a given Role and Environment
-func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy, err error) {
+func (km *KeyMaster) NewPolicy(role *Role, env string) (policy VaultPolicy, err error) {
 	payload, err := km.MakePolicyPayload(role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create payload")
@@ -86,7 +86,7 @@ func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy,
   }
 }
 */
-func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[string]interface{}, err error) {
+func (km *KeyMaster) MakePolicyPayload(role *Role, env string) (policy map[string]interface{}, err error) {
 	policy = make(map[string]interface{})
 	pathElem := make(map[string]interface{})
 

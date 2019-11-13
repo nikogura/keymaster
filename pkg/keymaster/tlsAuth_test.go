@@ -42,7 +42,7 @@ func TestTlsAuthCrud(t *testing.T) {
 				},
 			},
 			Team: "team6",
-		}, PROD)
+		}, "production")
 	if err != nil {
 		log.Printf("error creating policy: %s", err)
 		t.Fail()
@@ -137,18 +137,18 @@ func TestTlsAuthCrud(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy, err := km.NewPolicy(tc.role, PROD)
+			policy, err := km.NewPolicy(tc.role, "production")
 			if err != nil {
 				log.Printf("error creating policy: %s", err)
 				t.Fail()
 			}
-			err = km.WriteTlsAuth(tc.role, PROD, []string{policy.Name})
+			err = km.WriteTlsAuth(tc.role, "production", []string{policy.Name})
 			if err != nil {
 				fmt.Printf("Failed writing auth: %s", err)
 				t.Fail()
 			}
 
-			authData, err := km.ReadTlsAuth(tc.role, PROD)
+			authData, err := km.ReadTlsAuth(tc.role, "production")
 			if err != nil {
 				fmt.Printf("Failed reading auth: %s", err)
 				t.Fail()
@@ -161,13 +161,13 @@ func TestTlsAuthCrud(t *testing.T) {
 
 			assert.True(t, reflect.DeepEqual(authData, tc.first))
 
-			err = km.AddPolicyToTlsRole(tc.role, PROD, tc.add)
+			err = km.AddPolicyToTlsRole(tc.role, "production", tc.add)
 			if err != nil {
 				fmt.Printf("Failed adding policy")
 				t.Fail()
 			}
 
-			authData, err = km.ReadTlsAuth(tc.role, PROD)
+			authData, err = km.ReadTlsAuth(tc.role, "production")
 			if err != nil {
 				fmt.Printf("Failed reading auth: %s", err)
 				t.Fail()
@@ -180,13 +180,13 @@ func TestTlsAuthCrud(t *testing.T) {
 
 			assert.True(t, reflect.DeepEqual(authData, tc.second), "role successfully added")
 
-			err = km.RemovePolicyFromTlsRole(tc.role, PROD, tc.add)
+			err = km.RemovePolicyFromTlsRole(tc.role, "production", tc.add)
 			if err != nil {
 				fmt.Printf("Failed removing policy")
 				t.Fail()
 			}
 
-			authData, err = km.ReadTlsAuth(tc.role, PROD)
+			authData, err = km.ReadTlsAuth(tc.role, "production")
 			if err != nil {
 				fmt.Printf("Failed reading auth: %s", err)
 				t.Fail()

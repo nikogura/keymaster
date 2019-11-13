@@ -25,7 +25,7 @@ func TestK8sAuthCrud(t *testing.T) {
 			},
 		},
 		Team: "core-services",
-	}, DEV)
+	}, "development")
 	if err != nil {
 		log.Printf("Error creating policy: %s", err)
 		t.Fail()
@@ -44,7 +44,7 @@ func TestK8sAuthCrud(t *testing.T) {
 			},
 		},
 		Team: "core-platform",
-	}, DEV)
+	}, "development")
 	if err != nil {
 		log.Printf("Error creating policy: %s", err)
 		t.Fail()
@@ -201,7 +201,7 @@ func TestK8sAuthCrud(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy, err := km.NewPolicy(tc.role, DEV)
+			policy, err := km.NewPolicy(tc.role, "development")
 			if err != nil {
 				log.Printf("Error creating policy: %s", err)
 				t.Fail()

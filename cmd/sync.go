@@ -42,11 +42,11 @@ Syncs Secret config yamls with Vault.
 		km := keymaster.NewKeyMaster(client)
 
 		for _, config := range data {
-			ns, err := km.NewTeam(config, verbose)
+			team, err := km.NewTeam(config, verbose)
 			if err != nil {
 				log.Fatalf("Failed to load secret definitions: %s", err)
 			} else {
-				err = km.ConfigureTeam(ns, verbose)
+				err = km.ConfigureTeam(team, verbose)
 				if err != nil {
 					log.Fatalf("Failed to configure vault for secret definitions: %s", err)
 				}

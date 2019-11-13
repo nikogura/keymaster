@@ -31,22 +31,16 @@ type Cluster struct {
 	ApiServerUrl string `yaml:"apiserver"`
 	CACert       string `yaml:"ca_cert"`
 	EnvName      string `yaml:"environment"`
-	Environment  Environment
+	Environment  string
 	BoundCidrs   []string `yaml:"bound_cidrs"`
 }
 
 var Clusters []Cluster
 var ClustersByName map[string]Cluster
-var ClustersByEnvironment map[Environment][]Cluster
 
 func init() {
 	Clusters = make([]Cluster, 0)
 	ClustersByName = make(map[string]Cluster)
-	ClustersByEnvironment = make(map[Environment][]Cluster)
-
-	for _, env := range Envs {
-		ClustersByEnvironment[env] = make([]Cluster, 0)
-	}
 
 	// bravo
 	bravo := Cluster{
@@ -86,7 +80,7 @@ oSw0zT6wr3offAX1eSmgCIlnd5icE1jTit7jQE1osbscBY/xhk7D7mrE/mxqT9ey
 7wRL8S6kMjh5SjF0vS+5cEiT6fm4TXwqDHCq6/AGfBNU0szTDRKrbA71POm94WKf
 Kxq0lynHENJpP/eXjfyC8sLDVJN8YO3n4w==
 -----END CERTIFICATE-----`,
-		Environment: PROD,
+		Environment: "production",
 		BoundCidrs: []string{
 			"10.177.148.183",
 			"10.177.148.163",
@@ -124,7 +118,7 @@ MUy1/QvOhbJ6sR24/q5g1V+EUkKzrJCiil2SXKZBpKU0NFIvqRB9Yh40AgviLhsA
 kNoCEVDI5C2RN36GljQpCFkQ8IR5eyDC4PeqXBkxg8nzrl06NN2R89H1oB3OgiL2
 5bmcZjJIZiCcbgdAJSvf
 -----END CERTIFICATE-----`,
-		Environment: PROD,
+		Environment: "production",
 		BoundCidrs: []string{
 			"10.177.148.193",
 			"10.177.148.229",
@@ -159,7 +153,7 @@ IYDDkFzddRCPc4sMv6m+NaFclL8KE3gn241kJFGNoNDabBNMQPooSsPRYQVlnSF7
 pQuIfEhzZIVhpEJwCwjwnKT7SBTgsKhkXprmQon1kcKgm+8RVBAOP+4V6uAxOszP
 hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 -----END CERTIFICATE-----`,
-		Environment: PROD,
+		Environment: "production",
 		BoundCidrs: []string{
 			"10.177.148.240",
 		},
@@ -189,7 +183,7 @@ hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 	sj6yFaHX5RBT7mY6pXve6hmbdkA97Ub40OCTbvryhrAGe/ueD02ntswToAcM3NnC
 	lTYORq5Eksf5zoqyQi6aBMKpytzD8P7j4dZtFiavws1oUXbKd05WofMhrqI=
 	-----END CERTIFICATE-----`,
-		Environment: DEV,
+		Environment: "development",
 		BoundCidrs: []string{
 			"10.226.0.0/19",
 			"10.226.32.0/19",
@@ -200,10 +194,6 @@ hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 	Clusters = append(Clusters, csvcDevel)
 	ClustersByName[csvcDevel.Name] = csvcDevel
 
-	// Populate the map of ClustersByEnvironment
-	for _, cluster := range Clusters {
-		ClustersByEnvironment[cluster.Environment] = append(ClustersByEnvironment[cluster.Environment], cluster)
-	}
 }
 
 func (km *KeyMaster) NewCluster(data []byte, verbose bool) (cluster Cluster, err error) {

@@ -14,36 +14,36 @@ func TestSecretPath(t *testing.T) {
 		name       string
 		secretName string
 		team       string
-		env        Environment
+		env        string
 		output     string
 	}{
 		{
 			"secret1",
 			"foo",
 			"team6",
-			PROD,
-			fmt.Sprintf("team6/data/foo/%s", PROD),
+			"production",
+			"team6/data/foo/production",
 		},
 		{
 			"secret2",
 			"bar",
 			"team7",
-			STAGE,
-			fmt.Sprintf("team7/data/bar/%s", STAGE),
+			"staging",
+			"team7/data/bar/staging",
 		},
 		{
 			"secret3",
 			"baz",
 			"team5",
-			DEV,
-			fmt.Sprintf("team5/data/baz/%s", DEV),
+			"development",
+			"team5/data/baz/development",
 		},
 		{
 			"secret4",
 			"wip",
 			"team7",
-			DEV,
-			fmt.Sprintf("team7/data/wip/%s", DEV),
+			"development",
+			"team7/data/wip/development",
 		},
 	}
 
@@ -130,6 +130,11 @@ func TestWriteSecretIfBlank(t *testing.T) {
 					"type":   "alpha",
 					"length": 10,
 				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
+				},
 			},
 			regexp.MustCompile(`[a-zA-Z0-9]{10}`),
 		},
@@ -142,6 +147,11 @@ func TestWriteSecretIfBlank(t *testing.T) {
 					"type":   "hex",
 					"length": 32,
 				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
+				},
 			},
 			regexp.MustCompile(`[a-f0-9]{32}`),
 		},
@@ -152,6 +162,11 @@ func TestWriteSecretIfBlank(t *testing.T) {
 				Team: "secret-team2",
 				GeneratorData: GeneratorData{
 					"type": "uuid",
+				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
 				},
 			},
 			regexp.MustCompile(`[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}`),
@@ -165,6 +180,11 @@ func TestWriteSecretIfBlank(t *testing.T) {
 					"type":  "chbs",
 					"words": 6,
 				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
+				},
 			},
 			regexp.MustCompile(`\w+-\w+-\w+-\w+-\w+-\w+`),
 		},
@@ -177,6 +197,11 @@ func TestWriteSecretIfBlank(t *testing.T) {
 					"type": "tls",
 					"cn":   "foo.scribd.com",
 					"ca":   "service",
+				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
 				},
 			},
 			regexp.MustCompile(`.+`),
@@ -203,7 +228,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 			} else {
 				// give the write a moment to propagate.  If we hit vault directly the secret may not be there yet.
 				time.Sleep(time.Second)
-				for _, env := range Envs {
+				for _, env := range secret.Environments {
 					var path string
 					if secret.GeneratorData["type"] == "tls" {
 						path, err = km.SecretPath(secret.Team, secret.Name, env)
@@ -264,7 +289,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		input := inputs[0]
 		expected := make([]string, 0)
 
-		for _, env := range Envs {
+		for _, env := range input.in.Environments {
 			path, err := km.SecretPath(input.in.Team, input.in.Name, env)
 			if err != nil {
 				log.Printf("error creating path: %s", err)

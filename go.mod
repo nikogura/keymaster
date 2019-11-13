@@ -5,6 +5,7 @@ go 1.12
 require (
 	git.lo/ops/ldapclient v0.0.0-20190926144931-2b6d0b63b562 // indirect
 	git.lo/ops/scrutil v0.0.0-20191029195031-779f0ad832a6
+	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/kr/pretty v0.1.0 // indirect

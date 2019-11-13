@@ -14,7 +14,7 @@ import (
 )
 
 const VERSION = "0.3.0"
-const ERR_NS_DATA_LOAD = "failed to load data in supplied config"
+const ERR_TEAM_DATA_LOAD = "failed to load team data in supplied config"
 const ERR_NAMELESS_TEAM = "nameless teams are not supported"
 const ERR_NAMELESS_ROLE = "nameless roles are not supported"
 const ERR_NAMELESS_SECRET = "nameless secrets are not supported"
@@ -25,18 +25,7 @@ const ERR_REALMLESS_ROLE = "realmless roles are not supported"
 const ERR_SLASH_IN_TEAM_NAME = "team names cannot contain slashes"
 const ERR_SLASH_IN_ROLE_NAME = "role names cannot contain slashes"
 const ERR_UNSUPPORTED_REALM = "unsupported realm"
-
-const PROD = "production"
-const STAGE = "staging"
-const DEV = "development"
-
-type Environment string
-
-var Envs = []Environment{
-	PROD,
-	STAGE,
-	DEV,
-}
+const ERR_MISSING_ENVIRONMENTS = "no environments list found in config"
 
 type Realm struct {
 	Type        string   `yaml:"type"`        // k8s iam sl
@@ -71,11 +60,12 @@ func NewKeyMaster(vaultClient *api.Client) (km *KeyMaster) {
 
 // Team  Group of humans who control their own destiny in regard to secrets
 type Team struct {
-	Name       string    `yaml:"name"`
-	Roles      []*Role   `yaml:"roles"`
-	Secrets    []*Secret `yaml:"secrets"`
-	SecretsMap map[string]*Secret
-	RolesMap   map[string]*Role
+	Name         string    `yaml:"name"`
+	Roles        []*Role   `yaml:"roles"`
+	Secrets      []*Secret `yaml:"secrets"`
+	Environments []string  `yaml:"environments"`
+	SecretsMap   map[string]*Secret
+	RolesMap     map[string]*Role
 }
 
 // Role A named set of Secrets that is instantiated as an Auth endpoint in Vault for each computing realm.
@@ -103,10 +93,7 @@ type Secret struct {
 	Team          string        `yaml:"team"`
 	GeneratorData GeneratorData `yaml:"generator"`
 	Generator     Generator     `yaml:"-"`
-
-	DevValue   string `yaml:"dev_value"`
-	StageValue string `yaml:"-"`
-	ProdValue  string `yaml:"-"`
+	Environments  []string      `yaml:"-"`
 }
 
 // SetGenerator What else?  Set's the generator on the Secret.
@@ -118,15 +105,19 @@ func (s *Secret) SetTeam(team string) {
 	s.Team = team
 }
 
+func (s *Secret) SetEnvironments(environments []string) {
+	s.Environments = environments
+}
+
 func (r *Role) SetTeam(team string) {
 	r.Team = team
 }
 
 // NewTeam Create a new Team from the data provided.
-func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team Team, err error) {
+func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team *Team, err error) {
 	err = yaml.Unmarshal(data, &team)
 	if err != nil {
-		err = errors.Wrap(err, ERR_NS_DATA_LOAD)
+		err = errors.Wrap(err, ERR_TEAM_DATA_LOAD)
 		return team, err
 	}
 
@@ -138,6 +129,11 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team Team, err error) {
 
 	if regexp.MustCompile(`/`).MatchString(team.Name) {
 		err = errors.New(ERR_SLASH_IN_TEAM_NAME)
+		return team, err
+	}
+
+	if len(team.Environments) == 0 {
+		err = errors.New(ERR_MISSING_ENVIRONMENTS)
 		return team, err
 	}
 
@@ -171,6 +167,7 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team Team, err error) {
 		}
 
 		secret.SetGenerator(generator)
+		secret.SetEnvironments(team.Environments)
 
 		scrutil.VerboseOutput(verbose, "  ... success!")
 		team.SecretsMap[secret.Name] = secret
@@ -229,7 +226,7 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team Team, err error) {
 }
 
 // ConfigureTeam  The grand unified config loader that, after the yaml file is read into memory, applies it to Vault.
-func (km *KeyMaster) ConfigureTeam(team Team, verbose bool) (err error) {
+func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 	scrutil.VerboseOutput(verbose, "--- Configuring team %s ---", team.Name)
 	// populate secrets
 	scrutil.VerboseOutput(verbose, "--- Populating Secrets ---")
@@ -251,11 +248,14 @@ func (km *KeyMaster) ConfigureTeam(team Team, verbose bool) (err error) {
 			return err
 		}
 
-		scrutil.VerboseOutput(verbose, "  walking environments...")
-		for _, env := range Envs {
-			scrutil.VerboseOutput(verbose, "    handling %s...", env)
+		scrutil.VerboseOutput(verbose, "  defining realms...")
+		// create auth configs
+		for _, realm := range role.Realms {
+			env := realm.Environment
+			scrutil.VerboseOutput(verbose, "    handling %s env %s...", realm.Type, env)
+
 			// write policies
-			scrutil.VerboseOutput(verbose, "      new policy for role %s in env %s...", role.Name, env)
+			scrutil.VerboseOutput(verbose, "      new policy for role %s realm %s in env %s...", role.Name, realm.Type, env)
 			policy, err := km.NewPolicy(role, env)
 			if err != nil {
 				err = errors.Wrapf(err, "failed to create policy")
@@ -271,42 +271,38 @@ func (km *KeyMaster) ConfigureTeam(team Team, verbose bool) (err error) {
 			scrutil.VerboseOutput(verbose, "      written")
 
 			scrutil.VerboseOutput(verbose, "      creating auth configs...")
-			// create auth configs
-			for _, realm := range role.Realms {
-				scrutil.VerboseOutput(verbose, "        config for realm %s...", realm)
-				switch realm.Type {
-				case K8S:
-					scrutil.VerboseOutput(verbose, "          k8s")
-					for _, cluster := range ClustersByEnvironment[env] {
-						err = km.AddPolicyToK8sRole(cluster, role, realm, policy)
-						if err != nil {
-							err = errors.Wrapf(err, "failed to add K8S Auth for role:%q policy:%q cluster:%q env:%q", role.Name, policy.Name, cluster.Name, env)
-							return err
-						}
-					}
-
-				case TLS:
-					scrutil.VerboseOutput(verbose, "          sl")
-					err = km.AddPolicyToTlsRole(role, env, policy)
+			switch realm.Type {
+			case K8S:
+				scrutil.VerboseOutput(verbose, "          k8s")
+				for _, cluster := range realm.Identifiers {
+					err = km.AddPolicyToK8sRole(ClustersByName[cluster], role, realm, policy)
 					if err != nil {
-						err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
+						err = errors.Wrapf(err, "failed to add K8S Auth for role:%q policy:%q cluster:%q env:%q", role.Name, policy.Name, cluster, env)
 						return err
 					}
-				case IAM:
-					scrutil.VerboseOutput(verbose, "          aws")
-					err = km.AddPolicyToIamRole(role, realm, policy)
-					if err != nil {
-						err = errors.Wrapf(err, "failed to add IAM auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
-						return err
-					}
+				}
 
-				default:
-					err = errors.New(fmt.Sprintf("unsupported realm %q", realm))
+			case TLS:
+				scrutil.VerboseOutput(verbose, "          sl")
+				err = km.AddPolicyToTlsRole(role, env, policy)
+				if err != nil {
+					err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
 					return err
 				}
+			case IAM:
+				scrutil.VerboseOutput(verbose, "          aws")
+				err = km.AddPolicyToIamRole(role, realm, policy)
+				if err != nil {
+					err = errors.Wrapf(err, "failed to add IAM auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
+					return err
+				}
+
+			default:
+				err = errors.New(fmt.Sprintf("unsupported realm %q", realm))
+				return err
 			}
-			scrutil.VerboseOutput(verbose, "      done")
 		}
+		scrutil.VerboseOutput(verbose, "      done")
 		scrutil.VerboseOutput(verbose, "  done")
 	}
 

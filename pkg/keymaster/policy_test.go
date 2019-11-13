@@ -13,36 +13,36 @@ func TestPolicyName(t *testing.T) {
 		name     string
 		roleName string
 		team     string
-		env      Environment
+		env      string
 		output   string
 	}{
 		{
 			"role1",
 			"foo",
 			"core-services",
-			PROD,
-			fmt.Sprintf("core-services-foo-%s", PROD),
+			"production",
+			"core-services-foo-production",
 		},
 		{
 			"role2",
 			"bar",
 			"core-platform",
-			STAGE,
-			fmt.Sprintf("core-platform-bar-%s", STAGE),
+			"staging",
+			"core-platform-bar-staging",
 		},
 		{
 			"role3",
 			"baz",
 			"core-infra",
-			DEV,
-			fmt.Sprintf("core-infra-baz-%s", DEV),
+			"development",
+			"core-infra-baz-development",
 		},
 		{
 			"role4",
 			"wip",
 			"team3",
-			DEV,
-			fmt.Sprintf("team3-wip-%s", DEV),
+			"development",
+			"team3-wip-development",
 		},
 	}
 
@@ -66,7 +66,7 @@ func TestPolicyPath(t *testing.T) {
 	inputs := []struct {
 		name string
 		role Role
-		env  Environment
+		env  string
 		out  string
 	}{
 		{
@@ -85,7 +85,7 @@ func TestPolicyPath(t *testing.T) {
 				},
 				Team: "core-services",
 			},
-			DEV,
+			"development",
 			"sys/policy/core-services-app1-development",
 		},
 	}
@@ -103,19 +103,19 @@ func TestPolicyPath(t *testing.T) {
 func TestPolicyPayload(t *testing.T) {
 	km := NewKeyMaster(testVault.VaultTestClient())
 
-	path1, err := km.SecretPath("core-services", "foo", DEV)
+	path1, err := km.SecretPath("core-services", "foo", "development")
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
 	}
 
-	path2, err := km.SecretPath("core-platform", "foo", DEV)
+	path2, err := km.SecretPath("core-platform", "foo", "development")
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
 	}
 
-	path3, err := km.SecretPath("core-platform", "bar", DEV)
+	path3, err := km.SecretPath("core-platform", "bar", "development")
 	if err != nil {
 		log.Printf("Failed to create path: %s", err)
 		t.Fail()
@@ -204,7 +204,7 @@ func TestPolicyPayload(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy, err := km.MakePolicyPayload(tc.in, DEV)
+			policy, err := km.MakePolicyPayload(tc.in, "development")
 			if err != nil {
 				log.Printf("error creating policy: %s", err)
 				t.Fail()
@@ -217,19 +217,19 @@ func TestPolicyPayload(t *testing.T) {
 func TestPolicyCrud(t *testing.T) {
 	km := NewKeyMaster(testVault.VaultTestClient())
 
-	path1, err := km.SecretPath("foo", "core-services", DEV)
+	path1, err := km.SecretPath("foo", "core-services", "development")
 	if err != nil {
 		log.Printf("error creating path: %s", err)
 		t.Fail()
 	}
 
-	pName1, err := km.PolicyName("app1", "core-services", DEV)
+	pName1, err := km.PolicyName("app1", "core-services", "development")
 	if err != nil {
 		log.Printf("error creating policy name: %s", err)
 		t.Fail()
 	}
 
-	pPath1, err := km.PolicyPath("app1", "core-services", DEV)
+	pPath1, err := km.PolicyPath("app1", "core-services", "development")
 	if err != nil {
 		log.Printf("error creating policy path: %s", err)
 		t.Fail()
