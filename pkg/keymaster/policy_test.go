@@ -21,28 +21,28 @@ func TestPolicyName(t *testing.T) {
 			"foo",
 			"core-services",
 			PROD,
-			fmt.Sprintf("core-services-%s-foo", PROD),
+			fmt.Sprintf("core-services-foo-%s", PROD),
 		},
 		{
 			"role2",
 			"bar",
 			"core-platform",
 			STAGE,
-			fmt.Sprintf("core-platform-%s-bar", STAGE),
+			fmt.Sprintf("core-platform-bar-%s", STAGE),
 		},
 		{
 			"role3",
 			"baz",
 			"core-infra",
 			DEV,
-			fmt.Sprintf("core-infra-%s-baz", DEV),
+			fmt.Sprintf("core-infra-baz-%s", DEV),
 		},
 		{
 			"role4",
 			"wip",
 			"team3",
 			DEV,
-			fmt.Sprintf("team3-%s-wip", DEV),
+			fmt.Sprintf("team3-wip-%s", DEV),
 		},
 	}
 
@@ -86,7 +86,7 @@ func TestPolicyPath(t *testing.T) {
 				Team: "core-services",
 			},
 			DEV,
-			"sys/policy/core-services-development-app1",
+			"sys/policy/core-services-app1-development",
 		},
 	}
 
@@ -149,7 +149,7 @@ func TestPolicyPayload(t *testing.T) {
 							"read",
 						},
 					},
-					"sys/policy/core-services-development-app1": map[string]interface{}{
+					"sys/policy/core-services-app1-development": map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
@@ -192,7 +192,7 @@ func TestPolicyPayload(t *testing.T) {
 							"read",
 						},
 					},
-					"sys/policy/core-platform-development-app2": map[string]interface{}{
+					"sys/policy/core-platform-app2-development": map[string]interface{}{
 						"capabilities": []interface{}{
 							"read",
 						},
@@ -252,7 +252,7 @@ func TestPolicyCrud(t *testing.T) {
 								"read",
 							},
 						},
-						"sys/policy/dev-core-services-app1": map[string]interface{}{
+						"sys/policy/core-services-app1-development": map[string]interface{}{
 							"capabilities": []interface{}{
 								"read",
 							},
@@ -270,7 +270,7 @@ func TestPolicyCrud(t *testing.T) {
 								"read",
 							},
 						},
-						"sys/policy/dev-core-services-app1": map[string]interface{}{
+						"sys/policy/core-services-app1-development": map[string]interface{}{
 							"capabilities": []interface{}{
 								"read",
 							},

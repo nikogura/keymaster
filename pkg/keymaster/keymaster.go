@@ -13,6 +13,7 @@ import (
 	"regexp"
 )
 
+const VERSION = "0.3.0"
 const ERR_NS_DATA_LOAD = "failed to load data in supplied config"
 const ERR_NAMELESS_TEAM = "nameless teams are not supported"
 const ERR_NAMELESS_ROLE = "nameless roles are not supported"
@@ -41,6 +42,7 @@ type Realm struct {
 	Type        string   `yaml:"type"`        // k8s iam sl
 	Identifiers []string `yaml:"identifiers"` // cluster names for k8s, hostnames for TLS, meaningless for IAM unless account number?
 	Principals  []string `yaml:"principals"`  // namespaces for k8s, ARN's for IAM
+	Environment string   `yaml:"environment"` // Environment the realm occupies
 }
 
 const K8S = "k8s"
@@ -292,8 +294,11 @@ func (km *KeyMaster) ConfigureTeam(team Team, verbose bool) (err error) {
 					}
 				case IAM:
 					scrutil.VerboseOutput(verbose, "          aws")
-					err = errors.New("IAM Realm not yet implemented")
-					return err
+					err = km.AddPolicyToIamRole(role, realm, policy)
+					if err != nil {
+						err = errors.Wrapf(err, "failed to add IAM auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
+						return err
+					}
 
 				default:
 					err = errors.New(fmt.Sprintf("unsupported realm %q", realm))

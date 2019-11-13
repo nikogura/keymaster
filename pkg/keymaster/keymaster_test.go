@@ -1034,7 +1034,7 @@ roles:
 	// This is 1 test of 1 secret, and yes, it should hold true for all, but a more thorough and considered approach would help.
 
 	log.Printf("--- Create Test Token ---")
-	policy := "team3-development-app1"
+	policy := "team3-app1-development"
 
 	data := make(map[string]interface{})
 	data["policies"] = []string{policy}
@@ -1067,7 +1067,7 @@ roles:
 		}
 	}
 
-	s, err = testClient.Logical().Read("sys/policy/team3-development-app1")
+	s, err = testClient.Logical().Read("sys/policy/team3-app1-development")
 	if err != nil {
 		log.Printf("Failed to lookup policy: %s", err)
 		t.Fail()
@@ -1091,7 +1091,7 @@ roles:
 		//log.Printf("%s", string(jb))
 	}
 
-	goodpath := "team3/data/development/wip"
+	goodpath := "team3/data/wip/development"
 
 	s, err = testClient.Logical().Read(goodpath)
 	if err != nil {
@@ -1110,7 +1110,7 @@ roles:
 
 	}
 
-	badpath := "team1/data/production/foo"
+	badpath := "team1/data/foo/production"
 
 	if s != nil {
 		s, err = testClient.Logical().Read(badpath)

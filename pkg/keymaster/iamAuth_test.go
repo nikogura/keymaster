@@ -3,6 +3,7 @@ package keymaster
 import (
 	"fmt"
 	"git.lo/ops/scrutil/pkg/scrutil"
+	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
 )
@@ -85,7 +86,7 @@ func TestIamAuthCrud(t *testing.T) {
 				"auth_type":               "iam",
 				"bound_iam_principal_arn": testArnList,
 				"policies": []interface{}{
-					"core-services-development-app1",
+					"core-services-app1-development",
 				},
 			},
 			addPolicy1,
@@ -93,8 +94,8 @@ func TestIamAuthCrud(t *testing.T) {
 				"auth_type":               "iam",
 				"bound_iam_principal_arn": testArnList,
 				"policies": []interface{}{
-					"core-services-development-app1",
-					"core-services-development-app2",
+					"core-services-app1-development",
+					"core-services-app2-development",
 				},
 			},
 		},
@@ -122,7 +123,7 @@ func TestIamAuthCrud(t *testing.T) {
 				Team: "core-platform",
 				Realms: []*Realm{
 					&Realm{
-						Type:       "k8s",
+						Type:       "iam",
 						Principals: []string{testArn},
 					},
 				},
@@ -131,7 +132,7 @@ func TestIamAuthCrud(t *testing.T) {
 				"auth_type":               "iam",
 				"bound_iam_principal_arn": testArnList,
 				"policies": []interface{}{
-					"core-platform-development-app2",
+					"core-platform-app2-development",
 				},
 			},
 			addPolicy2,
@@ -139,8 +140,8 @@ func TestIamAuthCrud(t *testing.T) {
 				"auth_type":               "iam",
 				"bound_iam_principal_arn": testArnList,
 				"policies": []interface{}{
-					"core-platform-development-app2",
-					"core-platform-development-app3",
+					"core-platform-app2-development",
+					"core-platform-app3-development",
 				},
 			},
 		},
@@ -228,6 +229,7 @@ func TestIamAuthCrud(t *testing.T) {
 		}
 
 	} else {
+		assert.True(t, awsRegion == "", "aws region detection confused.")
 		fmt.Printf("--- Not running in AWS.  IAM Auth tests will not be performed ---")
 	}
 }

@@ -27,7 +27,7 @@ func (km *KeyMaster) PolicyName(team string, role string, env Environment) (name
 		return name, err
 	}
 
-	name = fmt.Sprintf("%s-%s-%s", team, env, role)
+	name = fmt.Sprintf("%s-%s-%s", team, role, env)
 
 	return name, err
 }

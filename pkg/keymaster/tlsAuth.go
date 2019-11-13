@@ -198,7 +198,7 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, env Environment, policies []string
 	data["allowed_common_names"] = strings.Join(hostnames, ",")
 	data["bound_cidrs"] = strings.Join(ips, ",")
 	data["policies"] = policies
-	data["display_name"] = fmt.Sprintf("%s-%s-%s", role.Team, env, role.Name)
+	data["display_name"] = fmt.Sprintf("%s-%s-%s", role.Team, role.Name, env)
 	data["certificate"] = HOST_CA_CERT
 
 	path, err := km.TlsAuthPath(role, env)

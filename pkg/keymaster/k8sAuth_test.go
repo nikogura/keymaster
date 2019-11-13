@@ -87,7 +87,7 @@ func TestK8sAuthCrud(t *testing.T) {
 				"bound_service_account_names":      []interface{}{"default"},
 				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
-					"core-services-development-app1",
+					"core-services-app1-development",
 				},
 				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
@@ -96,7 +96,7 @@ func TestK8sAuthCrud(t *testing.T) {
 				"token_num_uses":          json.Number("0"),
 				"token_period":            json.Number("0"),
 				"token_policies": []interface{}{
-					"core-services-development-app1",
+					"core-services-app1-development",
 				},
 				"token_ttl":  json.Number("0"),
 				"token_type": "default",
@@ -107,8 +107,8 @@ func TestK8sAuthCrud(t *testing.T) {
 				"bound_service_account_names":      []interface{}{"default"},
 				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
-					"core-services-development-app1",
-					"core-services-development-app2",
+					"core-services-app1-development",
+					"core-services-app2-development",
 				},
 				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
@@ -117,8 +117,8 @@ func TestK8sAuthCrud(t *testing.T) {
 				"token_num_uses":          json.Number("0"),
 				"token_period":            json.Number("0"),
 				"token_policies": []interface{}{
-					"core-services-development-app1",
-					"core-services-development-app2",
+					"core-services-app1-development",
+					"core-services-app2-development",
 				},
 				"token_ttl":  json.Number("0"),
 				"token_type": "default",
@@ -160,7 +160,7 @@ func TestK8sAuthCrud(t *testing.T) {
 				"bound_service_account_names":      []interface{}{"default"},
 				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
-					"core-platform-development-app2",
+					"core-platform-app2-development",
 				},
 				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
@@ -169,7 +169,7 @@ func TestK8sAuthCrud(t *testing.T) {
 				"token_num_uses":          json.Number("0"),
 				"token_period":            json.Number("0"),
 				"token_policies": []interface{}{
-					"core-platform-development-app2",
+					"core-platform-app2-development",
 				},
 				"token_ttl":  json.Number("0"),
 				"token_type": "default",
@@ -180,8 +180,8 @@ func TestK8sAuthCrud(t *testing.T) {
 				"bound_service_account_names":      []interface{}{"default"},
 				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
-					"core-platform-development-app2",
-					"core-platform-development-app3",
+					"core-platform-app2-development",
+					"core-platform-app3-development",
 				},
 				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
@@ -190,8 +190,8 @@ func TestK8sAuthCrud(t *testing.T) {
 				"token_num_uses":          json.Number("0"),
 				"token_period":            json.Number("0"),
 				"token_policies": []interface{}{
-					"core-platform-development-app2",
-					"core-platform-development-app3",
+					"core-platform-app2-development",
+					"core-platform-app3-development",
 				},
 				"token_ttl":  json.Number("0"),
 				"token_type": "default",

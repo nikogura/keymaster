@@ -22,28 +22,28 @@ func TestSecretPath(t *testing.T) {
 			"foo",
 			"team6",
 			PROD,
-			fmt.Sprintf("team6/data/%s/foo", PROD),
+			fmt.Sprintf("team6/data/foo/%s", PROD),
 		},
 		{
 			"secret2",
 			"bar",
 			"team7",
 			STAGE,
-			fmt.Sprintf("team7/data/%s/bar", STAGE),
+			fmt.Sprintf("team7/data/bar/%s", STAGE),
 		},
 		{
 			"secret3",
 			"baz",
 			"team5",
 			DEV,
-			fmt.Sprintf("team5/data/%s/baz", DEV),
+			fmt.Sprintf("team5/data/baz/%s", DEV),
 		},
 		{
 			"secret4",
 			"wip",
 			"team7",
 			DEV,
-			fmt.Sprintf("team7/data/%s/wip", DEV),
+			fmt.Sprintf("team7/data/wip/%s", DEV),
 		},
 	}
 

@@ -21,3 +21,13 @@ Users of the `secrets` tool will have to request their Role by name, and if they
 ## Design Docs
 
 * https://scribdjira.atlassian.net/wiki/spaces/SEC/pages/602835575/Managed+Secrets+-+2019+-+Q4
+
+## Admin Notes
+
+The `keymaster` tool cannot create secret engines.  This is a deliberate choice.
+
+Every time a new team is onboarded to Managed Secrets, an admin will need to run:
+
+    vault secrets enable -version=2 -path=<team name> -description="<team name> Secrets" kv
+    
+   

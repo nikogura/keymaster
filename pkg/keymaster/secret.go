@@ -44,7 +44,7 @@ func (km *KeyMaster) SecretPath(team string, name string, env Environment) (path
 		return path, err
 	}
 
-	path = fmt.Sprintf("%s/data/%s/%s", team, env, name)
+	path = fmt.Sprintf("%s/data/%s/%s", team, name, env)
 
 	return path, err
 }
@@ -56,7 +56,7 @@ func (km *KeyMaster) CertPath(team string, name string, env Environment) (path s
 		return path, err
 	}
 
-	path = fmt.Sprintf("%s/data/certs/%s/%s", team, env, name)
+	path = fmt.Sprintf("%s/data/certs/%s/%s", team, name, env)
 
 	return path, err
 }
