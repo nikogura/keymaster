@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/pkg/errors"
 )
 
@@ -150,15 +149,15 @@ func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env st
 
 // WriteSecretIfBlank writes a secret to each environment, but only if there's not already a value there.
 func (km *KeyMaster) WriteSecretIfBlank(secret *Secret, verbose bool) (err error) {
-	scrutil.VerboseOutput(verbose, "checking secret %s", secret.Name)
+	verboseOutput(verbose, "checking secret %s", secret.Name)
 	for _, env := range secret.Environments {
-		scrutil.VerboseOutput(verbose, "  checking env %s", env)
+		verboseOutput(verbose, "  checking env %s", env)
 		secretPath, err := km.SecretPath(secret.Team, secret.Name, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create secret path")
 			return err
 		}
-		scrutil.VerboseOutput(verbose, "    path: %s", secretPath)
+		verboseOutput(verbose, "    path: %s", secretPath)
 
 		// check to see if the secret does not exist
 		s, err := km.VaultClient.Logical().Read(secretPath)
@@ -170,20 +169,20 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret, verbose bool) (err error
 		// s will be nil if the secret does not exist
 		// warning: s will not be nil if there's a warning returned by the read
 		if s == nil {
-			scrutil.VerboseOutput(verbose, "secret is nil")
+			verboseOutput(verbose, "secret is nil")
 			err = km.WriteSecretForEnv(secret, secretPath, env)
 			if err != nil {
 				return err
 			}
 		} else if s.Data["data"] == nil {
-			scrutil.VerboseOutput(verbose, "secret has no data element")
+			verboseOutput(verbose, "secret has no data element")
 			err = km.WriteSecretForEnv(secret, secretPath, env)
 			if err != nil {
 				return err
 			}
 		}
 
-		scrutil.VerboseOutput(verbose, "secret exists")
+		verboseOutput(verbose, "secret exists")
 	}
 
 	return err

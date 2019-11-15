@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/scribd/keymaster/pkg/keymaster"
+	"github.com/scribd/vaultlibs/pkg/vaultlibs"
 	"github.com/spf13/cobra"
 	"log"
 )
@@ -34,7 +34,7 @@ Syncs Secret config yamls with Vault.
 			log.Fatalf("failed to load secret definitions: %s", err)
 		}
 
-		client, err := scrutil.VaultAuth("", "", !noninteractive, verbose)
+		client, err := vaultlibs.VaultAuth("", "", !noninteractive, verbose)
 		if err != nil {
 			log.Fatalf("Failed to create Vault client: %s", err)
 		}

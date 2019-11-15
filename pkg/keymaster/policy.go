@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/pkg/errors"
 	"strings"
 )
@@ -119,7 +118,7 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env string) (policy map[strin
 
 // WritePolicyToVault does just that.  It takes a vault client and the policy and takes care of the asshattery that is the vault api for policies.
 func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err error) {
-	scrutil.VerboseOutput(verbose, "----------------------------------------------------------------------------------------------------------------")
+	verboseOutput(verbose, "----------------------------------------------------------------------------------------------------------------")
 	// policies are not normal writes, and a royal pain the butt.  Thank you Mitch.
 	jsonBytes, err := json.Marshal(policy.Payload)
 	if err != nil {
@@ -136,7 +135,7 @@ func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err e
 	}
 
 	reqPath := fmt.Sprintf("/v1/%s", policy.Path)
-	scrutil.VerboseOutput(verbose, "        request path: %s", reqPath)
+	verboseOutput(verbose, "        request path: %s", reqPath)
 
 	bbytes, err := json.Marshal(body)
 	if err != nil {
@@ -144,7 +143,7 @@ func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err e
 		return err
 	}
 
-	scrutil.VerboseOutput(verbose, "        request body: %s", string(bbytes))
+	verboseOutput(verbose, "        request body: %s", string(bbytes))
 
 	r := km.VaultClient.NewRequest("PUT", reqPath)
 	if err := r.SetJSONBody(body); err != nil {
@@ -162,7 +161,7 @@ func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err e
 	}
 
 	code := resp.StatusCode
-	scrutil.VerboseOutput(verbose, "        response code: %d", code)
+	verboseOutput(verbose, "        response code: %d", code)
 	if code != 204 {
 		err = errors.New(fmt.Sprintf("failed writing to %s", policy.Path))
 		return err

@@ -2,7 +2,6 @@ package keymaster
 
 import (
 	"fmt"
-	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/hashicorp/vault/api"
 	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
@@ -137,7 +136,7 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team *Team, err error) 
 		return team, err
 	}
 
-	scrutil.VerboseOutput(verbose, "parsing team %s", team.Name)
+	verboseOutput(verbose, "parsing team %s", team.Name)
 
 	// Generate maps for O(1) lookups
 	team.SecretsMap = make(map[string]*Secret)
@@ -145,7 +144,7 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team *Team, err error) 
 
 	// If there's no team listed for the secret, it belongs to the team of the file from which it's loaded.
 	for _, secret := range team.Secrets {
-		scrutil.VerboseOutput(verbose, "  parsing secret %s", secret.Name)
+		verboseOutput(verbose, "  parsing secret %s", secret.Name)
 		if secret.Team == "" {
 			secret.SetTeam(team.Name)
 		}
@@ -169,12 +168,12 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team *Team, err error) 
 		secret.SetGenerator(generator)
 		secret.SetEnvironments(team.Environments)
 
-		scrutil.VerboseOutput(verbose, "  ... success!")
+		verboseOutput(verbose, "  ... success!")
 		team.SecretsMap[secret.Name] = secret
 	}
 
 	for _, role := range team.Roles {
-		scrutil.VerboseOutput(verbose, "  parsing role %s", role.Name)
+		verboseOutput(verbose, "  parsing role %s", role.Name)
 		if role.Name == "" {
 			err = errors.New(ERR_NAMELESS_ROLE)
 			return team, err
@@ -202,7 +201,7 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team *Team, err error) 
 		}
 
 		for _, secret := range role.Secrets {
-			scrutil.VerboseOutput(verbose, "  parsing role secrets %s", secret.Name)
+			verboseOutput(verbose, "  parsing role secrets %s", secret.Name)
 			if secret.Team == "" {
 				secret.Team = team.Name
 			}
@@ -215,10 +214,10 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team *Team, err error) 
 					return team, err
 				}
 			}
-			scrutil.VerboseOutput(verbose, "  ... done")
+			verboseOutput(verbose, "  ... done")
 		}
 
-		scrutil.VerboseOutput(verbose, "  ... role successfully loaded")
+		verboseOutput(verbose, "  ... role successfully loaded")
 		team.RolesMap[role.Name] = role
 	}
 
@@ -227,53 +226,53 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team *Team, err error) 
 
 // ConfigureTeam  The grand unified config loader that, after the yaml file is read into memory, applies it to Vault.
 func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
-	scrutil.VerboseOutput(verbose, "--- Configuring team %s ---", team.Name)
+	verboseOutput(verbose, "--- Configuring team %s ---", team.Name)
 	// populate secrets
-	scrutil.VerboseOutput(verbose, "--- Populating Secrets ---")
+	verboseOutput(verbose, "--- Populating Secrets ---")
 	for _, secret := range team.Secrets {
-		scrutil.VerboseOutput(verbose, "    configuring secret %s", secret.Name)
+		verboseOutput(verbose, "    configuring secret %s", secret.Name)
 		err = km.WriteSecretIfBlank(secret, verbose)
 		if err != nil {
 			err = errors.Wrapf(err, "failed writing secret %s for team %s", secret.Name, secret.Team)
 			return err
 		}
 	}
-	scrutil.VerboseOutput(verbose, "done")
+	verboseOutput(verbose, "done")
 
-	scrutil.VerboseOutput(verbose, "--- Configuring Roles ---")
+	verboseOutput(verbose, "--- Configuring Roles ---")
 	for _, role := range team.Roles {
-		scrutil.VerboseOutput(verbose, "  configuring role %s", role.Name)
+		verboseOutput(verbose, "  configuring role %s", role.Name)
 		if role.Team == "" {
 			err = errors.New("Role without a Team!")
 			return err
 		}
 
-		scrutil.VerboseOutput(verbose, "  defining realms...")
+		verboseOutput(verbose, "  defining realms...")
 		// create auth configs
 		for _, realm := range role.Realms {
 			env := realm.Environment
-			scrutil.VerboseOutput(verbose, "    handling %s env %s...", realm.Type, env)
+			verboseOutput(verbose, "    handling %s env %s...", realm.Type, env)
 
 			// write policies
-			scrutil.VerboseOutput(verbose, "      new policy for role %s realm %s in env %s...", role.Name, realm.Type, env)
+			verboseOutput(verbose, "      new policy for role %s realm %s in env %s...", role.Name, realm.Type, env)
 			policy, err := km.NewPolicy(role, env)
 			if err != nil {
 				err = errors.Wrapf(err, "failed to create policy")
 				return err
 			}
 
-			scrutil.VerboseOutput(verbose, "      writing policy to %s ...", policy.Path)
+			verboseOutput(verbose, "      writing policy to %s ...", policy.Path)
 			err = km.WritePolicyToVault(policy, verbose)
 			if err != nil {
 				err = errors.Wrapf(err, "failed writing policy %q for role %q in env %q", policy.Name, role.Name, env)
 				return err
 			}
-			scrutil.VerboseOutput(verbose, "      written")
+			verboseOutput(verbose, "      written")
 
-			scrutil.VerboseOutput(verbose, "      creating auth configs...")
+			verboseOutput(verbose, "      creating auth configs...")
 			switch realm.Type {
 			case K8S:
-				scrutil.VerboseOutput(verbose, "          k8s")
+				verboseOutput(verbose, "          k8s")
 				for _, cluster := range realm.Identifiers {
 					err = km.AddPolicyToK8sRole(ClustersByName[cluster], role, realm, policy)
 					if err != nil {
@@ -283,14 +282,14 @@ func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 				}
 
 			case TLS:
-				scrutil.VerboseOutput(verbose, "          sl")
+				verboseOutput(verbose, "          sl")
 				err = km.AddPolicyToTlsRole(role, env, policy)
 				if err != nil {
 					err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
 					return err
 				}
 			case IAM:
-				scrutil.VerboseOutput(verbose, "          aws")
+				verboseOutput(verbose, "          aws")
 				err = km.AddPolicyToIamRole(role, realm, policy)
 				if err != nil {
 					err = errors.Wrapf(err, "failed to add IAM auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
@@ -302,21 +301,21 @@ func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 				return err
 			}
 		}
-		scrutil.VerboseOutput(verbose, "      done")
-		scrutil.VerboseOutput(verbose, "  done")
+		verboseOutput(verbose, "      done")
+		verboseOutput(verbose, "  done")
 	}
 
-	scrutil.VerboseOutput(verbose, "done")
+	verboseOutput(verbose, "done")
 
 	return err
 }
 
 func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 	data = make([][]byte, 0)
-	scrutil.VerboseOutput(verbose, "\nLoading Secret Yamls")
+	verboseOutput(verbose, "\nLoading Secret Yamls")
 
 	for _, fileName := range files {
-		scrutil.VerboseOutput(verbose, "  examining %q", fileName)
+		verboseOutput(verbose, "  examining %q", fileName)
 		fi, err := os.Stat(fileName)
 		if err != nil {
 			err = errors.Wrap(err, fmt.Sprintf("failed to read yaml %s", fileName))
@@ -325,26 +324,26 @@ func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 
 		switch mode := fi.Mode(); {
 		case mode.IsRegular():
-			scrutil.VerboseOutput(verbose, "      it's a regular file")
+			verboseOutput(verbose, "      it's a regular file")
 			configBytes, err := ioutil.ReadFile(fileName)
 			if err != nil {
 				err = errors.Wrapf(err, "Error reading yaml %s", fileName)
 				return data, err
 			}
 
-			scrutil.VerboseOutput(verbose, "      ... loaded")
+			verboseOutput(verbose, "      ... loaded")
 			data = append(data, configBytes)
 
 		case mode.IsDir():
-			scrutil.VerboseOutput(verbose, "      it's a directory")
+			verboseOutput(verbose, "      it's a directory")
 			// start off true, set false on any failure
 			err := filepath.Walk(fileName, func(path string, info os.FileInfo, err error) error {
-				scrutil.VerboseOutput(verbose, "  examining %q", path)
+				verboseOutput(verbose, "  examining %q", path)
 				if err != nil {
 					return err
 				}
 				if !info.IsDir() { // we only care about files
-					scrutil.VerboseOutput(verbose, "        it's a regular file")
+					verboseOutput(verbose, "        it's a regular file")
 					// and we only care about yaml files
 					fileName := filepath.Base(path)
 					pat := regexp.MustCompile(`.+\.ya?ml`)
@@ -358,12 +357,12 @@ func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 						return err
 					}
 
-					scrutil.VerboseOutput(verbose, "          ... loaded")
+					verboseOutput(verbose, "          ... loaded")
 					data = append(data, configBytes)
 
 					return nil
 				}
-				scrutil.VerboseOutput(verbose, "        it's a directory")
+				verboseOutput(verbose, "        it's a directory")
 
 				return nil
 			})
@@ -376,4 +375,16 @@ func LoadSecretYamls(files []string, verbose bool) (data [][]byte, err error) {
 	}
 
 	return data, err
+}
+
+func verboseOutput(verbose bool, message string, args ...interface{}) {
+	if verbose {
+		if len(args) == 0 {
+			fmt.Printf("%s\n", message)
+			return
+		}
+
+		msg := fmt.Sprintf(message, args...)
+		fmt.Printf("%s\n", msg)
+	}
 }

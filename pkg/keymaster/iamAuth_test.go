@@ -2,7 +2,7 @@ package keymaster
 
 import (
 	"fmt"
-	"git.lo/ops/scrutil/pkg/scrutil"
+	"github.com/scribd/vaultlibs/pkg/vaultlibs"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
@@ -147,7 +147,7 @@ func TestIamAuthCrud(t *testing.T) {
 		},
 	}
 
-	awsRegion := scrutil.GetAwsRegion(true)
+	awsRegion := vaultlibs.GetAwsRegion(true)
 
 	// don't run tests if we cannot get the aws region (means we're not running in aws)
 	if awsRegion != "" {
@@ -230,7 +230,7 @@ func TestIamAuthCrud(t *testing.T) {
 
 	} else {
 		assert.True(t, awsRegion == "", "aws region detection confused.")
-		fmt.Printf("--- Not running in AWS.  IAM Auth tests will not be performed ---")
+		fmt.Printf("--- Not running in AWS.  IAM Auth tests will not be performed ---\n")
 	}
 	// this nonsense test makes sure this test file runs at least 1 test, which stops some test runners from being confused when run outside of AWS.
 	assert.True(t, 1 == 1, "Houston, we have a problem.")
