@@ -1,6 +1,6 @@
 # keymaster
 
-Secrets Definition and Management tool.
+Managed Secrets tool for Vault.
 
 Based on a config file, `keymaster` does the following:
 
