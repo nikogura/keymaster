@@ -10,7 +10,6 @@ package keymaster
 
 import (
 	"fmt"
-	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"strings"
@@ -230,7 +229,7 @@ func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role *Role, realm *Real
 	}
 
 	// exit early if it's already there
-	if dbt.StringInSlice(policy.Name, policies) {
+	if stringInSlice(policy.Name, policies) {
 		return err
 	}
 

@@ -3,7 +3,6 @@ package keymaster
 import (
 	"fmt"
 	"github.com/hashicorp/vault/api"
-	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
@@ -190,7 +189,7 @@ func (km *KeyMaster) NewTeam(data []byte, verbose bool) (team *Team, err error) 
 		}
 
 		for _, realm := range role.Realms {
-			if !dbt.StringInSlice(realm.Type, RealmTypes) {
+			if !stringInSlice(realm.Type, RealmTypes) {
 				err = errors.New(ERR_UNSUPPORTED_REALM)
 				return team, err
 			}
@@ -387,4 +386,13 @@ func verboseOutput(verbose bool, message string, args ...interface{}) {
 		msg := fmt.Sprintf(message, args...)
 		fmt.Printf("%s\n", msg)
 	}
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }

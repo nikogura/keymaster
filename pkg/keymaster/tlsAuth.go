@@ -10,7 +10,6 @@ package keymaster
 
 import (
 	"fmt"
-	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
 	"net"
 	"strings"
@@ -78,7 +77,7 @@ func (km *KeyMaster) AddPolicyToTlsRole(role *Role, env string, policy VaultPoli
 	}
 
 	// exit early if it's already there
-	if dbt.StringInSlice(policy.Name, policies) {
+	if stringInSlice(policy.Name, policies) {
 		return err
 	}
 
