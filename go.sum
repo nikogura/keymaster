@@ -109,6 +109,16 @@ github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkB
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
 github.com/scribd/vaultlibs v0.0.0-20191115000102-39f94125c6ab h1:v75ErZm7mbvpBi/4h/FZAKGIsHIoktIl6DwV8/H5Tfo=
 github.com/scribd/vaultlibs v0.0.0-20191115000102-39f94125c6ab/go.mod h1:PVWcoLLwk1OGvFzS/HqBWrr3/8mg7iiC61H+tH4S0no=
+github.com/scribd/vaultlibs v0.0.0-20191115220242-ef8c139c249d h1:6zEBq7p3TxmyRrOM62IDCoHowdwlYGkKRArLiu84kQ0=
+github.com/scribd/vaultlibs v0.0.0-20191115220242-ef8c139c249d/go.mod h1:CKcd3PemCF187wPoJAFyTl21GBvX/zSW6yB0AGf/lMo=
+github.com/scribd/vaultlibs v0.0.0-20191115220537-9fb6d66038b8 h1:sIsYDyjF2tF67Uq9WSDudKO8MspGROWanH+YGvNFytY=
+github.com/scribd/vaultlibs v0.0.0-20191115220537-9fb6d66038b8/go.mod h1:CKcd3PemCF187wPoJAFyTl21GBvX/zSW6yB0AGf/lMo=
+github.com/scribd/vaultlibs v0.0.0-20191115223717-d4cddcf634be h1:+9Jz+ad8EiCQklcX8FOrIWQmHTsXVQuv9MTVzGc7B7I=
+github.com/scribd/vaultlibs v0.0.0-20191115223717-d4cddcf634be/go.mod h1:CKcd3PemCF187wPoJAFyTl21GBvX/zSW6yB0AGf/lMo=
+github.com/scribd/vaultlibs v0.0.0-20191115230742-b54ffdf1e37e h1:BTpbZU6U2Jvaz2JO3+hJ3/5yuDAsqow7G30OKR6ihnk=
+github.com/scribd/vaultlibs v0.0.0-20191115230742-b54ffdf1e37e/go.mod h1:CKcd3PemCF187wPoJAFyTl21GBvX/zSW6yB0AGf/lMo=
+github.com/scribd/vaultlibs v0.0.0-20191115231424-63f639552bce h1:Go0KjSL5Kd9AodpVNdR0zJSXh/yWaDLQ1ZHS6KUbeNE=
+github.com/scribd/vaultlibs v0.0.0-20191115231424-63f639552bce/go.mod h1:CKcd3PemCF187wPoJAFyTl21GBvX/zSW6yB0AGf/lMo=
 github.com/scribd/vaulttest v0.0.0-20191104214843-a90d02dcb422 h1:R/m//rI9rVsy1H9f0422HRQEWq8MQgwXM97JTILyWK8=
 github.com/scribd/vaulttest v0.0.0-20191104214843-a90d02dcb422/go.mod h1:nc5nMGnBd/GfgZzDVKoIOEks+Y114+3rmsRhZf0cyf8=
 github.com/sethvargo/go-diceware v0.0.0-20181024230814-74428ac65346 h1:n9gSCIU8kuXl5qhguo7KHJMf0QDKUWL+sjv4HnUtoQ8=
