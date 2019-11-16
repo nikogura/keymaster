@@ -7,6 +7,7 @@ phases:
     runtime-versions:
       golang: 1.13
     commands:
+      - echo "W3VybCAiZ2l0QGdpdGh1Yi5jb206Il0KICBpbnN0ZWFkT2YgPSBodHRwczovL2dpdGh1Yi5jb20vCgpbdXJsICJnaXRAZ2l0LmxvOiJdCiAgaW5zdGVhZE9mID0gaHR0cHM6Ly9naXQubG8vCg==" | base64 -d > ~/.gitconfig
       - yum install -y wget && wget -q https://releases.hashicorp.com/vault/1.2.3/vault_1.2.3_linux_amd64.zip && unzip vault*.zip && mv vault /usr/local/bin/vault && chmod 755 /usr/local/bin/vault
   build:
     commands:
