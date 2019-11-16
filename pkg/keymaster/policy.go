@@ -5,43 +5,35 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/pkg/errors"
 	"strings"
 )
 
-// PolicyName constructs the policy name form the inputs in a regular fashion. Note: namespaces like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs.
-func (km *KeyMaster) PolicyName(role string, namespace string, env Environment) (name string, err error) {
+// PolicyName constructs the policy name form the inputs in a regular fashion. Note: team names like 'core-platform' will make policy names with embedded hyphens.  This could be a problem if we ever need to split the policy name to reconstruct the inputs.
+func (km *KeyMaster) PolicyName(team string, role string, env string) (name string, err error) {
 	if role == "" {
 		err = errors.New("empty role names are not supported")
 		return name, err
 	}
 
-	if namespace == "" {
-		err = errors.New("empty role namespaces are not supported")
+	if team == "" {
+		err = errors.New("teamless roles are not supported")
 		return name, err
 	}
 
-	if env == 0 {
-		err = errors.New("unsupported environment")
+	if env == "" {
+		err = errors.New("blank environments are not supported")
 		return name, err
 	}
 
-	switch env {
-	case Prod:
-		name = fmt.Sprintf("%s-%s-%s", PROD_NAME, namespace, role)
-	case Stage:
-		name = fmt.Sprintf("%s-%s-%s", STAGE_NAME, namespace, role)
-	default:
-		name = fmt.Sprintf("%s-%s-%s", DEV_NAME, namespace, role)
-	}
+	name = fmt.Sprintf("%s-%s-%s", team, role, env)
 
 	return name, err
 }
 
 // PolicyPath constructs the path to the policy for the role
-func (km *KeyMaster) PolicyPath(role string, namespace string, env Environment) (path string, err error) {
-	policyName, err := km.PolicyName(role, namespace, env)
+func (km *KeyMaster) PolicyPath(team string, role string, env string) (path string, err error) {
+	policyName, err := km.PolicyName(team, role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy name")
 		return path, err
@@ -53,20 +45,20 @@ func (km *KeyMaster) PolicyPath(role string, namespace string, env Environment) 
 }
 
 // NewPolicy creates a new Policy object for a given Role and Environment
-func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy, err error) {
+func (km *KeyMaster) NewPolicy(role *Role, env string) (policy VaultPolicy, err error) {
 	payload, err := km.MakePolicyPayload(role, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create payload")
 		return policy, err
 	}
 
-	pName, err := km.PolicyName(role.Name, role.Namespace, env)
+	pName, err := km.PolicyName(role.Team, role.Name, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy name")
 		return policy, err
 	}
 
-	pPath, err := km.PolicyPath(role.Name, role.Namespace, env)
+	pPath, err := km.PolicyPath(role.Team, role.Name, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy path")
 		return policy, err
@@ -93,12 +85,12 @@ func (km *KeyMaster) NewPolicy(role *Role, env Environment) (policy VaultPolicy,
   }
 }
 */
-func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[string]interface{}, err error) {
+func (km *KeyMaster) MakePolicyPayload(role *Role, env string) (policy map[string]interface{}, err error) {
 	policy = make(map[string]interface{})
 	pathElem := make(map[string]interface{})
 
 	for _, secret := range role.Secrets {
-		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+		secretPath, err := km.SecretPath(secret.Team, secret.Name, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create secret path for %s role %s", secret.Name, role.Name)
 			return policy, err
@@ -110,7 +102,7 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[
 	}
 
 	// add ability to read own policy
-	secretPath, err := km.PolicyPath(role.Name, role.Namespace, env)
+	secretPath, err := km.PolicyPath(role.Team, role.Name, env)
 	if err != nil {
 		err = errors.Wrapf(err, "failed to create policy path")
 		return policy, err
@@ -126,7 +118,7 @@ func (km *KeyMaster) MakePolicyPayload(role *Role, env Environment) (policy map[
 
 // WritePolicyToVault does just that.  It takes a vault client and the policy and takes care of the asshattery that is the vault api for policies.
 func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err error) {
-	scrutil.VerboseOutput(verbose, "----------------------------------------------------------------------------------------------------------------")
+	verboseOutput(verbose, "----------------------------------------------------------------------------------------------------------------")
 	// policies are not normal writes, and a royal pain the butt.  Thank you Mitch.
 	jsonBytes, err := json.Marshal(policy.Payload)
 	if err != nil {
@@ -143,7 +135,7 @@ func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err e
 	}
 
 	reqPath := fmt.Sprintf("/v1/%s", policy.Path)
-	scrutil.VerboseOutput(verbose, "        request path: %s", reqPath)
+	verboseOutput(verbose, "        request path: %s", reqPath)
 
 	bbytes, err := json.Marshal(body)
 	if err != nil {
@@ -151,7 +143,7 @@ func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err e
 		return err
 	}
 
-	scrutil.VerboseOutput(verbose, "        request body: %s", string(bbytes))
+	verboseOutput(verbose, "        request body: %s", string(bbytes))
 
 	r := km.VaultClient.NewRequest("PUT", reqPath)
 	if err := r.SetJSONBody(body); err != nil {
@@ -169,7 +161,7 @@ func (km *KeyMaster) WritePolicyToVault(policy VaultPolicy, verbose bool) (err e
 	}
 
 	code := resp.StatusCode
-	scrutil.VerboseOutput(verbose, "        response code: %d", code)
+	verboseOutput(verbose, "        response code: %d", code)
 	if code != 204 {
 		err = errors.New(fmt.Sprintf("failed writing to %s", policy.Path))
 		return err
@@ -234,3 +226,5 @@ func (km *KeyMaster) DeletePolicyFromVault(path string) (err error) {
 
 	return err
 }
+
+// TODO how to grant universal access to development?

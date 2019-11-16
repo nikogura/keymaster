@@ -13,16 +13,6 @@ import (
 
 type GeneratorType int
 
-const (
-	ALPHA GeneratorType = iota + 1
-	HEX
-	UUID
-	CHBS
-	RSA
-	TLS
-	STATIC
-)
-
 const ERR_UNKNOWN_GENERATOR = "unknown generator"
 
 // Generator an interface for a function that creates a string according to a pattern.  E. g.

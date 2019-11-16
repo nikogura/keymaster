@@ -5,10 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"git.lo/ops/vaulttest/pkg/vaulttest"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/vault/api"
 	"github.com/phayes/freeport"
 	"github.com/pkg/errors"
+	"github.com/scribd/vaulttest/pkg/vaulttest"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
@@ -20,7 +21,7 @@ import (
 )
 
 var tmpDir string
-var testServer *vaulttest.VaultDevServer
+var testVault *vaulttest.VaultDevServer
 var kmClient *api.Client
 var rootClient *api.Client
 
@@ -50,17 +51,23 @@ func setUp() {
 
 	testAddress := fmt.Sprintf("127.0.0.1:%d", port)
 
-	testServer = vaulttest.NewVaultDevServer(testAddress)
+	testVault = vaulttest.NewVaultDevServer(testAddress)
 
-	if !testServer.Running {
-		testServer.ServerStart()
-		// configure the secret backends
-		client := testServer.VaultTestClient()
+	if !testVault.Running {
+		testVault.ServerStart()
+
+		// Create normal Secret engines
+		client := testVault.VaultTestClient()
 
 		for _, endpoint := range []string{
-			"prod",
-			"stage",
-			"dev",
+			"team1",
+			"team2",
+			"team3",
+			"team4",
+			"secret-team1",
+			"secret-team2",
+			"secret-team3",
+			"secret-team4",
 		} {
 			data := map[string]interface{}{
 				"type":        "kv-v2",
@@ -72,6 +79,7 @@ func setUp() {
 			}
 		}
 
+		// Create K8s Auth endpoints
 		for _, cluster := range Clusters {
 			data := map[string]interface{}{
 				"type":        "kubernetes",
@@ -84,6 +92,7 @@ func setUp() {
 			}
 		}
 
+		// Create PKI Engine
 		data := map[string]interface{}{
 			"type":        "pki",
 			"description": "PKI backend",
@@ -102,6 +111,17 @@ func setUp() {
 			log.Fatalf("Failed to create root cert: %s", err)
 		}
 
+		// Create IAM Auth endpoint
+		data = map[string]interface{}{
+			"type":        "aws",
+			"description": "AWS Auth",
+		}
+		_, err = client.Logical().Write("sys/auth/aws", data)
+		if err != nil {
+			log.Fatalf("Failed to create root cert: %s", err)
+		}
+
+		// Create Keymaster TLS role
 		data = map[string]interface{}{
 			"max_ttl":         "24h",
 			"ttl":             "24h",
@@ -114,6 +134,7 @@ func setUp() {
 			log.Fatalf("Failed to create cert issuing role: %s", err)
 		}
 
+		// Create TLS Auth endpoint
 		data = map[string]interface{}{
 			"type":        "cert",
 			"description": "TLS Cert Auth endpoint",
@@ -129,7 +150,7 @@ func setUp() {
 			log.Fatalf("Failed to write keymaster policy: %s", err)
 		}
 
-		rootClient = testServer.VaultTestClient()
+		rootClient = testVault.VaultTestClient()
 		data = make(map[string]interface{})
 		data["policies"] = []string{"keymaster"}
 		data["no_parent"] = true
@@ -170,15 +191,15 @@ func setUp() {
 				log.Fatalf("failed to unmarshal rules string into json: %s", err)
 			}
 
-			jb, err := json.MarshalIndent(rulesObj, "", "  ")
-			if err != nil {
-				log.Printf("failed to marshal rules back into json: %s", err)
-
-			}
-			log.Printf("--- Rules ---")
-			log.Printf("%s", string(jb))
+			//jb, err := json.MarshalIndent(rulesObj, "", "  ") if err != nil {
+			//	log.Printf("failed to marshal rules back into json: %s", err)
+			//
+			//}
+			//log.Printf("--- Rules ---")
+			//log.Printf("%s", string(jb))
 		}
 	}
+
 }
 
 func tearDown() {
@@ -186,17 +207,23 @@ func tearDown() {
 		os.Remove(tmpDir)
 	}
 
-	testServer.ServerShutDown()
+	testVault.ServerShutDown()
 }
 
 func WriteKeyMasterPolicy(client *api.Client) (err error) {
 	paths := []string{
-		"prod/*",
-		"stage/*",
-		"dev/*",
+		"team1/*",
+		"team2/*",
+		"team3/*",
+		"team4/*",
+		"secret-team1/*",
+		"secret-team2/*",
+		"secret-team3/*",
+		"secret-team4/*",
 		"sys/policy/*",
 		"auth/cert/certs/*",
 		"service/issue/keymaster",
+		"auth/aws/role/*",
 	}
 
 	for _, cluster := range Clusters {
@@ -258,16 +285,16 @@ func WriteKeyMasterPolicy(client *api.Client) (err error) {
 	return err
 }
 
-func TestNewNamespace(t *testing.T) {
+func TestNewTeam(t *testing.T) {
 	inputs := []struct {
 		name string
 		in   string
 		out  string
 	}{
 		{
-			"good-ns",
+			"good-team",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: foo
     generator: 
@@ -280,16 +307,56 @@ secrets:
 roles:
   - name: app1
     realms: 
-      - k8s
+      - type: k8s
+        identifiers: 
+          - bravo
+        principals: 
+          - app1
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			"",
 		},
 		{
-			"name-ns",
+			"missing-environments",
+			`---
+name: team1
+secrets:
+  - name: foo
+    generator: 
+      type: alpha
+      length: 8
+  - name: bar
+    generator:
+      type: hex
+      length: 12
+roles:
+  - name: app1
+    realms: 
+      - type: k8s
+        identifiers: 
+          - bravo
+        principals: 
+          - app1
+        environment: production
+    secrets:
+      - name: foo
+      - name: bar
+      - name: baz
+        team: core-infra
+`,
+			ERR_MISSING_ENVIRONMENTS,
+		},
+		{
+			"nameless-team",
 			`---
 secrets:
   - name: foo
@@ -304,18 +371,26 @@ secrets:
 roles:
   - name: app1
     realms: 
-      - sl
+      - type: tls
+        principals: 
+          - www.scribd.com
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        namespace: core-infra`,
-			ERR_NAMELESS_NS,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
+			ERR_NAMELESS_TEAM,
 		},
 		{
 			"nameless-role",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: foo
     generator: 
@@ -328,18 +403,28 @@ secrets:
       length: 12
 roles:
   - realms: 
-      - k8s
+      - type: k8s
+        identifiers: 
+          - bravo
+        principals: 
+          - app1
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_NAMELESS_ROLE,
 		},
 		{
 			"missing-secret",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: bar
     generator:
@@ -348,23 +433,31 @@ secrets:
 roles:
   - name: app1
     realms: 
-      - sl
+      - type: tls
+        principals:
+          - app1
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_MISSING_SECRET,
 		},
 		{
 			"garbage",
 			`asd;lkfjqw4p9rui4tw`,
-			ERR_NS_DATA_LOAD,
+			ERR_TEAM_DATA_LOAD,
 		},
 		{
 			"missing-generator",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: foo
   - name: bar
@@ -374,18 +467,28 @@ secrets:
 roles:
   - name: app1
     realms:
-      - k8s
+      - type: k8s
+        identifiers: 
+          - bravo
+        principals:
+          - app1
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_MISSING_GENERATOR,
 		},
 		{
 			"nameless secret",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: foo
     generator: 
@@ -398,18 +501,28 @@ secrets:
 roles:
   - name: app1
     realms: 
-      - k8s
+      - type: k8s
+        identifiers:
+          - bravo
+        principals:
+          - app1
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_NAMELESS_SECRET,
 		},
 		{
 			"empty realms role",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: foo
     generator: 
@@ -427,13 +540,18 @@ roles:
       - name: foo
       - name: wip
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_REALMLESS_ROLE,
 		},
 		{
 			"realmless role",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: foo
     generator: 
@@ -451,7 +569,12 @@ roles:
       - name: foo
       - name: wip
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_REALMLESS_ROLE,
 		},
 		{
@@ -470,18 +593,28 @@ secrets:
 roles:
   - name: app1
     realms: 
-      - k8s
+      - type: k8s
+        identifiers:
+          - bravo
+        principals:
+          - app1
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        namespace: core-infra`,
-			ERR_SLASH_IN_NAMESPACE,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
+			ERR_SLASH_IN_TEAM_NAME,
 		},
 		{
 			"slash-in-role",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: foo
     generator: 
@@ -494,18 +627,28 @@ secrets:
 roles:
   - name: foo/bar
     realms: 
-      - k8s
+      - type: k8s
+        identifiers:
+          - bravo
+        principals:
+          - foo/bar
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_SLASH_IN_ROLE_NAME,
 		},
 		{
 			"unsupported-realm",
 			`---
-name: test-ns
+name: team1
 secrets:
   - name: foo
     generator: 
@@ -518,12 +661,22 @@ secrets:
 roles:
   - name: app1
     realms: 
-      - foo
+      - type: foo
+        identifiers:
+          - bar
+        principals:
+          - app1
+        environment: production
     secrets:
       - name: foo
       - name: bar
       - name: baz
-        namespace: core-infra`,
+        team: core-infra
+environments:
+  - production
+  - staging
+  - development
+`,
 			ERR_UNSUPPORTED_REALM,
 		},
 	}
@@ -532,7 +685,7 @@ roles:
 	for _, tt := range inputs {
 		t.Run(tt.name, func(t *testing.T) {
 			data := []byte(tt.in)
-			_, err := km.NewNamespace(data, true)
+			_, err := km.NewTeam(data, true)
 			errstr := ""
 			if err != nil {
 				errstr = err.Error()
@@ -550,40 +703,9 @@ roles:
 	}
 }
 
-func TestNameToEnvironment(t *testing.T) {
-	inputs := []struct {
-		in  string
-		out Environment
-	}{
-		{
-			"prod",
-			Prod,
-		},
-		{
-			"stage",
-			Stage,
-		},
-		{
-			"dev",
-			Dev,
-		},
-	}
-
-	for _, tc := range inputs {
-		t.Run(tc.in, func(t *testing.T) {
-			env, err := NameToEnvironment(tc.in)
-			if err != nil {
-				log.Printf("Error: %s", err)
-				t.Fail()
-			}
-			assert.Equal(t, env, tc.out, "outputted environment matches expectations")
-		})
-	}
-}
-
-func TestConfigureNamespace(t *testing.T) {
+func TestConfigureTeam(t *testing.T) {
 	inputFile1 := `---
-name: redns
+name: team1
 secrets:
   - name: foo
     generator:
@@ -616,16 +738,29 @@ secrets:
 roles:
   - name: app1
     realms:
-      - k8s
-      - sl
+      - type: k8s
+        identifiers:
+          - bravo
+        principals:
+          - app1
+        environment: production
+      - type: tls
+        principals:
+          - www.scribd.com
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
-        namespace: bluens
+        team: team4
+
+environments:
+  - production
+  - staging
+  - development
 `
 	inputFile2 := `---
-name: greenns
+name: team2
 secrets:
   - name: foo
     generator:
@@ -658,16 +793,29 @@ secrets:
 roles:
   - name: app1
     realms:
-      - k8s
-      - sl
+      - type: k8s
+        identifiers:
+          - bravo
+        principals:
+          - app1
+        environment: production
+      - type: tls
+        principals:
+          - www.scribd.com
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: baz
-        namespace: redns
+        team: team4
+
+environments:
+  - production
+  - staging
+  - development
 `
 	inputFile3 := `---
-name: bluens
+name: team3
 secrets:
   - name: foo
     generator:
@@ -700,14 +848,27 @@ secrets:
 roles:
   - name: app1
     realms:
-      - k8s
-      - sl
+      - type: k8s
+        identifiers:
+          - bravo
+        principals:
+          - app1
+        environment: production
+      - type: tls
+        principals:
+          - www.scribd.com
+        environment: production
     secrets:
       - name: foo
       - name: wip
       - name: foo.scribd.com
       - name: baz
-        namespace: redns
+        team: team1
+
+environments:
+  - production
+  - staging
+  - development
 `
 	km := NewKeyMaster(kmClient)
 
@@ -721,39 +882,44 @@ roles:
 	if err != nil {
 		log.Printf("Error creating dir %s", manifestDir)
 		t.Fail()
+		return
 	}
 
 	err = os.MkdirAll(subDir, 0755)
 	if err != nil {
 		log.Printf("Error creating dir %s", manifestDir)
 		t.Fail()
+		return
 	}
 
 	files := make([]string, 0)
 
-	fileName := fmt.Sprintf("%s/ns1.yml", manifestDir)
+	fileName := fmt.Sprintf("%s/team1.yml", manifestDir)
 	err = ioutil.WriteFile(fileName, []byte(inputFile1), 0644)
 	if err != nil {
 		log.Printf("Failed writing %s: %s", fileName, err)
 		t.Fail()
+		return
 	}
 
 	files = append(files, fileName)
 
-	fileName = fmt.Sprintf("%s/ns2.yml", manifestDir)
+	fileName = fmt.Sprintf("%s/team2.yml", manifestDir)
 	err = ioutil.WriteFile(fileName, []byte(inputFile2), 0644)
 	if err != nil {
 		log.Printf("Failed writing %s: %s", fileName, err)
 		t.Fail()
+		return
 	}
 
 	files = append(files, fileName)
 
-	fileName = fmt.Sprintf("%s/ns3.yml", subDir)
+	fileName = fmt.Sprintf("%s/team3.yml", subDir)
 	err = ioutil.WriteFile(fileName, []byte(inputFile3), 0644)
 	if err != nil {
 		log.Printf("Failed writing %s: %s", fileName, err)
 		t.Fail()
+		return
 	}
 
 	files = append(files, fileName)
@@ -771,24 +937,26 @@ roles:
 	assert.True(t, len(configs) == 3, "expect 3 configs for processing.")
 
 	for _, config := range configs {
-		ns, err := km.NewNamespace(config, true)
-		log.Printf("--- Processing data for namespace: %s ---", ns.Name)
+		team, err := km.NewTeam(config, true)
+		log.Printf("--- Processing data for team: %s ---", team.Name)
 		if err != nil {
-			log.Printf("Failed to load namespace: %s", err)
+			log.Printf("Failed to load team: %s", err)
 			t.Fail()
+			return
 		} else {
-			err = km.ConfigureNamespace(ns, true)
+			err = km.ConfigureTeam(team, true)
 			if err != nil {
-				log.Printf("Failed to configure namespace: %s", err)
+				log.Printf("Failed to configure team: %s", err)
 				t.Fail()
+				return
 			}
 
-			for _, env := range Envs {
+			for _, env := range team.Environments {
 				// Check Secrets
-				for _, secret := range ns.Secrets {
+				for _, secret := range team.Secrets {
 					var path string
 					if secret.GeneratorData["type"] == "tls" {
-						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Team, secret.Name, env)
 						if err != nil {
 							log.Printf("Error creating path: %s", err)
 							t.Fail()
@@ -824,7 +992,7 @@ roles:
 						}
 
 					} else {
-						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Team, secret.Name, env)
 						if err != nil {
 							log.Printf("Error creating path: %s", err)
 							t.Fail()
@@ -852,9 +1020,13 @@ roles:
 					}
 				}
 
-				for _, role := range ns.Roles {
+			}
+
+			for _, role := range team.Roles {
+				fmt.Printf("Checking role %s\n", role.Name)
+				for _, realm := range role.Realms {
 					// Check Policies
-					policy, err := km.NewPolicy(role, env)
+					policy, err := km.NewPolicy(role, realm.Environment)
 					if err != nil {
 						log.Printf("doh! error creating policy: %s", err)
 						t.Fail()
@@ -866,16 +1038,28 @@ roles:
 						t.Fail()
 					}
 
+					err = MapDiff(policy.Payload, readPolicy.Payload)
+					if err != nil {
+						fmt.Printf("%s\n", err)
+						fmt.Printf("Expected: \n")
+						spew.Dump(policy.Payload)
+						fmt.Printf("Actual: \n")
+						spew.Dump(readPolicy.Payload)
+						t.Fail()
+					} else {
+						fmt.Printf("  ... Match!\n")
+					}
+
 					assert.True(t, reflect.DeepEqual(policy.Payload, readPolicy.Payload), "payload meets expectations")
 
 					// Check Auth configs
 					for _, realm := range role.Realms {
-						switch realm {
-						case K8S_NAME:
-							for _, cluster := range ClustersByEnvironment[env] {
-								_, err := km.ReadK8sAuth(cluster, role)
+						switch realm.Type {
+						case K8S:
+							for _, cluster := range realm.Identifiers {
+								_, err := km.ReadK8sAuth(ClustersByName[cluster], role)
 								if err != nil {
-									log.Printf("failed to read k8s policy for %s and %s", cluster.Name, role.Name)
+									log.Printf("failed to read k8s policy for %s and %s", cluster, role.Name)
 									t.Fail()
 								}
 
@@ -883,15 +1067,15 @@ roles:
 								//log.Printf("K8s Role Data for %s %s:", cluster.Name, role.Name)
 								//spew.Dump(data)
 							}
-						case SL_NAME:
-							_, err := km.ReadTlsAuth(role, env)
+						case TLS:
+							_, err := km.ReadTlsAuth(role, realm.Environment)
 							if err != nil {
 								log.Printf("failed to read tls policy for %s", role.Name)
 								t.Fail()
 							}
 
-						case AWS_NAME:
-							// TODO Add AWS Auth config when implemented
+						case IAM:
+							// TODO Add IAM Auth config when implemented
 						default:
 							log.Printf("Unsupported Realm: %s", realm)
 							t.Fail()
@@ -902,6 +1086,7 @@ roles:
 		}
 	}
 
+	// Test k8s auth configs
 	for _, cluster := range Clusters {
 		path := fmt.Sprintf("/auth/k8s-%s/role", cluster.Name)
 		s, err := km.VaultClient.Logical().List(path)
@@ -910,22 +1095,24 @@ roles:
 			t.Fail()
 		}
 
-		log.Printf("--- K8S Roles for %s (%s) ---", cluster.Name, EnvToName[cluster.Environment])
-		keys, ok := s.Data["keys"].([]interface{})
-		if ok {
-			for _, key := range keys {
-				path := fmt.Sprintf("/auth/k8s-%s/role/%s", cluster.Name, key)
-				s, err := km.VaultClient.Logical().Read(path)
-				if err != nil {
-					log.Printf("Failed to list k8s roles: %s", err)
-					t.Fail()
-				}
+		if s != nil {
+			log.Printf("--- K8S Roles for %s (%s) ---", cluster.Name, cluster.Environment)
+			keys, ok := s.Data["keys"].([]interface{})
+			if ok {
+				for _, key := range keys {
+					path := fmt.Sprintf("/auth/k8s-%s/role/%s", cluster.Name, key)
+					s, err := km.VaultClient.Logical().Read(path)
+					if err != nil {
+						log.Printf("Failed to list k8s roles: %s", err)
+						t.Fail()
+					}
 
-				log.Printf("--- Policies for K8S Role %s ---", key)
-				policies, ok := s.Data["policies"].([]interface{})
-				if ok {
-					for _, policy := range policies {
-						log.Printf("  %s", policy)
+					log.Printf("--- Policies for K8S Role %s ---", key)
+					policies, ok := s.Data["policies"].([]interface{})
+					if ok {
+						for _, policy := range policies {
+							log.Printf("  %s", policy)
+						}
 					}
 				}
 			}
@@ -982,7 +1169,7 @@ roles:
 	// This is 1 test of 1 secret, and yes, it should hold true for all, but a more thorough and considered approach would help.
 
 	log.Printf("--- Create Test Token ---")
-	policy := "dev-bluens-app1"
+	policy := "team3-app1-production"
 
 	data := make(map[string]interface{})
 	data["policies"] = []string{policy}
@@ -1015,31 +1202,37 @@ roles:
 		}
 	}
 
-	s, err = testClient.Logical().Read("sys/policy/dev-bluens-app1")
+	s, err = testClient.Logical().Read("sys/policy/team3-app1-production")
 	if err != nil {
 		log.Printf("Failed to lookup policy: %s", err)
 		t.Fail()
 	}
 
-	rules, ok := s.Data["rules"].(string)
-	if ok {
-		var rulesObj map[string]interface{}
-		err := json.Unmarshal([]byte(rules), &rulesObj)
-		if err != nil {
-			log.Printf("failed to unmarshal rules string into json: %s", err)
-			t.Fail()
+	if s != nil {
+		rules, ok := s.Data["rules"].(string)
+		if ok {
+			var rulesObj map[string]interface{}
+			err := json.Unmarshal([]byte(rules), &rulesObj)
+			if err != nil {
+				log.Printf("failed to unmarshal rules string into json: %s", err)
+				t.Fail()
+			}
+
+			//jb, err := json.MarshalIndent(rulesObj, "", "  ")
+			//if err != nil {
+			//	log.Printf("failed to marshal rules back into json: %s", err)
+			//
+			//}
+			//log.Printf("--- Rules ---")
+			//log.Printf("%s", string(jb))
 		}
 
-		jb, err := json.MarshalIndent(rulesObj, "", "  ")
-		if err != nil {
-			log.Printf("failed to marshal rules back into json: %s", err)
-
-		}
-		log.Printf("--- Rules ---")
-		log.Printf("%s", string(jb))
+	} else {
+		log.Printf("No policy at sys/policy/team3-app1-production")
+		t.Fail()
 	}
 
-	goodpath := "dev/data/bluens/wip"
+	goodpath := "team3/data/wip/production"
 
 	s, err = testClient.Logical().Read(goodpath)
 	if err != nil {
@@ -1058,7 +1251,7 @@ roles:
 
 	}
 
-	badpath := "prod/data/redns/foo"
+	badpath := "team1/data/foo/production"
 
 	if s != nil {
 		s, err = testClient.Logical().Read(badpath)

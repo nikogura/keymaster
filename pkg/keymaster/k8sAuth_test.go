@@ -9,16 +9,6 @@ import (
 	"testing"
 )
 
-// anonymizeStringArray turns an []string into []interface{} so that we can use reflect.DeepEqual() to compare.
-func anonymizeStringArray(input []string) (output []interface{}) {
-	output = make([]interface{}, 0)
-	for _, i := range input {
-		output = append(output, i)
-	}
-
-	return output
-}
-
 func TestK8sAuthCrud(t *testing.T) {
 	km := NewKeyMaster(kmClient)
 
@@ -26,16 +16,16 @@ func TestK8sAuthCrud(t *testing.T) {
 		Name: "app2",
 		Secrets: []*Secret{
 			{
-				Name:      "bar",
-				Namespace: "core-services",
+				Name: "bar",
+				Team: "core-services",
 				Generator: AlphaGenerator{
 					Type:   "alpha",
 					Length: 10,
 				},
 			},
 		},
-		Namespace: "core-services",
-	}, Dev)
+		Team: "core-services",
+	}, "development")
 	if err != nil {
 		log.Printf("Error creating policy: %s", err)
 		t.Fail()
@@ -45,16 +35,16 @@ func TestK8sAuthCrud(t *testing.T) {
 		Name: "app3",
 		Secrets: []*Secret{
 			{
-				Name:      "baz",
-				Namespace: "core-platform",
+				Name: "baz",
+				Team: "core-platform",
 				Generator: AlphaGenerator{
 					Type:   "alpha",
 					Length: 10,
 				},
 			},
 		},
-		Namespace: "core-platform",
-	}, Dev)
+		Team: "core-platform",
+	}, "development")
 	if err != nil {
 		log.Printf("Error creating policy: %s", err)
 		t.Fail()
@@ -75,53 +65,60 @@ func TestK8sAuthCrud(t *testing.T) {
 				Name: "app1",
 				Secrets: []*Secret{
 					{
-						Name:      "foo",
-						Namespace: "core-services",
+						Name: "foo",
+						Team: "core-services",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 				},
-				Namespace: "core-services",
+				Team: "core-services",
+				Realms: []*Realm{
+					&Realm{
+						Type:        "k8s",
+						Identifiers: []string{"bravo"},
+						Principals:  []string{"default"},
+					},
+				},
 			},
 			map[string]interface{}{
-				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
+				"bound_cidrs":                      AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
-				"bound_service_account_namespaces": []interface{}{"core-services"},
+				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
-					"dev-core-services-app1",
+					"core-services-app1-development",
 				},
-				"token_bound_cidrs":       anonymizeStringArray(Clusters[0].BoundCidrs),
+				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
 				"token_max_ttl":           json.Number("0"),
 				"token_no_default_policy": false,
 				"token_num_uses":          json.Number("0"),
 				"token_period":            json.Number("0"),
 				"token_policies": []interface{}{
-					"dev-core-services-app1",
+					"core-services-app1-development",
 				},
 				"token_ttl":  json.Number("0"),
 				"token_type": "default",
 			},
 			addPolicy1,
 			map[string]interface{}{
-				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
+				"bound_cidrs":                      AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
-				"bound_service_account_namespaces": []interface{}{"core-services"},
+				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
-					"dev-core-services-app1",
-					"dev-core-services-app2",
+					"core-services-app1-development",
+					"core-services-app2-development",
 				},
-				"token_bound_cidrs":       anonymizeStringArray(Clusters[0].BoundCidrs),
+				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
 				"token_max_ttl":           json.Number("0"),
 				"token_no_default_policy": false,
 				"token_num_uses":          json.Number("0"),
 				"token_period":            json.Number("0"),
 				"token_policies": []interface{}{
-					"dev-core-services-app1",
-					"dev-core-services-app2",
+					"core-services-app1-development",
+					"core-services-app2-development",
 				},
 				"token_ttl":  json.Number("0"),
 				"token_type": "default",
@@ -134,60 +131,67 @@ func TestK8sAuthCrud(t *testing.T) {
 				Name: "app2",
 				Secrets: []*Secret{
 					{
-						Name:      "foo",
-						Namespace: "core-platform",
+						Name: "foo",
+						Team: "core-platform",
 						Generator: AlphaGenerator{
 							Type:   "alpha",
 							Length: 10,
 						},
 					},
 					{
-						Name:      "bar",
-						Namespace: "core-platform",
+						Name: "bar",
+						Team: "core-platform",
 						Generator: UUIDGenerator{
 							Type: "uuid",
 						},
 					},
 				},
-				Namespace: "core-platform",
+				Team: "core-platform",
+				Realms: []*Realm{
+					&Realm{
+						Type:        "k8s",
+						Identifiers: []string{"bravo"},
+						Principals:  []string{"default"},
+					},
+				},
 			},
 			map[string]interface{}{
-				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
+				"bound_cidrs":                      AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
-				"bound_service_account_namespaces": []interface{}{"core-platform"},
+				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
-					"dev-core-platform-app2",
+					"core-platform-app2-development",
 				},
-				"token_bound_cidrs":       anonymizeStringArray(Clusters[0].BoundCidrs),
+				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
 				"token_max_ttl":           json.Number("0"),
 				"token_no_default_policy": false,
 				"token_num_uses":          json.Number("0"),
 				"token_period":            json.Number("0"),
 				"token_policies": []interface{}{
-					"dev-core-platform-app2",
+					"core-platform-app2-development",
 				},
 				"token_ttl":  json.Number("0"),
 				"token_type": "default",
 			},
 			addPolicy2,
 			map[string]interface{}{
-				"bound_cidrs":                      anonymizeStringArray(Clusters[0].BoundCidrs),
+				"bound_cidrs":                      AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"bound_service_account_names":      []interface{}{"default"},
-				"bound_service_account_namespaces": []interface{}{"core-platform"},
+				"bound_service_account_namespaces": []interface{}{"default"},
 				"policies": []interface{}{
-					"dev-core-platform-app2",
-					"dev-core-platform-app3",
+					"core-platform-app2-development",
+					"core-platform-app3-development",
 				},
-				"token_bound_cidrs":       anonymizeStringArray(Clusters[0].BoundCidrs),
+				"token_bound_cidrs":       AnonymizeStringArray(Clusters[0].BoundCidrs),
 				"token_explicit_max_ttl":  json.Number("0"),
 				"token_max_ttl":           json.Number("0"),
 				"token_no_default_policy": false,
 				"token_num_uses":          json.Number("0"),
 				"token_period":            json.Number("0"),
 				"token_policies": []interface{}{
-					"dev-core-platform-app2",
-					"dev-core-platform-app3",
+					"core-platform-app2-development",
+					"core-platform-app3-development",
 				},
 				"token_ttl":  json.Number("0"),
 				"token_type": "default",
@@ -197,12 +201,12 @@ func TestK8sAuthCrud(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			policy, err := km.NewPolicy(tc.role, Dev)
+			policy, err := km.NewPolicy(tc.role, "development")
 			if err != nil {
 				log.Printf("Error creating policy: %s", err)
 				t.Fail()
 			}
-			err = km.WriteK8sAuth(tc.cluster, tc.role, []string{policy.Name})
+			err = km.WriteK8sAuth(tc.cluster, tc.role, tc.role.Realms[0], []string{policy.Name})
 			if err != nil {
 				fmt.Printf("Failed writing auth: %s", err)
 				t.Fail()
@@ -216,7 +220,7 @@ func TestK8sAuthCrud(t *testing.T) {
 
 			assert.True(t, reflect.DeepEqual(authData, tc.first))
 
-			err = km.AddPolicyToK8sRole(tc.cluster, tc.role, tc.add)
+			err = km.AddPolicyToK8sRole(tc.cluster, tc.role, tc.role.Realms[0], tc.add)
 			if err != nil {
 				fmt.Printf("Failed adding policy")
 				t.Fail()
@@ -230,7 +234,7 @@ func TestK8sAuthCrud(t *testing.T) {
 
 			assert.True(t, reflect.DeepEqual(authData, tc.second), "role successfully added")
 
-			err = km.RemovePolicyFromK8sRole(tc.cluster, tc.role, tc.add)
+			err = km.RemovePolicyFromK8sRole(tc.cluster, tc.role, tc.role.Realms[0], tc.add)
 			if err != nil {
 				fmt.Printf("Failed removing policy")
 				t.Fail()

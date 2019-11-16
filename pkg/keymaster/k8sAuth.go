@@ -10,7 +10,6 @@ package keymaster
 
 import (
 	"fmt"
-	"github.com/nikogura/dbt/pkg/dbt"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 	"strings"
@@ -31,22 +30,16 @@ type Cluster struct {
 	ApiServerUrl string `yaml:"apiserver"`
 	CACert       string `yaml:"ca_cert"`
 	EnvName      string `yaml:"environment"`
-	Environment  Environment
+	Environment  string
 	BoundCidrs   []string `yaml:"bound_cidrs"`
 }
 
 var Clusters []Cluster
 var ClustersByName map[string]Cluster
-var ClustersByEnvironment map[Environment][]Cluster
 
 func init() {
 	Clusters = make([]Cluster, 0)
 	ClustersByName = make(map[string]Cluster)
-	ClustersByEnvironment = make(map[Environment][]Cluster)
-
-	for _, env := range Envs {
-		ClustersByEnvironment[env] = make([]Cluster, 0)
-	}
 
 	// bravo
 	bravo := Cluster{
@@ -86,7 +79,7 @@ oSw0zT6wr3offAX1eSmgCIlnd5icE1jTit7jQE1osbscBY/xhk7D7mrE/mxqT9ey
 7wRL8S6kMjh5SjF0vS+5cEiT6fm4TXwqDHCq6/AGfBNU0szTDRKrbA71POm94WKf
 Kxq0lynHENJpP/eXjfyC8sLDVJN8YO3n4w==
 -----END CERTIFICATE-----`,
-		Environment: Prod,
+		Environment: "production",
 		BoundCidrs: []string{
 			"10.177.148.183",
 			"10.177.148.163",
@@ -124,7 +117,7 @@ MUy1/QvOhbJ6sR24/q5g1V+EUkKzrJCiil2SXKZBpKU0NFIvqRB9Yh40AgviLhsA
 kNoCEVDI5C2RN36GljQpCFkQ8IR5eyDC4PeqXBkxg8nzrl06NN2R89H1oB3OgiL2
 5bmcZjJIZiCcbgdAJSvf
 -----END CERTIFICATE-----`,
-		Environment: Prod,
+		Environment: "production",
 		BoundCidrs: []string{
 			"10.177.148.193",
 			"10.177.148.229",
@@ -159,7 +152,7 @@ IYDDkFzddRCPc4sMv6m+NaFclL8KE3gn241kJFGNoNDabBNMQPooSsPRYQVlnSF7
 pQuIfEhzZIVhpEJwCwjwnKT7SBTgsKhkXprmQon1kcKgm+8RVBAOP+4V6uAxOszP
 hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 -----END CERTIFICATE-----`,
-		Environment: Prod,
+		Environment: "production",
 		BoundCidrs: []string{
 			"10.177.148.240",
 		},
@@ -189,7 +182,7 @@ hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 	sj6yFaHX5RBT7mY6pXve6hmbdkA97Ub40OCTbvryhrAGe/ueD02ntswToAcM3NnC
 	lTYORq5Eksf5zoqyQi6aBMKpytzD8P7j4dZtFiavws1oUXbKd05WofMhrqI=
 	-----END CERTIFICATE-----`,
-		Environment: Dev,
+		Environment: "development",
 		BoundCidrs: []string{
 			"10.226.0.0/19",
 			"10.226.32.0/19",
@@ -200,10 +193,6 @@ hpffi7blzHapGacvtE8O0mJN2bWdMTEMYfr3XB+iRRF6ddkVTr0NCZZs4bk=
 	Clusters = append(Clusters, csvcDevel)
 	ClustersByName[csvcDevel.Name] = csvcDevel
 
-	// Populate the map of ClustersByEnvironment
-	for _, cluster := range Clusters {
-		ClustersByEnvironment[cluster.Environment] = append(ClustersByEnvironment[cluster.Environment], cluster)
-	}
 }
 
 func (km *KeyMaster) NewCluster(data []byte, verbose bool) (cluster Cluster, err error) {
@@ -223,33 +212,33 @@ func (km *KeyMaster) K8sAuthPath(cluster Cluster, role *Role) (path string, err 
 		return path, err
 	}
 
-	if role.Namespace == "" {
-		err = errors.New("empty role namespaces are not supported")
+	if role.Team == "" {
+		err = errors.New("teamless roles are not supported")
 		return path, err
 	}
 
-	path = fmt.Sprintf("auth/k8s-%s/role/%s-%s", cluster.Name, role.Namespace, role.Name)
+	path = fmt.Sprintf("auth/k8s-%s/role/%s-%s", cluster.Name, role.Team, role.Name)
 
 	return path, err
 }
 
-func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role *Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) AddPolicyToK8sRole(cluster Cluster, role *Role, realm *Realm, policy VaultPolicy) (err error) {
 	policies, err := km.GrantedPoliciesForK8sRole(cluster, role)
 	if err != nil {
 		return err
 	}
 
 	// exit early if it's already there
-	if dbt.StringInSlice(policy.Name, policies) {
+	if stringInSlice(policy.Name, policies) {
 		return err
 	}
 
 	policies = append(policies, policy.Name)
 
-	return km.WriteK8sAuth(cluster, role, policies)
+	return km.WriteK8sAuth(cluster, role, realm, policies)
 }
 
-func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role *Role, policy VaultPolicy) (err error) {
+func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role *Role, realm *Realm, policy VaultPolicy) (err error) {
 	current, err := km.GrantedPoliciesForK8sRole(cluster, role)
 	if err != nil {
 		return err
@@ -263,7 +252,7 @@ func (km *KeyMaster) RemovePolicyFromK8sRole(cluster Cluster, role *Role, policy
 		}
 	}
 
-	return km.WriteK8sAuth(cluster, role, updated)
+	return km.WriteK8sAuth(cluster, role, realm, updated)
 }
 
 func (km *KeyMaster) GrantedPoliciesForK8sRole(cluster Cluster, role *Role) (policies []string, err error) {
@@ -296,11 +285,11 @@ func (km *KeyMaster) GrantedPoliciesForK8sRole(cluster Cluster, role *Role) (pol
 }
 
 // WriteK8sAuth Writes the Vault Auth definition for the Role.
-func (km *KeyMaster) WriteK8sAuth(cluster Cluster, role *Role, policies []string) (err error) {
+func (km *KeyMaster) WriteK8sAuth(cluster Cluster, role *Role, realm *Realm, policies []string) (err error) {
 
 	data := make(map[string]interface{})
 	data["bound_service_account_names"] = "default"
-	data["bound_service_account_namespaces"] = role.Namespace
+	data["bound_service_account_namespaces"] = strings.Join(realm.Principals, ",")
 	data["policies"] = policies
 
 	boundCidrs := strings.Join(cluster.BoundCidrs, ",")

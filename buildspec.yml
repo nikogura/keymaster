@@ -1,17 +1,13 @@
 version: 0.2
 env:
   variables:
-    VAULT_ADDR: https://vault-prod.inf.scribd.com
+    GOPRIVATE: git.lo,github.com/scribd
 phases:
   install:
     runtime-versions:
       golang: 1.13
     commands:
-      - echo "Installing dbt"
-      - bash -c "$(curl http://10.177.148.216/artifactory/dbt/install_dbt_aws.sh)"
-    finally:
-      - echo "Prereqs Installed"
+      - yum install -y wget && wget -q https://releases.hashicorp.com/vault/1.2.3/vault_1.2.3_linux_amd64.zip && unzip vault*.zip && mv vault /usr/local/bin/vault && chmod 755 /usr/local/bin/vault
   build:
     commands:
-      - dbt keymaster syntax -v secrets
-      - echo "Build Successful!"
+      - go test -v ./...

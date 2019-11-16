@@ -13,37 +13,37 @@ func TestSecretPath(t *testing.T) {
 	inputs := []struct {
 		name       string
 		secretName string
-		namespace  string
-		env        Environment
+		team       string
+		env        string
 		output     string
 	}{
 		{
 			"secret1",
 			"foo",
-			"core-services",
-			Prod,
-			"prod/data/core-services/foo",
+			"team6",
+			"production",
+			"team6/data/foo/production",
 		},
 		{
 			"secret2",
 			"bar",
-			"core-platform",
-			Stage,
-			"stage/data/core-platform/bar",
+			"team7",
+			"staging",
+			"team7/data/bar/staging",
 		},
 		{
 			"secret3",
 			"baz",
-			"core-infra",
-			Dev,
-			"dev/data/core-infra/baz",
+			"team5",
+			"development",
+			"team5/data/baz/development",
 		},
 		{
 			"secret4",
 			"wip",
-			"payments",
-			17,
-			"dev/data/payments/wip",
+			"team7",
+			"development",
+			"team7/data/wip/development",
 		},
 	}
 
@@ -51,7 +51,7 @@ func TestSecretPath(t *testing.T) {
 
 	for _, tc := range inputs {
 		t.Run(tc.name, func(t *testing.T) {
-			path, err := km.SecretPath(tc.secretName, tc.namespace, tc.env)
+			path, err := km.SecretPath(tc.team, tc.secretName, tc.env)
 			if err != nil {
 				log.Printf("error creating path: %s", err)
 				t.Fail()
@@ -66,7 +66,7 @@ func TestSecretPath(t *testing.T) {
 //	inputs := []struct {
 //		name       string
 //		secretName string
-//		namespace  string
+//		team       string
 //		env        Environment
 //		output     string
 //	}{
@@ -94,9 +94,9 @@ func TestSecretPath(t *testing.T) {
 //		{
 //			"cert4",
 //			"wip",
-//			"payments",
+//			"team3",
 //			17,
-//			"dev/data/certs/payments/wip",
+//			"dev/data/certs/team3/wip",
 //		},
 //	}
 //
@@ -104,7 +104,7 @@ func TestSecretPath(t *testing.T) {
 //
 //	for _, tc := range inputs {
 //		t.Run(tc.name, func(t *testing.T) {
-//			path, err := km.SecretPath(tc.secretName, tc.namespace, tc.env)
+//			path, err := km.SecretPath(tc.team, tc.secretName, tc.env)
 //			if err != nil {
 //				log.Printf("error creating path: %s", err)
 //				t.Fail()
@@ -124,11 +124,16 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"foo",
 			&Secret{
-				Name:      "foo",
-				Namespace: "testns1",
+				Name: "foo",
+				Team: "secret-team1",
 				GeneratorData: GeneratorData{
 					"type":   "alpha",
 					"length": 10,
+				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
 				},
 			},
 			regexp.MustCompile(`[a-zA-Z0-9]{10}`),
@@ -136,11 +141,16 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"bar",
 			&Secret{
-				Name:      "bar",
-				Namespace: "testns1",
+				Name: "bar",
+				Team: "secret-team2",
 				GeneratorData: GeneratorData{
 					"type":   "hex",
 					"length": 32,
+				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
 				},
 			},
 			regexp.MustCompile(`[a-f0-9]{32}`),
@@ -148,10 +158,15 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"wip",
 			&Secret{
-				Name:      "wip",
-				Namespace: "testns1",
+				Name: "wip",
+				Team: "secret-team2",
 				GeneratorData: GeneratorData{
 					"type": "uuid",
+				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
 				},
 			},
 			regexp.MustCompile(`[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}`),
@@ -159,11 +174,16 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"zoz",
 			&Secret{
-				Name:      "zoz",
-				Namespace: "payments",
+				Name: "zoz",
+				Team: "secret-team4",
 				GeneratorData: GeneratorData{
 					"type":  "chbs",
 					"words": 6,
+				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
 				},
 			},
 			regexp.MustCompile(`\w+-\w+-\w+-\w+-\w+-\w+`),
@@ -171,12 +191,17 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		{
 			"foo.scribd.com",
 			&Secret{
-				Name:      "",
-				Namespace: "testns2",
+				Name: "",
+				Team: "secret-team3",
 				GeneratorData: GeneratorData{
 					"type": "tls",
 					"cn":   "foo.scribd.com",
 					"ca":   "service",
+				},
+				Environments: []string{
+					"production",
+					"staging",
+					"development",
 				},
 			},
 			regexp.MustCompile(`.+`),
@@ -203,16 +228,16 @@ func TestWriteSecretIfBlank(t *testing.T) {
 			} else {
 				// give the write a moment to propagate.  If we hit vault directly the secret may not be there yet.
 				time.Sleep(time.Second)
-				for _, env := range Envs {
+				for _, env := range secret.Environments {
 					var path string
 					if secret.GeneratorData["type"] == "tls" {
-						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Team, secret.Name, env)
 						if err != nil {
 							log.Printf("error creating path: %s", err)
 							t.Fail()
 						}
 					} else {
-						path, err = km.SecretPath(secret.Name, secret.Namespace, env)
+						path, err = km.SecretPath(secret.Team, secret.Name, env)
 						if err != nil {
 							log.Printf("error creating path: %s", err)
 							t.Fail()
@@ -256,7 +281,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 					}
 				}
 				// Uncomment the following to debug manually
-				//fmt.Printf("VAULT_TOKEN=%s VAULT_ADDR=http://%s\n", testServer.RootToken, testServer.Address)
+				//fmt.Printf("VAULT_TOKEN=%s VAULT_ADDR=http://%s\n", testVault.RootToken, testVault.Address)
 				//time.Sleep(10 * time.Minute)
 			}
 		})
@@ -264,8 +289,8 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		input := inputs[0]
 		expected := make([]string, 0)
 
-		for _, env := range Envs {
-			path, err := km.SecretPath(input.in.Name, input.in.Namespace, env)
+		for _, env := range input.in.Environments {
+			path, err := km.SecretPath(input.in.Team, input.in.Name, env)
 			if err != nil {
 				log.Printf("error creating path: %s", err)
 				t.Fail()
@@ -301,7 +326,7 @@ func TestWriteSecretIfBlank(t *testing.T) {
 		//	t.Fail()
 		//}
 		//for i, env := range Envs {
-		//	path, err := km.SecretPath(input.in.Name, input.in.Namespace, env)
+		//	path, err := km.SecretPath(input.in.Team, input.in.Name, env)
 		//	if err != nil {
 		//		log.Printf("error creating path: %s", err)
 		//		t.Fail()

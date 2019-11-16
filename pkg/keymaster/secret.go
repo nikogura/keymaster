@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"git.lo/ops/scrutil/pkg/scrutil"
 	"github.com/pkg/errors"
 )
 
@@ -37,45 +36,31 @@ func (km *KeyMaster) NewGenerator(options GeneratorData) (generator Generator, e
 	return generator, err
 }
 
-// SecretPath Given a Name, Namespace, and Environment, returns the proper path in Vault where that secret is stored.
-func (km *KeyMaster) SecretPath(name string, namespace string, env Environment) (path string, err error) {
-	if namespace == "" {
-		err = errors.New("cannot make secret path for blank namespace")
+// SecretPath Given a Name, Team, and Environment, returns the proper path in Vault where that secret is stored.
+func (km *KeyMaster) SecretPath(team string, name string, env string) (path string, err error) {
+	if team == "" {
+		err = errors.New("cannot make secret path for nameless team")
 		return path, err
 	}
 
-	switch env {
-	case Prod:
-		path = fmt.Sprintf("%s/data/%s/%s", PROD_NAME, namespace, name)
-	case Stage:
-		path = fmt.Sprintf("%s/data/%s/%s", STAGE_NAME, namespace, name)
-	default:
-		path = fmt.Sprintf("%s/data/%s/%s", DEV_NAME, namespace, name)
-	}
+	path = fmt.Sprintf("%s/data/%s/%s", team, name, env)
 
 	return path, err
 }
 
-// CertPath Given a Name, Namespace, and Environment, returns the proper path in Vault where that Cert Secret is stored.
-func (km *KeyMaster) CertPath(name string, namespace string, env Environment) (path string, err error) {
-	if namespace == "" {
-		err = errors.New("cannot make cert secret path for blank namespace")
+// CertPath Given a Name, Team, and Environment, returns the proper path in Vault where that Cert Secret is stored.
+func (km *KeyMaster) CertPath(team string, name string, env string) (path string, err error) {
+	if team == "" {
+		err = errors.New("cannot make cert secret path for nameless team")
 		return path, err
 	}
 
-	switch env {
-	case Prod:
-		path = fmt.Sprintf("%s/data/certs/%s/%s", PROD_NAME, namespace, name)
-	case Stage:
-		path = fmt.Sprintf("%s/data/certs/%s/%s", STAGE_NAME, namespace, name)
-	default:
-		path = fmt.Sprintf("%s/data/certs/%s/%s", DEV_NAME, namespace, name)
-	}
+	path = fmt.Sprintf("%s/data/certs/%s/%s", team, name, env)
 
 	return path, err
 }
 
-func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env Environment) (err error) {
+func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env string) (err error) {
 	if secret.Generator == nil {
 		err = errors.New(fmt.Sprintf("nil generators are not suppported.  secret: %q", secret.Name))
 		return err
@@ -95,7 +80,7 @@ func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env En
 		data["data"] = sdata
 
 		var vcert VaultCert
-		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+		secretPath, err := km.SecretPath(secret.Team, secret.Name, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create cert path")
 			return err
@@ -164,15 +149,15 @@ func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env En
 
 // WriteSecretIfBlank writes a secret to each environment, but only if there's not already a value there.
 func (km *KeyMaster) WriteSecretIfBlank(secret *Secret, verbose bool) (err error) {
-	scrutil.VerboseOutput(verbose, "checking secret %s", secret.Name)
-	for _, env := range Envs {
-		scrutil.VerboseOutput(verbose, "  checking env %s", EnvToName[env])
-		secretPath, err := km.SecretPath(secret.Name, secret.Namespace, env)
+	verboseOutput(verbose, "checking secret %s", secret.Name)
+	for _, env := range secret.Environments {
+		verboseOutput(verbose, "  checking env %s", env)
+		secretPath, err := km.SecretPath(secret.Team, secret.Name, env)
 		if err != nil {
 			err = errors.Wrapf(err, "failed to create secret path")
 			return err
 		}
-		scrutil.VerboseOutput(verbose, "    path: %s", secretPath)
+		verboseOutput(verbose, "    path: %s", secretPath)
 
 		// check to see if the secret does not exist
 		s, err := km.VaultClient.Logical().Read(secretPath)
@@ -184,20 +169,20 @@ func (km *KeyMaster) WriteSecretIfBlank(secret *Secret, verbose bool) (err error
 		// s will be nil if the secret does not exist
 		// warning: s will not be nil if there's a warning returned by the read
 		if s == nil {
-			scrutil.VerboseOutput(verbose, "secret is nil")
+			verboseOutput(verbose, "secret is nil")
 			err = km.WriteSecretForEnv(secret, secretPath, env)
 			if err != nil {
 				return err
 			}
 		} else if s.Data["data"] == nil {
-			scrutil.VerboseOutput(verbose, "secret has no data element")
+			verboseOutput(verbose, "secret has no data element")
 			err = km.WriteSecretForEnv(secret, secretPath, env)
 			if err != nil {
 				return err
 			}
 		}
 
-		scrutil.VerboseOutput(verbose, "secret exists")
+		verboseOutput(verbose, "secret exists")
 	}
 
 	return err
