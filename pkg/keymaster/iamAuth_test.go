@@ -5,13 +5,17 @@ import (
 	"github.com/scribd/vaultlibs/pkg/vaultlibs"
 	"github.com/stretchr/testify/assert"
 	"log"
+	"os"
 	"testing"
 )
 
 func TestIamAuthCrud(t *testing.T) {
 	km := NewKeyMaster(kmClient)
 
-	testArn := "arn:aws:iam::130231011399:role/fargle-role20191025175930670600000001"
+	// Test AWS ARN from environment
+	testArn := os.Getenv("TEST_ARN")
+
+	fmt.Printf("Test ARN: %s\n", testArn)
 
 	testArnList := AnonymizeStringArray([]string{testArn})
 
@@ -177,7 +181,7 @@ func TestIamAuthCrud(t *testing.T) {
 					"policies",
 				}
 
-				err = AuthMatch(matchKeys, tc.first, authData)
+				err = PartialMatch(matchKeys, tc.first, authData)
 				if err != nil {
 					fmt.Printf("Initial values do not meet expectations: %s\n", err)
 					t.Fail()
@@ -198,7 +202,7 @@ func TestIamAuthCrud(t *testing.T) {
 					return
 				}
 
-				err = AuthMatch(matchKeys, tc.second, authData)
+				err = PartialMatch(matchKeys, tc.second, authData)
 				if err != nil {
 					fmt.Printf("Failed adding policy to role: %s\n", err)
 					t.Fail()
@@ -219,7 +223,7 @@ func TestIamAuthCrud(t *testing.T) {
 					return
 				}
 
-				err = AuthMatch(matchKeys, tc.first, authData)
+				err = PartialMatch(matchKeys, tc.first, authData)
 				if err != nil {
 					fmt.Printf("Failed to remove policy from role: %s\n", err)
 					t.Fail()

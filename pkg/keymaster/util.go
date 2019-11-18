@@ -44,8 +44,8 @@ func AnonymizeStringArray(input []string) (output []interface{}) {
 	return output
 }
 
-// AuthMatch compares two maps, and returns true if the keys you care about match.  Other keys are ignored
-func AuthMatch(matchKeys []string, expected map[string]interface{}, actual map[string]interface{}) (err error) {
+// PartialMatch compares two maps, and returns true if the keys you care about match.  Other keys are ignored
+func PartialMatch(matchKeys []string, expected map[string]interface{}, actual map[string]interface{}) (err error) {
 	if reflect.TypeOf(expected) != reflect.TypeOf(actual) {
 		err = errors.New(fmt.Sprintf("Type mismatch: %s vs %s", reflect.TypeOf(expected).String(), reflect.TypeOf(actual).String()))
 		return err
