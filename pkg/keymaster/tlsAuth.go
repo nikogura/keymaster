@@ -199,6 +199,13 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, env string, policies []string) (er
 	data["policies"] = policies
 	data["display_name"] = fmt.Sprintf("%s-%s-%s", role.Team, role.Name, env)
 	data["certificate"] = HOST_CA_CERT
+	// these appear to need to be set to empty lists
+	data["allowed_dns_sans"] = []string{}
+	data["allowed_email_sans"] = []string{}
+	data["allowed_names"] = []string{}
+	data["allowed_organizational_units"] = []string{}
+	data["allowed_uri_sans"] = []string{}
+	data["required_extensions"] = []string{}
 
 	path, err := km.TlsAuthPath(role, env)
 	if err != nil {

@@ -281,7 +281,8 @@ func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 				}
 
 			case TLS:
-				verboseOutput(verbose, "          sl")
+				verboseOutput(verbose, "          tls")
+				// TODO AddPolicyToTlsRole doesn't overwrite.  If you add a new host to the policy, the old policy needs deleting.  Should probably fix this.
 				err = km.AddPolicyToTlsRole(role, env, policy)
 				if err != nil {
 					err = errors.Wrapf(err, "failed to add TLS auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
