@@ -298,6 +298,7 @@ func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 			switch realm.Type {
 			case K8S:
 				verboseOutput(verbose, "          k8s")
+				// TODO AddPolicyToK8sRole doesn't overwrite.  If you change the policy the old policy needs deleting.  Should probably fix this.
 				for _, cluster := range realm.Identifiers {
 					verboseOutput(verbose, "            %s", cluster)
 					err = km.AddPolicyToK8sRole(km.K8sClustersByName[cluster], role, realm, policy)
