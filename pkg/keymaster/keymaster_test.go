@@ -80,24 +80,22 @@ func setUp() {
 		}
 
 		// Create K8s Auth endpoints
-		for _, cluster := range Clusters {
-			data := map[string]interface{}{
-				"type":        "kubernetes",
-				"description": fmt.Sprintf("Kubernetes Cluster %s", cluster.Name),
-			}
+		data := map[string]interface{}{
+			"type":        "kubernetes",
+			"description": fmt.Sprintf("Kubernetes Cluster Alpha"),
+		}
 
-			_, err := client.Logical().Write(fmt.Sprintf("sys/auth/k8s-%s", cluster.Name), data)
-			if err != nil {
-				log.Fatalf("Failed to enable k8s auth at %s: %s", cluster.Name, err)
-			}
+		_, err := client.Logical().Write("sys/auth/k8s-alpha", data)
+		if err != nil {
+			log.Fatalf("Failed to enable k8s auth at %s: k8s-alpha", err)
 		}
 
 		// Create PKI Engine
-		data := map[string]interface{}{
+		data = map[string]interface{}{
 			"type":        "pki",
 			"description": "PKI backend",
 		}
-		_, err := client.Logical().Write("sys/mounts/service", data)
+		_, err = client.Logical().Write("sys/mounts/service", data)
 		if err != nil {
 			log.Fatalf("Failed to create 'service' pki secrets engine: %s", err)
 		}
@@ -224,10 +222,7 @@ func WriteKeyMasterPolicy(client *api.Client) (err error) {
 		"auth/cert/certs/*",
 		"service/issue/keymaster",
 		"auth/aws/role/*",
-	}
-
-	for _, cluster := range Clusters {
-		paths = append(paths, fmt.Sprintf("auth/k8s-%s/*", cluster.Name))
+		"auth/k8s-alpha/*",
 	}
 
 	policy := make(map[string]interface{})
@@ -309,7 +304,7 @@ roles:
     realms: 
       - type: k8s
         identifiers: 
-          - bravo
+          - alpha
         principals: 
           - app1
         environment: production
@@ -343,7 +338,7 @@ roles:
     realms: 
       - type: k8s
         identifiers: 
-          - bravo
+          - alpha
         principals: 
           - app1
         environment: production
@@ -405,7 +400,7 @@ roles:
   - realms: 
       - type: k8s
         identifiers: 
-          - bravo
+          - alpha
         principals: 
           - app1
         environment: production
@@ -469,7 +464,7 @@ roles:
     realms:
       - type: k8s
         identifiers: 
-          - bravo
+          - alpha
         principals:
           - app1
         environment: production
@@ -503,7 +498,7 @@ roles:
     realms: 
       - type: k8s
         identifiers:
-          - bravo
+          - alpha
         principals:
           - app1
         environment: production
@@ -595,7 +590,7 @@ roles:
     realms: 
       - type: k8s
         identifiers:
-          - bravo
+          - alpha
         principals:
           - app1
         environment: production
@@ -629,7 +624,7 @@ roles:
     realms: 
       - type: k8s
         identifiers:
-          - bravo
+          - alpha
         principals:
           - foo/bar
         environment: production
@@ -740,7 +735,7 @@ roles:
     realms:
       - type: k8s
         identifiers:
-          - bravo
+          - alpha
         principals:
           - app1
         environment: production
@@ -795,7 +790,7 @@ roles:
     realms:
       - type: k8s
         identifiers:
-          - bravo
+          - alpha
         principals:
           - app1
         environment: production
@@ -850,7 +845,7 @@ roles:
     realms:
       - type: k8s
         identifiers:
-          - bravo
+          - alpha
         principals:
           - app1
         environment: production
@@ -871,6 +866,87 @@ environments:
   - development
 `
 	km := NewKeyMaster(kmClient)
+
+	clusters := make([]*Cluster, 0)
+	alpha := Cluster{
+		Name:         "alpha",
+		ApiServerUrl: "https://kubernetes-alpha:6443",
+		CACert: `-----BEGIN CERTIFICATE-----
+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
+Kxq0lynHENJpP/eXjfyC8sLDVJN8YO3n4w==
+-----END CERTIFICATE-----`,
+		Environment: "production",
+		BoundCidrs:  []string{"1.2.3.4"},
+	}
+
+	clusters = append(clusters, &alpha)
+
+	km.SetK8sClusters(clusters)
+
+	km.SetTlsAuthCaCert(`-----BEGIN CERTIFICATE-----
+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
+Kxq0lynHENJpP/eXjfyC8sLDVJN8YO3n4w==
+-----END CERTIFICATE-----`)
 
 	certheader := regexp.MustCompile(`-----BEGIN CERTIFICATE-----`)
 	keyheader := regexp.MustCompile(`-----BEGIN RSA PRIVATE KEY-----`)
@@ -1057,7 +1133,7 @@ environments:
 						switch realm.Type {
 						case K8S:
 							for _, cluster := range realm.Identifiers {
-								_, err := km.ReadK8sAuth(ClustersByName[cluster], role)
+								_, err := km.ReadK8sAuth(km.K8sClustersByName[cluster], role)
 								if err != nil {
 									log.Printf("failed to read k8s policy for %s and %s", cluster, role.Name)
 									t.Fail()
@@ -1087,7 +1163,7 @@ environments:
 	}
 
 	// Test k8s auth configs
-	for _, cluster := range Clusters {
+	for _, cluster := range km.K8sClusters {
 		path := fmt.Sprintf("/auth/k8s-%s/role", cluster.Name)
 		s, err := km.VaultClient.Logical().List(path)
 		if err != nil {

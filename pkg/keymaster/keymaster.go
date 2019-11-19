@@ -47,6 +47,8 @@ type KeyMaster struct {
 	VaultClient       *api.Client
 	IpRestrictTlsAuth bool
 	TlsAuthCaCert     string
+	K8sClusters       []*Cluster
+	K8sClustersByName map[string]*Cluster
 }
 
 // NewKeyMaster Creates a new KeyMaster with the vault client supplied.
@@ -64,6 +66,15 @@ func (km *KeyMaster) SetTlsAuthCaCert(certificate string) {
 
 func (km *KeyMaster) SetIpRestrictTlsAuth(enabled bool) {
 	km.IpRestrictTlsAuth = enabled
+}
+
+func (km *KeyMaster) SetK8sClusters(clusters []*Cluster) {
+	km.K8sClusters = clusters
+
+	km.K8sClustersByName = make(map[string]*Cluster)
+	for _, c := range clusters {
+		km.K8sClustersByName[c.Name] = c
+	}
 }
 
 // Team  Group of humans who control their own destiny in regard to secrets
@@ -283,7 +294,7 @@ func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 			case K8S:
 				verboseOutput(verbose, "          k8s")
 				for _, cluster := range realm.Identifiers {
-					err = km.AddPolicyToK8sRole(ClustersByName[cluster], role, realm, policy)
+					err = km.AddPolicyToK8sRole(km.K8sClustersByName[cluster], role, realm, policy)
 					if err != nil {
 						err = errors.Wrapf(err, "failed to add K8S Auth for role:%q policy:%q cluster:%q env:%q", role.Name, policy.Name, cluster, env)
 						return err

@@ -142,12 +142,12 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, env string, policies []string) (er
 		return err
 	}
 
-	if km.IpRestrictTlsAuth {
-		for _, realm := range role.Realms {
-			if realm.Type == "tls" {
-				for _, hostname := range realm.Principals {
-					hostnames = append(hostnames, hostname)
+	for _, realm := range role.Realms {
+		if realm.Type == "tls" {
+			for _, hostname := range realm.Principals {
+				hostnames = append(hostnames, hostname)
 
+				if km.IpRestrictTlsAuth {
 					addrs, err := net.LookupIP(hostname)
 					if err != nil {
 						err = errors.Wrapf(err, "failed to look up ip addresses for %s", hostname)
