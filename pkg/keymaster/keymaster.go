@@ -294,6 +294,7 @@ func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 			case K8S:
 				verboseOutput(verbose, "          k8s")
 				for _, cluster := range realm.Identifiers {
+					verboseOutput(verbose, "            %s", cluster)
 					err = km.AddPolicyToK8sRole(km.K8sClustersByName[cluster], role, realm, policy)
 					if err != nil {
 						err = errors.Wrapf(err, "failed to add K8S Auth for role:%q policy:%q cluster:%q env:%q", role.Name, policy.Name, cluster, env)
