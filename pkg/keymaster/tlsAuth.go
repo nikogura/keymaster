@@ -15,44 +15,6 @@ import (
 	"strings"
 )
 
-const LDAP_SERVER_ENV_VAR = "LDAP_SERVER_URL"
-
-const HOST_CA_CERT = `-----BEGIN CERTIFICATE-----
-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
-8no=
------END CERTIFICATE-----`
-
 // TlsAuthPath constructs the auth path in a regular fashion.
 func (km *KeyMaster) TlsAuthPath(role *Role, env string) (path string, err error) {
 	if role.Name == "" {
@@ -175,19 +137,26 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, env string, policies []string) (er
 	hostnames := make([]string, 0)
 	ips := make([]string, 0)
 
-	for _, realm := range role.Realms {
-		if realm.Type == "tls" {
-			for _, hostname := range realm.Principals {
-				hostnames = append(hostnames, hostname)
+	if km.TlsAuthCaCert == "" {
+		err = errors.New("Cannot configure TLS Auth without a CA certificate.  call SetTlsAuthCaCert(cert) on keymaster object.")
+		return err
+	}
 
-				addrs, err := net.LookupIP(hostname)
-				if err != nil {
-					err = errors.Wrapf(err, "failed to look up ip addresses for %s", hostname)
-					return err
-				}
+	if km.IpRestrictTlsAuth {
+		for _, realm := range role.Realms {
+			if realm.Type == "tls" {
+				for _, hostname := range realm.Principals {
+					hostnames = append(hostnames, hostname)
 
-				for _, ip := range addrs {
-					ips = append(ips, ip.String())
+					addrs, err := net.LookupIP(hostname)
+					if err != nil {
+						err = errors.Wrapf(err, "failed to look up ip addresses for %s", hostname)
+						return err
+					}
+
+					for _, ip := range addrs {
+						ips = append(ips, ip.String())
+					}
 				}
 			}
 		}
@@ -198,7 +167,7 @@ func (km *KeyMaster) WriteTlsAuth(role *Role, env string, policies []string) (er
 	data["bound_cidrs"] = strings.Join(ips, ",")
 	data["policies"] = policies
 	data["display_name"] = fmt.Sprintf("%s-%s-%s", role.Team, role.Name, env)
-	data["certificate"] = HOST_CA_CERT
+	data["certificate"] = km.TlsAuthCaCert
 	// these appear to need to be set to empty lists
 	data["allowed_dns_sans"] = []string{}
 	data["allowed_email_sans"] = []string{}

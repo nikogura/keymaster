@@ -44,7 +44,9 @@ var RealmTypes = []string{
 
 // KeyMaster The KeyMaster Interface
 type KeyMaster struct {
-	VaultClient *api.Client
+	VaultClient       *api.Client
+	IpRestrictTlsAuth bool
+	TlsAuthCaCert     string
 }
 
 // NewKeyMaster Creates a new KeyMaster with the vault client supplied.
@@ -54,6 +56,14 @@ func NewKeyMaster(vaultClient *api.Client) (km *KeyMaster) {
 	}
 
 	return km
+}
+
+func (km *KeyMaster) SetTlsAuthCaCert(certificate string) {
+	km.TlsAuthCaCert = certificate
+}
+
+func (km *KeyMaster) SetIpRestrictTlsAuth(enabled bool) {
+	km.IpRestrictTlsAuth = enabled
 }
 
 // Team  Group of humans who control their own destiny in regard to secrets
