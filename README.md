@@ -1,8 +1,8 @@
 # keymaster
 
-Managed Secrets tool for Vault.
+Managed Secrets Library for Vault.
 
-Based on a config file, `keymaster` does the following:
+Based on a config file, these libs do the following:
 
 * Defines Secrets and their Generators for a Team.
 
@@ -14,19 +14,14 @@ Based on a config file, `keymaster` does the following:
 
 * Does *not* create the per team secrets engines in Vault.  That has to be done manually by a Vault Admin.  This is deliberate, and allows `keymaster` to run with limited permissions (creating new storage engines would require `keymaster` to run with root permissions).
 
-Users of the `secrets` tool will have to request their Role by name, and if they successfully authenticate, they'll be able to successfully retrieve secrets for that Role in that Environment.
-
 * At present, CA engines are general purpose - not per Team.
 
-## Design Docs
-
-* https://scribdjira.atlassian.net/wiki/spaces/SEC/pages/602835575/Managed+Secrets+-+2019+-+Q4
 
 ## Admin Notes
 
-The `keymaster` tool cannot create secret engines.  This is a deliberate choice.
+These cannot create secret engines.  This is a deliberate choice.
 
-Every time a new team is onboarded to Managed Secrets, an admin will need to run:
+Every time a new team is onboarded to Managed Secrets, an admin will need to manually run:
 
     vault secrets enable -version=2 -path=<team name> -description="<team name> Secrets" kv
     
