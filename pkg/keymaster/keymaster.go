@@ -46,6 +46,7 @@ var RealmTypes = []string{
 type KeyMaster struct {
 	VaultClient       *api.Client
 	IpRestrictTlsAuth bool
+	IpRestrictK8sAuth bool
 	TlsAuthCaCert     string
 	K8sClusters       []*Cluster
 	K8sClustersByName map[string]*Cluster
@@ -66,6 +67,10 @@ func (km *KeyMaster) SetTlsAuthCaCert(certificate string) {
 
 func (km *KeyMaster) SetIpRestrictTlsAuth(enabled bool) {
 	km.IpRestrictTlsAuth = enabled
+}
+
+func (km *KeyMaster) SetIpRestrictK8sAuth(enabled bool) {
+	km.IpRestrictK8sAuth = enabled
 }
 
 func (km *KeyMaster) SetK8sClusters(clusters []*Cluster) {

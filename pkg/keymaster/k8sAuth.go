@@ -130,8 +130,12 @@ func (km *KeyMaster) WriteK8sAuth(cluster *Cluster, role *Role, realm *Realm, po
 	data["bound_service_account_namespaces"] = strings.Join(realm.Principals, ",")
 	data["policies"] = policies
 
-	boundCidrs := strings.Join(cluster.BoundCidrs, ",")
-	data["bound_cidrs"] = boundCidrs
+	if km.IpRestrictK8sAuth {
+		boundCidrs := strings.Join(cluster.BoundCidrs, ",")
+		data["bound_cidrs"] = boundCidrs
+	} else {
+		data["bound_cidrs"] = []string{}
+	}
 
 	path, err := km.K8sAuthPath(cluster, role)
 	if err != nil {

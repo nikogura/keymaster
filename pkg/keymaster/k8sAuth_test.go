@@ -57,6 +57,7 @@ Kxq0lynHENJpP/eXjfyC8sLDVJN8YO3n4w==
 	clusters = append(clusters, &alpha)
 
 	km.SetK8sClusters(clusters)
+	km.SetIpRestrictK8sAuth(true)
 
 	addPolicy1, err := km.NewPolicy(&Role{
 		Name: "app2",
