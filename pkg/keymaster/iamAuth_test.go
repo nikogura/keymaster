@@ -2,7 +2,7 @@ package keymaster
 
 import (
 	"fmt"
-	"github.com/scribd/vaultlibs/pkg/vaultlibs"
+	"github.com/scribd/vault-authenticator/pkg/authenticator"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
@@ -151,7 +151,7 @@ func TestIamAuthCrud(t *testing.T) {
 		},
 	}
 
-	awsRegion := vaultlibs.GetAwsRegion(true)
+	awsRegion := authenticator.GetAwsRegion(true)
 
 	// don't run tests if we cannot get the aws region (means we're not running in aws)
 	if awsRegion != "" {
