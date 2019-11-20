@@ -9,7 +9,7 @@ require (
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/phayes/freeport v0.0.0-20180830031419-95f893ade6f2
 	github.com/pkg/errors v0.8.1
-	github.com/scribd/vault-authenticator v0.0.0-20191120134248-d576f092c33a
+	github.com/scribd/vault-authenticator v0.0.0-20191120154727-5c2ec43f4c6f
 	github.com/scribd/vaulttest v0.0.0-20191104214843-a90d02dcb422
 	github.com/sethvargo/go-diceware v0.0.0-20181024230814-74428ac65346
 	github.com/spf13/cobra v0.0.5

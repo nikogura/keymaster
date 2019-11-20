@@ -109,6 +109,8 @@ github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkB
 github.com/ryanuber/go-glob v1.0.0/go.mod h1:807d1WSdnB0XRJzKNil9Om6lcp/3a0v4qIHxIXzX/Yc=
 github.com/scribd/vault-authenticator v0.0.0-20191120134248-d576f092c33a h1:Iou6v5ifUAJsnVst/sVQsLq6D3bugWmn7FWWtSnt5u0=
 github.com/scribd/vault-authenticator v0.0.0-20191120134248-d576f092c33a/go.mod h1:5SbT3eHBZ2Ps36u7e6C+mOXwITB/zpCo0IjwJpsOT7Q=
+github.com/scribd/vault-authenticator v0.0.0-20191120154727-5c2ec43f4c6f h1:vNbnKE1vhQzEDE0RjBeOM61Z8oWm9LagMyv645fngDU=
+github.com/scribd/vault-authenticator v0.0.0-20191120154727-5c2ec43f4c6f/go.mod h1:5SbT3eHBZ2Ps36u7e6C+mOXwITB/zpCo0IjwJpsOT7Q=
 github.com/scribd/vaultlibs v0.0.0-20191115000102-39f94125c6ab h1:v75ErZm7mbvpBi/4h/FZAKGIsHIoktIl6DwV8/H5Tfo=
 github.com/scribd/vaultlibs v0.0.0-20191115000102-39f94125c6ab/go.mod h1:PVWcoLLwk1OGvFzS/HqBWrr3/8mg7iiC61H+tH4S0no=
 github.com/scribd/vaultlibs v0.0.0-20191115220242-ef8c139c249d h1:6zEBq7p3TxmyRrOM62IDCoHowdwlYGkKRArLiu84kQ0=
