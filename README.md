@@ -1,5 +1,7 @@
 # keymaster
 
+[![Status](https://codebuild.us-east-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiV1FnWVg1ZlNiTmg0OCt2Q2RMeEZEQm5HKzFMWTJ1VnRBL2JuZFVRNGg5Nm9TUjlnODJMblpNV2hEeUZheTdSV0dVcm8zbEtQZ0g5L0hzcmJXQVd4ZUlBPSIsIml2UGFyYW1ldGVyU3BlYyI6IlZCSWd3ZzF3SmVyR0dtU28iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)](https://us-east-2.console.aws.amazon.com/codesuite/codebuild/projects/keymaster/history?region=us-east-2)
+
 Managed Secrets Library for Vault.
 
 Based on a config file, these libs do the following:
