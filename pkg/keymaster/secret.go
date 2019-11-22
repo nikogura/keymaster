@@ -115,8 +115,6 @@ func (km *KeyMaster) WriteSecretForEnv(secret *Secret, secretPath string, env st
 
 	case "rsa":
 		// TODO Implement saving RSA Secrets
-	case "static":
-		// do nothing, cos it's static
 	default:
 		value, err := secret.Generator.Generate()
 		if err != nil {

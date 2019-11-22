@@ -308,7 +308,7 @@ func NewTlsGenerator(vaultClient *api.Client, options GeneratorData) (generator 
 }
 
 // Static Secrets
-// Static Secrets don't chenge, hence this is just a no-op
+// Static Secrets don't change, hence this just creates an empty bucket
 type StaticGenerator struct {
 	Type string
 }
