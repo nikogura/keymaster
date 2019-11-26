@@ -35,11 +35,13 @@ type Realm struct {
 const K8S = "k8s"
 const IAM = "iam"
 const TLS = "tls"
+const EXTERNAL = "external"
 
 var RealmTypes = []string{
 	IAM,
 	K8S,
 	TLS,
+	EXTERNAL,
 }
 
 // KeyMaster The KeyMaster Interface
@@ -323,7 +325,8 @@ func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 					err = errors.Wrapf(err, "failed to add IAM auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
 					return err
 				}
-
+			case EXTERNAL:
+				// do nothing.  Externally Authed realms are handled externally.
 			default:
 				err = errors.New(fmt.Sprintf("unsupported realm %q", realm))
 				return err
