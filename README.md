@@ -14,7 +14,7 @@ Based on a config file, these libs do the following:
 
 * Creates Roles per Team, generating Vault Auth endpoints allowing the `secrets` client or any other Vault savvy user to authenticate to Vault and get a token.
 
-* Roles have 'Realms' which are computing environments.  Each Realm configures a different flavor of Authentication backend.  Choices are 'k8s', 'iam', 'tls', and 'external'.  'External' auth means the Role is configured, but authentication is handled by some other system (such as LDAP).
+* Roles have 'Realms' which are computing environments.  Each Realm configures a different flavor of Authentication backend.  Choices are 'k8s', 'iam', and 'tls'.
 
 * Does *not* create the per team secrets engines in Vault.  That has to be done manually by a Vault Admin.  This is deliberate, and allows `keymaster` to run with limited permissions (creating new storage engines would require `keymaster` to run with root permissions).
 

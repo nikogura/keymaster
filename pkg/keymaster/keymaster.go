@@ -325,8 +325,6 @@ func (km *KeyMaster) ConfigureTeam(team *Team, verbose bool) (err error) {
 					err = errors.Wrapf(err, "failed to add IAM auth for role: %q policy: %q env: %q", role.Name, policy.Name, env)
 					return err
 				}
-			case EXTERNAL:
-				// do nothing.  Externally Authed realms are handled externally.
 			default:
 				err = errors.New(fmt.Sprintf("unsupported realm %q", realm))
 				return err
