@@ -7,9 +7,33 @@ This repo contains a library that configures your secrets provider for something
 
 Managed Secrets are an _interface_ on your secrets provider.  Hashicorp Vault is the reference implementation, but there's nothing stopping us from adding modules for AWS's Secrets Manager, SSM Parameter Store, or any other engine. 
 
-The idea behind Managed Secrets is that your secrets are `managed`.  Users do not need to know or care that Vault is backend to store secrets, or where the secrets are stored within Vault, or how Vault is configured.  
+The idea behind Managed Secrets is that your secrets are `managed`.  Users do not need to know or care what the backend to store secrets, or where the secrets are stored within the backend, or how it's configured.
 
-They don't need to know anything about Vault at all to use secrets.  What's more, the backend could be swapped out at any time and nobody should notice or care.
+They don't need to know anything about the backend at all.  What's more, the backend could be swapped out at any time and nobody should notice or care.
+
+## Why Manage Secrets?
+
+Secrets management is an important job, but it sucks.  Why does it suck?
+
+First off, anyone who's actually run/managed a secrets system knows that making sure your app has the secrets it needs is just the tip of the iceberg.  Yeah, that's all the developers care about, and that's all most people think of.  Just about any solution can provide for that use case.
+
+For the unsung heroes who maintain the system however, there's more.  What?  Here's a short list:
+
+* Audit (who has access to what?)
+
+* Logging (Who accessed what when?)
+
+* 'Rotation' (i.e. changing secrets)
+
+* Granting of access
+
+* Revocation of access
+
+* Generating hard to guess secrets
+
+The problem with the above tasks is, they're necessary, but they're time consuming and inglorious, so most of the time, they _don't get done_.
+
+This is the point of Managed Secrets.  Make the necessary painless, so you have a chance at actually doing it.
 
 ## What are Secrets?
 
