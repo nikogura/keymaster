@@ -3,11 +3,15 @@
 [![Status](https://codebuild.us-east-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiV1FnWVg1ZlNiTmg0OCt2Q2RMeEZEQm5HKzFMWTJ1VnRBL2JuZFVRNGg5Nm9TUjlnODJMblpNV2hEeUZheTdSV0dVcm8zbEtQZ0g5L0hzcmJXQVd4ZUlBPSIsIml2UGFyYW1ldGVyU3BlYyI6IlZCSWd3ZzF3SmVyR0dtU28iLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master)](https://us-east-2.console.aws.amazon.com/codesuite/codebuild/projects/keymaster/history?region=us-east-2)
 
 ## Overview
-This repo contains a library that configures Hashicorp Vault for something called "Managed Secrets".
+This repo contains a library that configures your secrets provider for something called "Managed Secrets".
+
+Managed Secrets are an _interface_ on your secrets provider.  Hashicorp Vault is the reference implementation, but there's nothing stopping us from adding modules for AWS's Secrets Manager, SSM Parameter Store, or any other engine. 
 
 The idea behind Managed Secrets is that your secrets are `managed`.  Users do not need to know or care that Vault is backend to store secrets, or where the secrets are stored within Vault, or how Vault is configured.  
 
 They don't need to know anything about Vault at all to use secrets.  What's more, the backend could be swapped out at any time and nobody should notice or care.
+
+## What are Secrets?
 
 Secrets are defined as string values that must be kept from disclosure or discovery to or by unauthorized entities.
 
@@ -26,8 +30,6 @@ In this manner, developers can create Secrets in a self service fashion, and aut
 Developers on one Team can also request access to Secrets owned by another Team simply by creating a Role which contains that Secret.  This is a deliberate design feature.  It is also something that could absolutely be used by evil.   
 
 Permission to use Secrets from another Team is controlled by Code Review on the repo containing the config files.  How ever good/bad that's handled will determine how 'safe' cross team secrets access really is.
-
-Managed Secrets then is basically a yaml interface for machine access to Vault.  
 
 ## Capabilities
 
