@@ -101,7 +101,7 @@ func (km *KeyMaster) WriteIamAuth(role *Role, realm *Realm, policies []string) (
 
 	path, err := km.IamAuthPath(role)
 	if err != nil {
-		err = errors.Wrapf(err, "failed building k8s auth path")
+		err = errors.Wrapf(err, "failed building iam auth path")
 		return err
 	}
 
@@ -118,7 +118,7 @@ func (km *KeyMaster) WriteIamAuth(role *Role, realm *Realm, policies []string) (
 func (km *KeyMaster) ReadIamAuth(role *Role) (data map[string]interface{}, err error) {
 	path, err := km.IamAuthPath(role)
 	if err != nil {
-		err = errors.Wrapf(err, "failed building k8s auth path")
+		err = errors.Wrapf(err, "failed building iam auth path")
 		return data, err
 	}
 
@@ -139,7 +139,7 @@ func (km *KeyMaster) ReadIamAuth(role *Role) (data map[string]interface{}, err e
 func (km *KeyMaster) DeleteIamAuth(role *Role) (err error) {
 	path, err := km.IamAuthPath(role)
 	if err != nil {
-		err = errors.Wrapf(err, "failed building k8s auth path")
+		err = errors.Wrapf(err, "failed building iam auth path")
 		return err
 	}
 
