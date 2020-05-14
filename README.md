@@ -5,23 +5,19 @@
 ## Overview
 This repo contains a library that configures your secrets provider for something called "Managed Secrets".
 
-Managed Secrets are an _interface_ on your secrets provider.  Hashicorp Vault is the reference implementation, but there's nothing stopping us from adding modules for AWS's Secrets Manager, SSM Parameter Store, or any other engine. 
+Managed Secrets are an _interface_ on your secrets provider. Hashicorp Vault is the reference implementation, but there's nothing stopping us from adding modules for AWS's Secrets Manager, SSM Parameter Store, or any other engine. 
 
-The idea behind Managed Secrets is that your secrets are `managed`.  Users do not need to know or care what the backend to store secrets, or where the secrets are stored within the backend, or how it's configured.
-
-They don't need to know anything about the backend at all.  What's more, the backend could be swapped out at any time and nobody should notice or care.
+The idea behind Managed Secrets is that your secrets are managed. You do not need to know or care that we're currently using Vault to store secrets, or where the secrets are stored within Vault, or how Vault is configured. You don't need to know anything about Vault at all to use secrets. What's more, Vault could be swapped out for a different storage solution at any time and nobody should notice or care.
 
 ## Why Manage Secrets?
 
-Secrets management is an important job, but it sucks.  Why does it suck?
+Anyone who's actually run/managed a secrets system knows that making sure your app has the secrets it needs is just the tip of the iceberg. Developers only care about accessing secrets, and that's all most people think of. Just about any solution can provide for that use case.
 
-First off, anyone who's actually run/managed a secrets system knows that making sure your app has the secrets it needs is just the tip of the iceberg.  Yeah, that's all the developers care about, and that's all most people think of.  Just about any solution can provide for that use case.
-
-For the unsung heroes who maintain the system however, there's more.  What?  Here's a short list:
+For the unsung heroes who maintain the system however, there's more:
 
 * Audit (who has access to what?)
 
-* Logging (Who accessed what when?)
+* Logging (who accessed what, and when?)
 
 * 'Rotation' (i.e. changing secrets)
 
@@ -31,51 +27,45 @@ For the unsung heroes who maintain the system however, there's more.  What?  Her
 
 * Generating hard to guess secrets
 
-The problem with the above tasks is, they're necessary, but they're time consuming and inglorious, so most of the time, they _don't get done_.
+The above tasks are time consuming and inglorious. Most of the time, they _don't get done_.
 
-This is the point of Managed Secrets.  Make the necessary painless, so you have a chance at actually doing it.
+This is the point of Managed Secrets. Make the necessary painless, so you have a chance at actually doing it.
 
 ## What are Secrets?
 
-Secrets are defined as string values that must be kept from disclosure or discovery to or by unauthorized entities.
+Secrets are defined as string values that must be kept from disclosure to unauthorized entities.
 
-Secrets are basically key value pairs that are owned by a Team.  One secret 'key' has multiple values- one for each Environment.  
+Secrets are basically key-value pairs that are owned by a Team. One secret 'key' has multiple values, one for each Environment (development, staging, or production). You don't generally need to know or care which Environment you're fetching Secrets for. The system is environmentally aware, and will automatically return the appropriate value for your Environment.
 
-Users also don't generally need to know or care which Environment they're fetching Secrets for- the system is environmentally aware, and will automatically return the appropriate value for the Environment in which the client is run.
+Each Secret has a 'generator' which can create and recreate the value of the Secret in each Environment. This is used to initially provision a Secret, and to rotate it as needed.
 
-Each Secret has a 'generator' which can create and recreate the value of the Secret in each Environment.  This is used to initially provision a Secret, and to rotate it at need.
+You gain access to Secrets via Roles. The Roles define which Principal can access which Secret in a given Environment.
 
-One gains access to Secrets via Roles.  The Roles define which Principal (app or person) can access which Secret in a given Environment.  
+In this manner, developers can create Secrets in a (mostly) self-service fashion, and automatically make the Secrets available to their application in each Environment without needing to specify what the values actually are. The generator populates the actual values in each Environment (with the exception of static secrets; see below).   
 
-Again, even though the reference implementation leverages Vault, and Vault stores secrets at paths, you don't need to know or care which path is being used.  You authenticate to a Role- as defined in this repo, and the rest _just works_.
-
-In this manner, developers can create Secrets in a self service fashion, and automatically make the Secrets available to their application in each Environment without needing to specify what the values actually are. The generator populates the actual values in each Environment.
-
-Developers on one Team can also request access to Secrets owned by another Team simply by creating a Role which contains that Secret.  This is a deliberate design feature.  It is also something that could absolutely be used by evil.   
-
-Permission to use Secrets from another Team is controlled by Code Review on the repo containing the config files.  How ever good/bad that's handled will determine how 'safe' cross team secrets access really is.
+Ultimately, access to Secrets is controlled entirely by human code review for changes to a separate repo that stores the config files (see below). As an example, developers on one Team can request access to Secrets owned by another Team simply by creating a Role in that other Team's .yml file which provides access to that Secret. There are no additional automated controls that prevent access from being granted. The only control is a human one: a Security admin will confirm with the second Team that they intend to grant access to one of their secrets. This is a deliberate design feature. It is also something that could absolutely be used by evil conspirators on different teams. However well/poorly code review is handled will determine how 'safe' secrets access really is. Can everyone get together and agree that everyone gets access to everything? They sure can. Is that a good idea? In a production environment, probably not.
 
 ## Capabilities
 
-Based on the contents of a config file, hese libs do the following:
+Based on the contents of a config file, these libs do the following in the secrets provider (again, HashiCorp Vault is the reference implementation):
 
-* Defines Secrets and their Generators for a Team.
+* Defines Secrets and a Generator string (the latter as a key/value pair) for a Team.
 
 * Generate Secrets for a Team in each Environment, storing the Secrets in Vault. 
 
-* Creates Vault Policies allowing Principals to access the above Secrets in each Environment.
+* Creates Vault Policies allowing Principals to access the Secrets in the designated Environments.
 
-* Creates Roles per Team, generating Vault Auth endpoints allowing the `secrets` client or any other Vault savvy user to authenticate to Vault and get a token.
+* Creates Roles per Team, generating Vault Auth endpoints allowing [the `secrets` client](https://github.com/scribd/secrets) or any other Vault savvy user to authenticate to Vault and get a token.
 
-* Roles have 'Realms' which are computing environments.  Each Realm configures a different flavor of Authentication backend.  Choices are 'k8s', 'iam', and 'tls'.
+* Configures authentication methods called 'Realms'. Choices are 'k8s', 'iam', and 'tls'.
 
-* Does *not* create the per team secrets engines in Vault.  That has to be done manually by a Vault Admin.  This is deliberate, and allows `keymaster` to run with limited permissions (creating new storage engines would require `keymaster` to run with root permissions).
+Managed Secrets (specifically, the keymaster component) should not run with full admin permissions to the secrets provider. This was a deliberate choice, as programmatically accessing secret storage with root privileges while running in CI (currently AWS CodeBuild) is never a good idea. Running as non-admin necessitates some preparatory manual steps by a human when using Vault as a secrets provider, however. Keymaster can configure Secrets within a Team's configuration, but creation of a new group of Secrets for a team in Vault has to be done manually by a human administrator of Vault prior to running keymaster. Vault stores secrets in objects called "paths". While it doesn't require full admin access to write secret values to paths that already exist, it does require full admin privileges to create new paths. A different secrets provider, other than Vault, may not have such restrictions, and thus you may be able to run keymaster without needing to perform any manual preparatory steps.
 
-* At present, CA engines are general purpose - not per Team.
+At present, CA engines are general purpose - not per Team.
 
 ## Other Components
 
-This repo is the libraries behind https://github.com/scribd/keymaster-cli.  `keymaster-cli` would be run against a set of config files as described above to configure Vault for Managed Secrets.
+This repo contains the libraries behind https://github.com/scribd/keymaster-cli.  `keymaster-cli` would be run against a set of config files as described above to configure Vault for Managed Secrets.
 
 An example client for Managed Secrets is https://github.com/scribd/secrets.  It leverages libraries in https://github.com/scribd/vault-authenticator to attempt parallel login methods to Vault, and then grab secrets from your Role.
 
@@ -87,7 +77,7 @@ With `secrets` providing your access, and `keymaster-cli` configuring Vault for 
 
 Some Secrets cannot be generated, and must be manually placed.  3rd party API credentials are a good example of this.  
 
-In the case of these 'manual' secrets, the appropriate 'bucket' will be created, but any values will be the empty string.  Static Secrets are no different than any other Secret, but their Generator does precisely _nothing_.
+In the case of static secrets, the appropriate 'bucket' will be created in Vault when a configuration is merged, but any values will be an empty string. Note, however, that the Generator that creates values for other types of Secrets still operates on the storage bucket, and also creates a 'generator' value string for use in comparing buckets created at different times.
 
 ## TLS Secrets
 
@@ -147,7 +137,7 @@ This example defines a Team
             - 1.2.3.4
             
     roles:                                  # Your Secret Roles  This is what you authenticate to in order to access the Secrets above.
-      - name: app1                          # A role unimaginatively named 'app1'
+      - name: app1                          # A role unimaginatively named 'app1'; NOT case sensitive
         realms:
           - type: k8s                       # legal types are 'k8s', 'tls', and 'iam'
             identifiers:
@@ -163,7 +153,8 @@ This example defines a Team
 
           - type: iam                       # only works if you're running in AWS
             principals:
-              - "arn:aws:iam::888888888888:role/vaultadmin-role20191254858394857285048328"
+              - "arn:aws:iam::123456789012:role/vaultadmin-role20191254858394857285048328"
+              - "arn:aws:iam::123456789012:role/vault-role-2"
             environment: staging            # each principal auths to a role in a single environment.
         secrets:
           - name: foo                       # These Secrets are defined above.  No 'team' in the config means 'team from this file'
@@ -171,10 +162,10 @@ This example defines a Team
           - name: baz
             team: test-team2                # This secret is owned by another Team.
             
-    environments:                           # Environments are just strings.  Use whatever you want.   Many people would like Scribd to use standardized Environment names.  That's a people problem, not a tech problem.  To the code, they're all just strings.
+    environments:                           # Environments are just strings. Use whatever you want. Many people would like Scribd to use standardized Environment names. That's a people problem, not a tech problem. To the code, they're all just strings.
       - production
       - staging
-      - development                         # The 'development' environment is special.  If you have one, anyone who can authenticate can access development secrets.  This is intended to ease/ speed development.
+      - development
       
 
 ## Admin Notes
