@@ -5,11 +5,9 @@
 ## Overview
 This repo contains a library that configures your secrets provider for something called "Managed Secrets".
 
-Managed Secrets are an _interface_ on your secrets provider.  Hashicorp Vault is the reference implementation, but there's nothing stopping us from adding modules for AWS's Secrets Manager, SSM Parameter Store, or any other engine. 
+Managed Secrets are an _interface_ on your secrets provider. HashiCorp Vault is the reference implementation, but there's nothing stopping us from adding modules for AWS's Secrets Manager, SSM Parameter Store, or any other storage backend. 
 
-The idea behind Managed Secrets is that your secrets are `managed`.  Users do not need to know or care what the backend to store secrets, or where the secrets are stored within the backend, or how it's configured.
-
-They don't need to know anything about the backend at all.  What's more, the backend could be swapped out at any time and nobody should notice or care.
+The idea behind Managed Secrets is that your secrets are `managed`.  Users do not need to know where the secrets are stored within the backend, how it's configured, or even what it is. They don't need to know anything about the backend at all. What's more, the backend could be swapped out at any time and nobody should notice or care.
 
 ## Why Manage Secrets?
 
@@ -37,27 +35,21 @@ This is the point of Managed Secrets.  Make the necessary painless, so you have 
 
 ## What are Secrets?
 
-Secrets are defined as string values that must be kept from disclosure or discovery to or by unauthorized entities.
+Secrets are defined as string values that must be kept from disclosure to unauthorized entities.
 
-Secrets are basically key value pairs that are owned by a Team.  One secret 'key' has multiple values- one for each Environment.  
+Secrets are key-value pairs that are owned by a Team. One secret 'key' has multiple values, one for each Environment (e.g., development, staging, or production, though there is no limit on the names or numbers of environments). The `secrets` client can be configured to be environmentally aware based on CIDRs of client machines, and can automatically return the appropriate value for an Environment. You can specify different secrets for different environments, or just use the same secret name for all environments.
 
-Users also don't generally need to know or care which Environment they're fetching Secrets for- the system is environmentally aware, and will automatically return the appropriate value for the Environment in which the client is run.
+You gain access to Secrets via Roles. The Roles define which Principal can access which Secret in a given Environment. While Roles have no functional significance in terms of which Principals have access to which Secrets, and it is possible to put all such combinations inside a single Role, Roles function as an administrative aid to keep specified combinations of Principals, Secrets, and Environments logically grouped together for human interpretation.
 
-Each Secret has a 'generator' which can create and recreate the value of the Secret in each Environment.  This is used to initially provision a Secret, and to rotate it at need.
+The details of your client application will determine how you attach a Principal identity to that client. If using an IAM role as a Principal in the 'iam realm' (see below), for example, you could attach the IAM role to an EC2 instance to allow all applications on the instance to access your Secrets.
 
-One gains access to Secrets via Roles.  The Roles define which Principal (app or person) can access which Secret in a given Environment.  
+Each Secret has a 'generator' which can create and recreate the value of the Secret in each Environment (with the exception of static secret values, which are manually entered by an admin; see below). This is used to initially provision a Secret, and to rotate it as needed.
 
-Again, even though the reference implementation leverages Vault, and Vault stores secrets at paths, you don't need to know or care which path is being used.  You authenticate to a Role- as defined in this repo, and the rest _just works_.
-
-In this manner, developers can create Secrets in a self service fashion, and automatically make the Secrets available to their application in each Environment without needing to specify what the values actually are. The generator populates the actual values in each Environment.
-
-Developers on one Team can also request access to Secrets owned by another Team simply by creating a Role which contains that Secret.  This is a deliberate design feature.  It is also something that could absolutely be used by evil.   
-
-Permission to use Secrets from another Team is controlled by Code Review on the repo containing the config files.  How ever good/bad that's handled will determine how 'safe' cross team secrets access really is.
+Ultimately, access to Secrets is controlled entirely by human code review for changes to this repo. As an example, developers on Team A can request access to Secrets owned by Team B simply by creating a Role in Team B's yaml file which provides access to that Secret to a principal controlled by Team A, such as an IAM role. There are no additional automated controls that prevent access from being granted. The only control is a human one: an admin will confirm with Team B that they intend to grant access to one of their secrets. This is a deliberate design feature. It is also something that could absolutely be used by evil conspirators on different teams. However well/poorly code review is handled will determine how 'safe' secrets access really is. Can everyone get together and agree that everyone gets access to everything? They sure can. Is that a good idea? In a production environment, probably not.
 
 ## Capabilities
 
-Based on the contents of a config file, hese libs do the following:
+Based on the contents of a config file, these libs do the following:
 
 * Defines Secrets and their Generators for a Team.
 
@@ -69,13 +61,13 @@ Based on the contents of a config file, hese libs do the following:
 
 * Roles have 'Realms' which are computing environments.  Each Realm configures a different flavor of Authentication backend.  Choices are 'k8s', 'iam', and 'tls'.
 
-* Does *not* create the per team secrets engines in Vault.  That has to be done manually by a Vault Admin.  This is deliberate, and allows `keymaster` to run with limited permissions (creating new storage engines would require `keymaster` to run with root permissions).
+* Does *not* create the per team secrets engines in Vault.  That has to be done manually by a Vault Admin.  This is deliberate, and allows `keymaster` to run with limited permissions (creating new secrets engines would require `keymaster` to run with root permissions).
 
 * At present, CA engines are general purpose - not per Team.
 
 ## Other Components
 
-This repo is the libraries behind https://github.com/scribd/keymaster-cli.  `keymaster-cli` would be run against a set of config files as described above to configure Vault for Managed Secrets.
+This repo contains the libraries behind https://github.com/scribd/keymaster-cli.  `keymaster-cli` would be run against a set of config files as described above to configure Vault for Managed Secrets.
 
 An example client for Managed Secrets is https://github.com/scribd/secrets.  It leverages libraries in https://github.com/scribd/vault-authenticator to attempt parallel login methods to Vault, and then grab secrets from your Role.
 
@@ -85,9 +77,11 @@ With `secrets` providing your access, and `keymaster-cli` configuring Vault for 
 
 ## Manual or Static Secrets
 
-Some Secrets cannot be generated, and must be manually placed.  3rd party API credentials are a good example of this.  
+Some Secrets cannot be generated, and must be manually placed into the storage backend. Third party API credentials are a good example of such 'static' secrets.
 
-In the case of these 'manual' secrets, the appropriate 'bucket' will be created, but any values will be the empty string.  Static Secrets are no different than any other Secret, but their Generator does precisely _nothing_.
+In the case of static secrets, the appropriate 'bucket' will be created in Vault when a configuration is merged, but any values will be an empty string. Note, however, that the Generator that creates values for other types of Secrets still operates on the storage bucket, and also creates a 'generator' value string for use in comparing buckets created at different times.
+
+Although not strictly necessary, it is probably easier to use LDAP authentication for human users for entering static secrets manually. If you have another form of human user authentication configured for Vault, that works, too. The policy authorizations to secret paths for any authentication methods aside from IAM, Kubernetes, or TLS certificate are NOT configured by Managed Secrets. Thus, while you are able to _create_ an (empty) static secret accessible by your applications via your yaml file, you will not be able to _set_ the value of the secret unless your personal username is manually given write permissions to the specific Vault path. (This is the only scenario in which some knowledge of the Vault backend, namely, the exact path at which secrets provisioned by `keymaster` are stored, is required, although all secrets belonging to a given theam are stored at the team_name/ path, making them easy to find.)
 
 ## TLS Secrets
 
@@ -95,94 +89,168 @@ TLS certificates are handled much in the same way as any other secret, but they 
 
 For a TLS Secret named 'foo.scribd.com', you should expect to find a 'foo.scribd.com.key', 'foo.scribd.com.crt', 'foo.scribd.com.serial', etc.  
 
-TLS certificate secrets are automatically renewed when they are near expiration.  *N.B.: At the time of this writing, this has not been implemented. The code to regenerate exists, but it's not wired up to anything.*
+TLS certificate secrets are automatically renewed when they are near expiration. *N.B.: At the time of this writing, this has not been implemented. The code to regenerate exists, but it's not wired up to anything.*
 
-The Roles defined in this repo have the power to _consume_ TLS Secrets, but they cannot _generate_ them.  This is an important point.  By separating generation from consumption, it severely limits the blast radius of a compromised application.  The attacker can steal the credentials, but they cannot create new ones.
+The Roles defined in this repo have the power to _consume_ TLS Secrets, but they cannot _generate_ them. This is an important point. By separating generation from consumption, it severely limits the blast radius of a compromised application. The attacker can steal the credentials, but they cannot create new ones.
+
+
+# Sample Management Workflow
+
+## 1. Create Directory
+
+Create a directory for your Team.  Put it under the path in this repo `secrets`.  
+
+Name it whatever you like.  Only yaml files in the directory `secrets` in this repo are parsed and synced to Vault.  
+  
+It's probably best to name the directory after your Team, but hey, you're the one that needs to keep track of it and communicate it to others.  Knock yourself out.
+
+## 2. Create Yaml File and Define Team Name
+
+Under that directory, create a yaml file (example below). The file name doesn't matter here, either. Again, the author recommends you name the file after your Team, but it's only a suggestion.  
+
+Each file defines a Team. The `name` value at the top of this file will be the name of the Team's secret container. Even _this_ name doesn't matter. Only one Team is allowed per file, but each directory can have multiple files. Note, however, that spreading a single Team's info across multiple files is not currently supported; each file in a directory must contain a different Team name at the top.
+
+## 3. Define Secrets, Roles, and Environments
+
+In your yaml file, define your Secrets, Roles, and Environments.  
+
+The Roles allow specified Principals to read specified Secrets. As noted above, Roles are merely an administrative aid to keep specified combinations of Principals and Secrets logically grouped together. To associate a single Role with different Principals and/or grant access to different secret values in different Environments, make multiple Realm blocks (specifying 'realms', 'principals', and 'secrets') for the same Role name (the 'name' of the Role can optionally be restated for readability). See the example below for the 'app1' Role.
+
+Environments are merely the "buckets" that each secret is split into. If three different Environments are defined for a team, each secret will have three different buckets in which to place unique values for all the Secrets defined in the yaml, though they don't all need to be used. The names of the Environments can be anything, but the `secrets` binary can be customized to treat recognize certain environments by CIDR. When a client has a source IP in a CIDR that corresponds to one of these environments, `secrets` automatically recognizes the environment, and saves the calling process from needing to specify the `-e` flag with `secrets`.
+
+## 4. Add Realms to Roles
+
+Realms have 'types' ('k8s', 'iam', 'tls'), as well as 'principals'.  The 'identifiers' list is only used by the 'k8s' type and is the name of the Kubernetes Cluster.
+  
+The possible 'principals' are:
+  * the ARNs of the IAM role (or IAM user) for the 'iam' type
+  * the FQDN of the host for the 'tls' type
+  * the namespace for the 'k8s' type (the `secrets` tool uses the `default` service account in the specified namespace to authenticate)
+
+Note: a Managed Secrets Role (defined by this README) is _unrelated_ to an AWS IAM role (a technical AWS term). A single IAM role could be specified as a Principal in multiple Managed Secrets Roles. However, keeping the scope of both types of roles the same (i.e., logically mapping one Managed Secrets Role to one AWS IAM role) makes it easier to keep track of which IAM roles have access to which Secrets. Giving them each the same name helps, too.
+
+Note: although LDAP authentication to Vault is possible, it isn't one of the authentication methods that is configured by Managed Secrets automation. A Vault admin must manually configure a specific Vault policy to allow LDAP authentication. How you set this up is dependent on how you assign users to LDAP groups.
+
+## 5. Create a Pull Request
+
+Once you have your secrets defined, open a PR to master. Scribd configures its CI to check yaml files for syntax when a PR is opened.
+
+## 6. Get it Reviewed.
+
+Get someone to review your PR.
+
+Keeping it all secure and sane is _everyone's_ responsibility.
+
+## 7. Onboard with a Vault admin  
+
+Make a Jira task, send a Slack message, etc.
+
+**_Some manual setup must be completed by a Vault admin before a new Managed Secrets configuration can be provisioned_**. This was a deliberate choice (see "Capabilities" section, above).
+
+## 8. Merge your PR to Master
+
+A Vault admin must configure the storage for your secrets _before_ you merge to master or CD will fail. See Step 7.
 
 
 ## Config Example
 
 This example defines a Team
 
-    ---
-    name: test-team1                        # The name of the Team
-    secrets:                                # Definitions of the Secrets in the Team
-      - name: foo
-        generator:
-          type: alpha                       # A 10 digit alphanumeric secert
-          length: 10
+---
+name: test-team1                        # The name of the Team
+secrets:                                # Definitions of the Secrets in the Team
+  - name: foo
+    generator:
+      type: alpha                       # A 10 digit alphanumeric secert
+      length: 10
 
-      - name: bar
-        generator:
-          type: hex                         # A 12 digit hexadecimal secret
-          length: 12
+  - name: bar
+    generator:
+      type: hex                         # A 12 digit hexadecimal secret
+      length: 12
 
-      - name: baz
-        generator:
-          type: uuid                        # A UUID secret
+  - name: baz
+    generator:
+      type: uuid                        # A UUID secret
 
-      - name: wip
-        generator:
-          type: chbs
-          words: 6                          # A 6 word 'correct-horse-battery-staple' secret.  6 random commonly used words joined by hyphens.
+  - name: wip
+    generator:
+      type: chbs
+      words: 6                          # A 6 word 'correct-horse-battery-staple' secret.  6 random commonly used words joined by hyphens.
 
-      - name: zoz
-        generator:
-          type: rsa
-          blocksize: 2048                   # A RSA keypair expressed as a secret (Not currently supported)
-          
-      - name: blort                         # I've clearly run out of standard throwaway names here.
-        generator:
-          type: static                      # Static secrets have to be placed manually.  API keys are a good use case for Static Secrets.
-
-      - name: foo.scribd.com
-        generator:
-          type: tls                         # A TLS Certificate/ Private Key expressed as a secret.
-          cn: foo.scribd.com
-          ca: service                       # This cert is created off of the 'service' CA
-          sans:
-            - bar.scribd.com                # Allowed alternate names for this cert
-            - baz.scribd.com
-          ip_sans:                          # IP SANS allow you to use TLS and target an IP directly
-            - 1.2.3.4
-            
-    roles:                                  # Your Secret Roles  This is what you authenticate to in order to access the Secrets above.
-      - name: app1                          # A role unimaginatively named 'app1'
-        realms:
-          - type: k8s                       # legal types are 'k8s', 'tls', and 'iam'
-            identifiers:
-              - bravo                       # for k8s, this is the name of the cluster.  Has no meaning for other realms.
-            principals:
-              - app1                        # for k8s, this is the namespace that's allowed to access the secret
-            environment: production         # each role maps to a single environment.  Which one is this?
-
-          - type: tls                       # 'tls' specifies authenticated by client certs (generally only applies to SL hosts)
-            principals:
-              - ci08.inf.scribd.com         # for tls, this is the FQDN of the host
-            environment: development        # when this host connects, it gets development secrets
-
-          - type: iam                       # only works if you're running in AWS
-            principals:
-              - "arn:aws:iam::888888888888:role/vaultadmin-role20191254858394857285048328"
-            environment: staging            # each principal auths to a role in a single environment.
-        secrets:
-          - name: foo                       # These Secrets are defined above.  No 'team' in the config means 'team from this file'
-          - name: wip
-          - name: baz
-            team: test-team2                # This secret is owned by another Team.
-            
-    environments:                           # Environments are just strings.  Use whatever you want.   Many people would like Scribd to use standardized Environment names.  That's a people problem, not a tech problem.  To the code, they're all just strings.
-      - production
-      - staging
-      - development                         # The 'development' environment is special.  If you have one, anyone who can authenticate can access development secrets.  This is intended to ease/ speed development.
+  - name: zoz
+    generator:
+      type: rsa
+      blocksize: 2048                   # A RSA keypair expressed as a secret (Not currently supported)
       
+  - name: blort                         # I've clearly run out of standard throwaway names here.
+    generator:
+      type: static                      # Static secrets have to be placed manually.  API keys are a good use case for Static Secrets.
+
+  - name: foo.scribd.com
+    generator:
+      type: tls                         # A TLS Certificate/ Private Key expressed as a secret.
+      cn: foo.scribd.com
+      ca: service                       # This cert is created off of the 'service' CA
+      sans:
+        - bar.scribd.com                # Allowed alternate names for this cert
+        - baz.scribd.com
+      ip_sans:                          # IP SANS allow you to use TLS and target an IP directly
+        - 1.2.3.4
+        
+roles:                                  # Your Secret Roles  This is what you authenticate to in order to access the Secrets above.
+  - name: app1                          # A role unimaginatively named 'app1'; NOT case sensitive
+    realms:
+      - type: k8s                       # legal types are 'k8s', 'tls', and 'iam'
+        identifiers:
+          - bravo                       # for k8s, this is the name of the cluster.  Has no meaning for other realms.
+        principals:
+          - app1                        # for k8s, this is the namespace that's allowed to access the secret
+        environment: production         # each role maps to a single environment.  Which one is this?
+
+      - type: tls                       # 'tls' specifies authentication by client certs (generally only applies to SL hosts)
+        principals:
+          - foo.scribd.com              # for tls, this is the FQDN of a host that possesses a root CA-signed certificate
+        environment: development        # when this host connects, it gets development secrets
+
+      - type: iam                       # only works if the client has an IAM identity, which usually means the client
+        principals:                     # is running inside AWS
+          - "arn:aws:iam::<team-stage-account>:role/foo"
+          - "arn:aws:iam::<team-stage-account>:user/foo"
+          - "arn:aws:iam::<team-stage-account>:role/foo-*" # wildcards allowed!
+        environment: staging            # each principal auths to a role in a single environment.
+        
+    secrets:
+      - name: foo                       # These Secrets are defined above. No 'team' in the config means 'team from this file'
+      - name: wip
+      - name: baz
+        team: test-team2                # This secret is owned by another Team.
+
+  - name: app1                          # The "realms:" type and/or the principals can be modified in repeated blocks beneath role names
+    realms:                             # to give the same (or different) principals access to different versions of the same (or different)
+      - type: iam                       # secrets in different environments. This example is a "maximum" differential of
+        principals:                     # principal, environment, and secret names, but it is also possible to change just
+          - "arn:aws:iam::<team-prod-account>:role/foo" # one or two of these parameters
+        environment: production         # Restating the "name" and "realms:" lines is not necessary, but increases readability
+        
+    secrets:
+      - name: blah                      # The top two secrets are completely different than "foo" and "wip", above
+      - name: bloo
+      - name: wip                       # This is the same secret as above, but refers to the "production" version
+                                        #  instead of the "staging" version
+        
+
+environments:
+  - production
+  - staging
+  - development      
 
 ## Admin Notes
 
-These cannot create secret engines.  This is a deliberate choice.
+The libraries cannot enable Vault secret engines. The root token is required for this operation. Relying on a human user to enable a secrets engine both removes the requirement for the libraries to be run as root, and forces a human to take an affirmative action to approve an onboarding of a new team.
 
 Every time a new team is onboarded to Managed Secrets, an admin will need to manually run:
 
-    vault secrets enable -version=2 -path=<team name> -description="<team name> Secrets" kv
+    vault secrets enable -version=2 -path=<team name> -description="<team name> Managed Secrets" kv
     
    
