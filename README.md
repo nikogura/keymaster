@@ -156,94 +156,94 @@ A Vault admin must configure the storage for your secrets _before_ you merge to 
 
 This example defines a Team
 
----
-name: test-team1                        # The name of the Team
-secrets:                                # Definitions of the Secrets in the Team
-  - name: foo
-    generator:
-      type: alpha                       # A 10 digit alphanumeric secert
-      length: 10
+    ---
+    name: test-team1                        # The name of the Team
+    secrets:                                # Definitions of the Secrets in the Team
+      - name: foo
+        generator:
+          type: alpha                       # A 10 digit alphanumeric secert
+          length: 10
 
-  - name: bar
-    generator:
-      type: hex                         # A 12 digit hexadecimal secret
-      length: 12
+      - name: bar
+        generator:
+          type: hex                         # A 12 digit hexadecimal secret
+          length: 12
 
-  - name: baz
-    generator:
-      type: uuid                        # A UUID secret
-
-  - name: wip
-    generator:
-      type: chbs
-      words: 6                          # A 6 word 'correct-horse-battery-staple' secret.  6 random commonly used words joined by hyphens.
-
-  - name: zoz
-    generator:
-      type: rsa
-      blocksize: 2048                   # A RSA keypair expressed as a secret (Not currently supported)
-      
-  - name: blort                         # I've clearly run out of standard throwaway names here.
-    generator:
-      type: static                      # Static secrets have to be placed manually.  API keys are a good use case for Static Secrets.
-
-  - name: foo.scribd.com
-    generator:
-      type: tls                         # A TLS Certificate/ Private Key expressed as a secret.
-      cn: foo.scribd.com
-      ca: service                       # This cert is created off of the 'service' CA
-      sans:
-        - bar.scribd.com                # Allowed alternate names for this cert
-        - baz.scribd.com
-      ip_sans:                          # IP SANS allow you to use TLS and target an IP directly
-        - 1.2.3.4
-        
-roles:                                  # Your Secret Roles  This is what you authenticate to in order to access the Secrets above.
-  - name: app1                          # A role unimaginatively named 'app1'; NOT case sensitive
-    realms:
-      - type: k8s                       # legal types are 'k8s', 'tls', and 'iam'
-        identifiers:
-          - bravo                       # for k8s, this is the name of the cluster.  Has no meaning for other realms.
-        principals:
-          - app1                        # for k8s, this is the namespace that's allowed to access the secret
-        environment: production         # each role maps to a single environment.  Which one is this?
-
-      - type: tls                       # 'tls' specifies authentication by client certs (generally only applies to SL hosts)
-        principals:
-          - foo.scribd.com              # for tls, this is the FQDN of a host that possesses a root CA-signed certificate
-        environment: development        # when this host connects, it gets development secrets
-
-      - type: iam                       # only works if the client has an IAM identity, which usually means the client
-        principals:                     # is running inside AWS
-          - "arn:aws:iam::<team-stage-account>:role/foo"
-          - "arn:aws:iam::<team-stage-account>:user/foo"
-          - "arn:aws:iam::<team-stage-account>:role/foo-*" # wildcards allowed!
-        environment: staging            # each principal auths to a role in a single environment.
-        
-    secrets:
-      - name: foo                       # These Secrets are defined above. No 'team' in the config means 'team from this file'
-      - name: wip
       - name: baz
-        team: test-team2                # This secret is owned by another Team.
+        generator:
+          type: uuid                        # A UUID secret
 
-  - name: app1                          # The "realms:" type and/or the principals can be modified in repeated blocks beneath role names
-    realms:                             # to give the same (or different) principals access to different versions of the same (or different)
-      - type: iam                       # secrets in different environments. This example is a "maximum" differential of
-        principals:                     # principal, environment, and secret names, but it is also possible to change just
-          - "arn:aws:iam::<team-prod-account>:role/foo" # one or two of these parameters
-        environment: production         # Restating the "name" and "realms:" lines is not necessary, but increases readability
-        
-    secrets:
-      - name: blah                      # The top two secrets are completely different than "foo" and "wip", above
-      - name: bloo
-      - name: wip                       # This is the same secret as above, but refers to the "production" version
-                                        #  instead of the "staging" version
-        
+      - name: wip
+        generator:
+          type: chbs
+          words: 6                          # A 6 word 'correct-horse-battery-staple' secret.  6 random commonly used words joined by hyphens.
 
-environments:
-  - production
-  - staging
-  - development      
+      - name: zoz
+        generator:
+          type: rsa
+          blocksize: 2048                   # A RSA keypair expressed as a secret (Not currently supported)
+
+      - name: blort                         # I've clearly run out of standard throwaway names here.
+        generator:
+          type: static                      # Static secrets have to be placed manually.  API keys are a good use case for Static Secrets.
+
+      - name: foo.scribd.com
+        generator:
+          type: tls                         # A TLS Certificate/ Private Key expressed as a secret.
+          cn: foo.scribd.com
+          ca: service                       # This cert is created off of the 'service' CA
+          sans:
+            - bar.scribd.com                # Allowed alternate names for this cert
+            - baz.scribd.com
+          ip_sans:                          # IP SANS allow you to use TLS and target an IP directly
+            - 1.2.3.4
+
+    roles:                                  # Your Secret Roles  This is what you authenticate to in order to access the Secrets above.
+      - name: app1                          # A role unimaginatively named 'app1'; NOT case sensitive
+        realms:
+          - type: k8s                       # legal types are 'k8s', 'tls', and 'iam'
+            identifiers:
+              - bravo                       # for k8s, this is the name of the cluster.  Has no meaning for other realms.
+            principals:
+              - app1                        # for k8s, this is the namespace that's allowed to access the secret
+            environment: production         # each role maps to a single environment.  Which one is this?
+
+          - type: tls                       # 'tls' specifies authentication by client certs (generally only applies to SL hosts)
+            principals:
+              - foo.scribd.com              # for tls, this is the FQDN of a host that possesses a root CA-signed certificate
+            environment: development        # when this host connects, it gets development secrets
+
+          - type: iam                       # only works if the client has an IAM identity, which usually means the client
+            principals:                     # is running inside AWS
+              - "arn:aws:iam::<team-stage-account>:role/foo"
+              - "arn:aws:iam::<team-stage-account>:user/foo"
+              - "arn:aws:iam::<team-stage-account>:role/foo-*" # wildcards allowed!
+            environment: staging            # each principal auths to a role in a single environment.
+
+        secrets:
+          - name: foo                       # These Secrets are defined above. No 'team' in the config means 'team from this file'
+          - name: wip
+          - name: baz
+            team: test-team2                # This secret is owned by another Team.
+
+      - name: app1                          # The "realms:" type and/or the principals can be modified in repeated blocks beneath role names
+        realms:                             # to give the same (or different) principals access to different versions of the same (or different)
+          - type: iam                       # secrets in different environments. This example is a "maximum" differential of
+            principals:                     # principal, environment, and secret names, but it is also possible to change just
+              - "arn:aws:iam::<team-prod-account>:role/foo" # one or two of these parameters
+            environment: production         # Restating the "name" and "realms:" lines is not necessary, but increases readability
+
+        secrets:
+          - name: blah                      # The top two secrets are completely different than "foo" and "wip", above
+          - name: bloo
+          - name: wip                       # This is the same secret as above, but refers to the "production" version
+                                            #  instead of the "staging" version
+
+
+    environments:
+      - production
+      - staging
+      - development      
 
 ## Admin Notes
 
