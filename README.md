@@ -247,10 +247,74 @@ This example defines a Team
 
 ## Admin Notes
 
-The libraries cannot enable Vault secret engines. The root token is required for this operation. Relying on a human user to enable a secrets engine both removes the requirement for the libraries to be run as root, and forces a human to take an affirmative action to approve an onboarding of a new team.
+The machine running `keymaster` requires broad Vault permissions to configure secrets. We don't list them here, but the Vault API operations conducted by `keymaster` are readily apparent in the code. Additionally, `keymaster` requires create and update access to each new secrets engine enabled (and all subpaths), the AWS authentication method path, and each new Kubernetes authentication method path created.
+
+The libraries cannot enable Vault secrets engines. The root token is required for this operation. Relying on a human user to enable a secrets engine both removes the requirement for the libraries to be run as root, and forces a human to take an affirmative action to approve an onboarding of a new team.
 
 Every time a new team is onboarded to Managed Secrets, an admin will need to manually run:
 
     vault secrets enable -version=2 -path=<team name> -description="<team name> Managed Secrets" kv
     
-   
+Keymaster does not _remove_ deprecated secrets or Managed Secrets roles. Although it would likely be trivial to fork `keymaster` and add functionality to automatically delete secrets and roles based solely on their removal from a yaml file, we do not recommend doing this. Secret values and secret access authorization configurations are some of the most sensitive data in any environment. Retaining deletion authorization for a human user reduces the risk of loss of potentially irreplaceable information due to compromise of a CD system.
+
+This isn’t necessary for the new or renamed role or secret to work, but over time, it will lead to a proliferation of unused roles and secret paths inside the storage backend, which will make auditing (and troubleshooting!) more difficult.
+
+If a Managed Secrets role or secret name has changed or removed, you should manually remove the access authorization and secret. Using the reference Vault backend, this requires deleting the Vault policy corresponding to the deprecated role and the environment(s) for which it authorized secret access, and/or the old secret paths: 
+
+    $ vault policy delete <team-name>-<old-role-name>-<environment>
+
+    $ vault kv destroy <team-name>/<secret-name>
+
+Before removing a secret path with `kv destroy`, ensure you have moved the secret values to the new secret path. If the secret value will no longer be used, but you wish to retain the value and version history, use `vault kv delete <team-name>/<secret-name>`
+
+
+Using the IAM and Kubernetes authentication methods requires some understanding of these systems that is beyond the scope of Managed Secrets. HashiCorp has voluminous documentation on reference architectures for these authentication methods. Some necessary, but possibly not sufficient, key points for you to implement Managed Secrets using Vault as a storage backend:
+
+### IAM Authentication
+
+Initial points to avoid confusion:
+- "Vault permissions" and "IAM permissions" are two different things, and we've tried to make clear which one we're talking about below
+- Some necessary Vault permissions and _all_ necessary IAM permissions are _manually configured_, i.e., **_`keymaster` does not configure IAM permissions or any other AWS infrastructure_**
+
+Morever, although it would likely be trivial to fork `keymaster` and add functionality to automatically configure AWS as well as Vault based solely on the yaml file, we do not recommend doing this. As with secret and role deletion, above, separating the Vault configuration from the AWS configuration creates a barrier between catastrophic compromise of your secrets. It also lends itself to having a human admin in the loop reviewing secret setups of various developer teams.
+
+The machine that runs Vault (and therefore Vault itself) must be able to call `sts:GetCallerIdentity` in the AWS account in which it exists (this is configured by the current [HashiCorp reference Terraform](https://github.com/scribd/terraform-vault)). Vault must also be able to assume an IAM role in the account that contains the IAM principal specified in the Managed Secrets yaml. This assumed role must be granted the `ec2:DescribeInstances`,`iam:GetInstanceProfile`,`iam:GetUser`, and `iam:GetRole` permissions. This assumed role, its permissions, _and_ the permission for Vault to assume it must be configured in AWS, independently of Managed Secrets. Additionally, this role must be [manually specified in Vault](https://www.vaultproject.io/api-docs/auth/aws#create-sts-role) as an "STS role".
+
+A reference architecture and workflow is: 
+
+1) an EC2 machine running `keymaster` in the same (ideally, dedicated) AWS account in which Vault runs, which 
+2) authenticates to Vault using IAM authentication (manually configured outside of Managed Secrets) and 
+3) grants `keymaster` the Vault permission to make the appropriate API call to Vault to configure the specified IAM principal to retrieve secrets from Vault
+4) Vault uses its default IAM role (from reference Terraform) with an IAM permission policy (manually configured) to assume an IAM role (manually configured, we'll call it the `VaultLookup` IAM role) in the AWS account that contains the specified IAM principal; this `VaultLookup` IAM role must be manually specified in Vault as an "STS role" (see above)
+5) Vault makes various AWS API calls (using the `VaultLookup` role it has assumed) to validate that the specified IAM principal exists
+
+If you fail to specify the `VaultLookup` role as an "STS role" in Vault, you'll receive the following error, which is unhelpful unless you are very familiar with AWS IAM terminology ("internal ID") and also understand the mechanics of how Vault integrates with IAM (using a "client"):
+
+    URL: PUT https://vault.foo.com/v1/auth/aws/role/specified-IAM-principal
+    Code: 400. Errors:
+
+    unable to resolve ARN "arn:aws:iam::<id of account containing IAM principal>:role/specified-IAM-principal" to internal ID: unable to fetch client for account ID "<id of account containing IAM principal>" -- default client is for account "<Vault account id>"
+
+### Kubernetes Authentication
+
+Each K8s authentication method is [manually enabled in Vault](https://www.vaultproject.io/docs/auth/kubernetes#configuration) at a unique path. This path must be added to the Vault permissions granted to `keymaster`.
+
+### TLS Authentication
+
+A CA-signed certificate must be hardcoded into your private fork of [`keymaster-cli`]() in order for TLS authentication methods to be configured.
+
+Managed Secrets currently only configures the `allowed_common_names` parameter in Vault based on the principals specified in a team’s yaml. It does not configure other restrictions, such as `token_bound_cidrs`. Additional restrictions have to be manually configured after Managed Secrets has already configured the TLS role. For example, using the example yaml configuration above:
+
+    $ curl -XPOST -d @payload.json --header "X-Vault-Token: $(< .vault-token)" https://vault.foo.com/v1/auth/cert/certs/test-team1-app1
+
+with `payload.json` as:
+
+    {
+      "token_bound_cidrs": [
+        "10.1.2.3",
+        "10.2.3.4",
+        <additional IP addresses>
+        ]
+    }
+
+There are several other restrictions that can be configured manually. See Vault documentation. We'd like to extend `keymaster`'s ability to automatically configure these additional parameters. Make a PR!
