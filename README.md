@@ -75,7 +75,7 @@ Under Managed Secrets, your users take your version of `secrets`, and either bak
 
 With `secrets` providing your access, and `keymaster-cli` configuring Vault for you, you can make Secrets for your organization a self-service proposition while you do more interesting things.
 
-## Manual or Static Secrets
+## Static Secrets
 
 Some Secrets cannot be generated, and must be manually placed into the storage backend. Third party API credentials are a good example of such 'static' secrets.
 
@@ -218,6 +218,7 @@ This example defines a Team
               - "arn:aws:iam::<team-stage-account>:role/foo"
               - "arn:aws:iam::<team-stage-account>:user/foo"
               - "arn:aws:iam::<team-stage-account>:role/foo-*" # wildcards allowed!
+              - "arn:aws:sts::<team-stage-account>:assumed-role/foo/*" # allows entities that can assume the role to authenticate
             environment: staging            # each principal auths to a role in a single environment.
 
         secrets:
