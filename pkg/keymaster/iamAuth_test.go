@@ -2,7 +2,7 @@ package keymaster
 
 import (
 	"fmt"
-	"github.com/scribd/vault-authenticator/pkg/authenticator"
+	"github.com/nikogura/vault-authenticator/pkg/authenticator"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"os"

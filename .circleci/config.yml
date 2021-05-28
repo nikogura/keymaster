@@ -1,0 +1,18 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:latest
+
+    working_directory: /go/src/github.com/nikogura/vault-authenticator
+    steps:
+      - checkout
+      - run: wget https://releases.hashicorp.com/vault/1.6.1/vault_1.6.1_linux_amd64.zip
+      - run: unzip vault*.zip
+      - run: sudo cp vault /usr/local/bin/vault
+      - run: go test -v ./...
+      - run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+      - run: bash <(curl -s https://codecov.io/bash)

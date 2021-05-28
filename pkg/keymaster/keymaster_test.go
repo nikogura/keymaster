@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/vault/api"
+	"github.com/nikogura/vaulttest/pkg/vaulttest"
 	"github.com/phayes/freeport"
 	"github.com/pkg/errors"
-	"github.com/scribd/vaulttest/pkg/vaulttest"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
@@ -21,7 +21,7 @@ import (
 )
 
 var tmpDir string
-var testVault *vaulttest.VaultDevServer
+var testVault *vaulttest.VaultServer
 var kmClient *api.Client
 var rootClient *api.Client
 
@@ -51,10 +51,10 @@ func setUp() {
 
 	testAddress := fmt.Sprintf("127.0.0.1:%d", port)
 
-	testVault = vaulttest.NewVaultDevServer(testAddress)
+	testVault = vaulttest.NewVaultServer(testAddress)
 
 	if !testVault.Running {
-		testVault.ServerStart()
+		testVault.DevServerStart()
 
 		// Create normal Secret engines
 		client := testVault.VaultTestClient()
