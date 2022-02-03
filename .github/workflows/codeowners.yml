@@ -1,9 +1,0 @@
-name: Codeowners
-
-on: push
-
-jobs:
-  codeowners:
-    uses: scribd/github-actions-shared-workflows/.github/workflows/codeowners-workflow.yml@main
-    secrets:
-      github_access_token: ${{ secrets.SCRIBD_GITHUB_GENERIC_TOKEN }}
