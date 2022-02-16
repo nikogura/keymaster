@@ -3,7 +3,11 @@ name: CI
 on: push
 
 jobs:
-  shared-workflow:
-    uses: scribd/github-actions-shared-workflows/.github/workflows/shared-workflow.yml@main
-    secrets:
-      github_access_token: ${{ secrets.SCRIBD_GITHUB_GENERIC_TOKEN }}
+  codeowners:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: GitHub CODEOWNERS Validator
+        uses: mszostok/codeowners-validator@v0.7.1
+        with:
+          checks: "files,duppatterns,syntax"
