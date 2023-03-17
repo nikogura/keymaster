@@ -4,9 +4,9 @@ on: push
 
 jobs:
   codeowners:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: GitHub CODEOWNERS Validator
         uses: mszostok/codeowners-validator@v0.7.1
         with:
